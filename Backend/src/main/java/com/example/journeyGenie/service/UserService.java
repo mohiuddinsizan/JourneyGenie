@@ -17,11 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -32,37 +27,28 @@ public class UserService {
     @Autowired
     private JWTService jwtService;
 
-    private final UserRepository userRepository;
+    @Autowired
+    private UserRepository userRepository;
 
-    private BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder(7);
-
-
-    public UserService(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
+    private final BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder(7);
 
 
-    // create a new user
-    public User createUser(User user) {
+    public ResponseEntity<?> createUser(User user) {
         System.out.println("inside the user service , create user");
         user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
         User existingUser = userRepository.findByEmail(user.getEmail());
         if (existingUser != null) {
             System.out.println("User with this email already exists");
-            return null; // or throw an exception
+            return ResponseEntity
+                    .status(HttpStatus.CONFLICT)
+                    .body("User with this email already exists");
         } else {
             userRepository.save(user);
             System.out.println("User created successfully");
-            return user;
+            return ResponseEntity.ok(user);
         }
     }
 
-    // get all users
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
-    }
-
-    // log in a user
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody User user, HttpServletResponse response) {
         Authentication authentication = authenticationManager.authenticate(

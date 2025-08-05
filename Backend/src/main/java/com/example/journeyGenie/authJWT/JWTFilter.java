@@ -1,6 +1,7 @@
 package com.example.journeyGenie.authJWT;
 
 import com.example.journeyGenie.authUsernamePassword.MyUserDetailsService;
+import com.example.journeyGenie.util.Debug;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -8,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.jdbc.core.metadata.Db2CallMetaDataProvider;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -28,7 +30,7 @@ public class JWTFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
-        System.out.println("JWT filter invoked for request: " + request.getRequestURI());
+        Debug.log("JWT filter invoked for request: " + request.getRequestURI());
 
         String token = null;
         String username = null;
@@ -39,6 +41,7 @@ public class JWTFilter extends OncePerRequestFilter {
                 for (Cookie cookie : request.getCookies()) {
                     if (cookie.getName().equals("jwt")) {
                         token = cookie.getValue();
+                        Debug.log("JWT token found in cookies: " + token);
                         break;
                     }
                 }
@@ -47,6 +50,7 @@ public class JWTFilter extends OncePerRequestFilter {
             // 2. Extract username and validate
             if (token != null) {
                 username = jwtService.extractUserName(token);
+                Debug.log("Extracted username from token: " + username);
             }
 
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -62,11 +66,13 @@ public class JWTFilter extends OncePerRequestFilter {
                     String newToken = jwtService.generateToken(username);
                     Cookie newCookie = new Cookie("jwt", newToken);
                     newCookie.setHttpOnly(true);
-                    newCookie.setSecure(true); // Set to true in production
+                     newCookie.setSecure(true); // Set to true in production
                     newCookie.setPath("/");
                     newCookie.setMaxAge(60 * 30); // 30 minutes
                     newCookie.setAttribute("SameSite","None"); // set true in production
                     response.addCookie(newCookie);
+
+                    Debug.log("JWT token validated and new token set in cookie: " + newToken);
 
                     // 5. Continue filter chain
                     filterChain.doFilter(request, response);
@@ -79,10 +85,10 @@ public class JWTFilter extends OncePerRequestFilter {
             response.setContentType("application/json");
             response.getWriter().write("{ \"error\": \"Unauthorized: Missing or invalid token\" }");
 
-            // filterChain.doFilter(request,response);
+            Debug.exception("JWTFilter : unauthorized - Missing or invalid token");
 
         } catch (Exception e) {
-            System.out.println("JWTFilter : unauthorized");
+            Debug.exception("JWTFilter : unauthorized");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
             response.getWriter().write("{ \"error\": \"" + e.getMessage() + "\" }");
@@ -93,7 +99,7 @@ public class JWTFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
-        return path.startsWith("/users/login") || path.startsWith("/users/signup") || path.startsWith("/test-no-auth");
+        return path.startsWith("/user/login") || path.startsWith("/user/signup") || path.startsWith("/test-no-auth");
     }
 
 
