@@ -24,13 +24,15 @@ public class JWTService {
     private String secretkey = "";
 
     public JWTService() {
-        try {
-            KeyGenerator keyGen = KeyGenerator.getInstance("HmacSHA256");
-            SecretKey sk = keyGen.generateKey();
-            secretkey = Base64.getEncoder().encodeToString(sk.getEncoded());
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
+//        try {
+//            KeyGenerator keyGen = KeyGenerator.getInstance("HmacSHA256");
+//            SecretKey sk = keyGen.generateKey();
+//            secretkey = Base64.getEncoder().encodeToString(sk.getEncoded());
+//        } catch (NoSuchAlgorithmException e) {
+//            throw new RuntimeException(e);
+//        }
+
+        secretkey = "c2VjcmV0a2V5Zm9yYXV0aGVudGljYXRpb24xMjM0NTY3ODkwMTIzNDU2Nzg5MA=="; // Example base64 encoded key
     }
 
     /// /////////////////////// generating token //////////////////////////// ///
