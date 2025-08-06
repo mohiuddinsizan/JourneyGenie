@@ -1,7 +1,7 @@
 package com.example.journeyGenie.authGoogleOAuth;
 
 import com.example.journeyGenie.authJWT.JWTService;
-import com.example.journeyGenie.model.User;
+import com.example.journeyGenie.entity.User;
 import com.example.journeyGenie.repository.UserRepository;
 import com.example.journeyGenie.util.AppEnv;
 import jakarta.servlet.ServletException;

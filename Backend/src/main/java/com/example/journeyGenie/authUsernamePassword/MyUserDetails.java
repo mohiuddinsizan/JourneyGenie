@@ -1,6 +1,6 @@
 package com.example.journeyGenie.authUsernamePassword;
 
-import com.example.journeyGenie.model.User;
+import com.example.journeyGenie.entity.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;

@@ -1,7 +1,8 @@
 package com.example.journeyGenie.service;
 
 import com.example.journeyGenie.authJWT.JWTService;
-import com.example.journeyGenie.model.User;
+import com.example.journeyGenie.entity.Tour;
+import com.example.journeyGenie.entity.User;
 import com.example.journeyGenie.repository.UserRepository;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,6 +17,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+
+import java.util.ArrayList;
+import java.util.Map;
 
 
 @Service
@@ -43,6 +47,7 @@ public class UserService {
                     .status(HttpStatus.CONFLICT)
                     .body("User with this email already exists");
         } else {
+            user.setTours(new ArrayList<Tour>());
             userRepository.save(user);
             System.out.println("User created successfully");
             return ResponseEntity.ok(user);
@@ -65,7 +70,9 @@ public class UserService {
             cookie.setAttribute("SameSite","None"); // set true in production , Set SameSite attribute to None
             response.addCookie(cookie);
 
-            return ResponseEntity.ok("Login successful");
+            // find user from database
+            User existingUser = userRepository.findByEmail(user.getEmail());
+            return ResponseEntity.ok(existingUser);
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login failed");
         }
@@ -76,7 +83,7 @@ public class UserService {
         if (email != null) {
             User user = userRepository.findByEmail(email);
             if (user != null) {
-                return ResponseEntity.ok(user.getName());
+                return ResponseEntity.ok(Map.of("name", user.getName()));
             } else {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
             }
