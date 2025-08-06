@@ -1,6 +1,6 @@
 package com.example.journeyGenie.authUsernamePassword;
 
-import com.example.journeyGenie.model.User;
+import com.example.journeyGenie.entity.User;
 import com.example.journeyGenie.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
