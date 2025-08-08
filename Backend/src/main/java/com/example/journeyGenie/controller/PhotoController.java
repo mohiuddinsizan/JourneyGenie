@@ -1,9 +1,11 @@
 package com.example.journeyGenie.controller;
 
 import com.example.journeyGenie.dto.ActivityDTO;
+import com.example.journeyGenie.dto.PhotoDTO;
 import com.example.journeyGenie.entity.Activity;
 import com.example.journeyGenie.entity.Tour;
 import com.example.journeyGenie.service.ActivityService;
+import com.example.journeyGenie.service.PhotoService;
 import com.example.journeyGenie.util.Debug;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,17 +16,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/activity")
-public class ActivityController {
+@RequestMapping("/photo")
+public class PhotoController {
 
     @Autowired
-    private ActivityService activityService;
+    private PhotoService photoService;
 
     @PostMapping("/add")
-    public ResponseEntity<?> addActivity(@RequestBody ActivityDTO activity, HttpServletRequest request) {
-        Debug.log("Creating activity: ");
-        Debug.log("Activity description: " + activity.getDescription());
-        Debug.log("Day id: " + activity.getDayid());
-        return activityService.addActivity(activity, request);
+    public ResponseEntity<?> addPhoto(@RequestBody PhotoDTO photo, HttpServletRequest request) {
+        Debug.log("adding photo: ");
+        Debug.log("photo link " + photo.getLink());
+        Debug.log("Day id: " + photo.getDayid());
+        return photoService.addPhoto(photo, request);
     }
 }
