@@ -1,0 +1,367 @@
+/* register.css */
+.register-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  font-family: 'Arial', sans-serif;
+}
+
+.register-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 480px;
+  background: url('your-image-path.jpg') center/cover no-repeat;
+  background-image: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%), url('your-image-path.jpg');
+  border-radius: 25px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(5px);
+}
+
+.register-form-box {
+  width: 380px;
+  padding: 25px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 15px;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(10px);
+  text-align: center;
+}
+
+/* Custom scrollbar for form box */
+.register-form-box::-webkit-scrollbar {
+  width: 4px;
+}
+
+.register-form-box::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.1);
+  border-radius: 2px;
+}
+
+.register-form-box::-webkit-scrollbar-thumb {
+  background: #2d1b3d;
+  border-radius: 2px;
+}
+
+.welcome-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.welcome-subtitle {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 20px;
+  line-height: 1.4;
+}
+
+.register-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20px;
+  letter-spacing: 1.5px;
+}
+
+.input-group {
+  margin-bottom: 15px;
+  position: relative;
+  text-align: left;
+}
+
+.input-field {
+  width: 100%;
+  padding: 12px 15px 12px 40px;
+  border: none;
+  border-radius: 20px;
+  background: #2d1b3d;
+  color: white;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.input-field::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.input-field:focus {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(45, 27, 61, 0.3);
+}
+
+.input-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  z-index: 1;
+}
+
+.divider {
+  margin: 20px 0;
+  position: relative;
+  text-align: center;
+}
+
+.divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #ddd;
+}
+
+.divider span {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 0 15px;
+  color: #666;
+  font-size: 12px;
+  position: relative;
+}
+
+.google-button {
+  width: 100%;
+  padding: 12px;
+  background: #4285f4;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.google-button:hover {
+  background: #357ae8;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(66, 133, 244, 0.3);
+}
+
+
+
+.google-button:active {
+  transform: translateY(0);
+}
+
+.google-logo {
+  font-size: 16px;
+    width: 18px;
+  height: 18px;
+}
+
+
+.form-options {
+  margin: 15px 0;
+  text-align: left;
+}
+
+.terms-agreement {
+  display: flex;
+  align-items: flex-start;
+  color: #333;
+  cursor: pointer;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.terms-agreement input {
+  margin-right: 8px;
+  margin-top: 2px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.terms-link {
+  color: #7b4397;
+  text-decoration: none;
+}
+
+.terms-link:hover {
+  text-decoration: underline;
+}
+
+.register-button {
+  width: 160px;
+  padding: 10px;
+  background: #2d1b3d;
+  color: white;
+  border: none;
+  border-radius: 18px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 10px;
+}
+
+.register-button:hover {
+  background: #4a2c5a;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(45, 27, 61, 0.3);
+}
+
+.register-button:active {
+  transform: translateY(0);
+}
+
+.login-nav-button {
+  width: 140px;
+  padding: 10px;
+  background: transparent;
+  color: #2d1b3d;
+  border: 2px solid #2d1b3d;
+  border-radius: 18px;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 15px;
+}
+
+.login-nav-button:hover {
+  background: #2d1b3d;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(45, 27, 61, 0.3);
+}
+
+.login-nav-button:active {
+  transform: translateY(0);
+}
+
+.login-link {
+  font-size: 12px;
+  color: #666;
+  margin-top: 10px;
+}
+
+.switch-link {
+  color: #7b4397;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.switch-link:hover {
+  text-decoration: underline;
+}
+
+.error-message {
+  display: block;
+  color: #dc2430;
+  font-size: 10px;
+  margin-top: 3px;
+  margin-left: 35px;
+}
+
+.designer-credit {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: white;
+  font-size: 14px;
+  z-index: 10;
+}
+
+.designer-credit span {
+  font-weight: bold;
+}
+
+/* Icons using CSS */
+.user-icon::before {
+  content: "👤";
+  font-size: 12px;
+}
+
+.email-icon::before {
+  content: "📧";
+  font-size: 12px;
+}
+
+.username-icon::before {
+  content: "👤";
+  font-size: 12px;
+}
+
+.lock-icon::before {
+  content: "🔒";
+  font-size: 12px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .register-container {
+    width: 95%;
+    height: 90%;
+  }
+  
+  .register-form-box {
+    width: 90%;
+    padding: 20px 15px;
+    max-height: 90%;
+  }
+  
+  .welcome-title {
+    font-size: 20px;
+  }
+  
+  .register-title {
+    font-size: 16px;
+  }
+  
+  .input-field {
+    padding: 8px 10px 8px 30px;
+    font-size: 12px;
+    border-radius: 15px;
+  }
+  
+  .register-button {
+    width: 100%;
+    font-size: 13px;
+    padding: 8px;
+  }
+  
+  .input-icon {
+    left: 8px;
+    font-size: 11px;
+  }
+  
+  .error-message {
+    margin-left: 30px;
+    font-size: 9px;
+  }
+}
+
+@media (max-width: 480px) {
+  .register-container {
+    width: 98%;
+    height: 95%;
+  }
+  
+  .register-form-box {
+    width: 95%;
+    padding: 15px 10px;
+  }
+}
