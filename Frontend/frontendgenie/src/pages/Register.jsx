@@ -8,23 +8,21 @@ const Register = () => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    fullName: '',
+    name: '',
     email: '',
-    username: '',
     password: '',
     confirmPassword: '',
-    agreeTerms: false
   });
 
   const [errors, setErrors] = useState({});
 
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: value
     }));
-    
+
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -35,67 +33,62 @@ const Register = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = 'Full name is required';
-    }
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
-    }
-    if (!formData.username.trim()) {
-      newErrors.username = 'Username is required';
-    } else if (formData.username.length < 3) {
-      newErrors.username = 'Username must be at least 3 characters';
-    }
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
-    if (!formData.agreeTerms) {
-      newErrors.agreeTerms = 'You must agree to the terms';
-    }
-
+    if (!formData.name.trim()) newErrors.name = 'Name is required';
+    if (!formData.email.trim()) newErrors.email = 'Email is required';
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Invalid email';
+    if (!formData.password || formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
+    if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const newErrors = validateForm();
-    
-    if (Object.keys(newErrors).length === 0) {
-      console.log('Registration attempt:', formData);
-      // Add your registration logic here
-    } else {
-      setErrors(newErrors);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  const newErrors = validateForm();
+
+  if (Object.keys(newErrors).length === 0) {
+    const { name, email, password } = formData;
+    try {
+      console.log('Submitting:', { name, email, password });
+
+      const res = await fetch('http://localhost:8080/user/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password }),
+      });
+
+      console.log('Server response:', res);
+
+      if (res.ok) {
+        alert('Account created successfully!');
+        navigate('/');
+      } else {
+        const errorText = await res.text();
+        alert('Registration failed: ' + errorText);
+        console.error('Registration error text:', errorText);
+      }
+    } catch (err) {
+      console.error('Registration error (catch):', err);
+      alert('Something went wrong');
     }
-  };
+  } else {
+    console.warn('Validation errors:', newErrors);
+    setErrors(newErrors);
+  }
+};
 
   useEffect(() => {
-    const createStars = () => {
-      const starsContainer = document.getElementById('stars');
-      if (starsContainer) {
-        const numStars = 100;
-        for (let i = 0; i < numStars; i++) {
-          const star = document.createElement('div');
-          star.className = 'star';
-          star.style.left = Math.random() * 100 + '%';
-          star.style.top = Math.random() * 60 + '%';
-          star.style.animationDelay = Math.random() * 3 + 's';
-          starsContainer.appendChild(star);
-        }
+    const starsContainer = document.getElementById('stars');
+    if (starsContainer) {
+      for (let i = 0; i < 100; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+        star.style.left = Math.random() * 100 + '%';
+        star.style.top = Math.random() * 60 + '%';
+        star.style.animationDelay = Math.random() * 3 + 's';
+        starsContainer.appendChild(star);
       }
-    };
-    
-    createStars();
-
+    }
     return () => {
-      const starsContainer = document.getElementById('stars');
       if (starsContainer) starsContainer.innerHTML = '';
     };
   }, []);
@@ -104,44 +97,29 @@ const Register = () => {
     <div className="register-page">
       <div className="background"></div>
       <div className="stars" id="stars"></div>
-      <div className="planet"></div>
-      <div className="sun"></div>
-
-      <div className="landscape">
-        <div className="mountain mountain-1"></div>
-        <div className="mountain mountain-2"></div>
-        <div className="tree">
-          <div className="tree-trunk"></div>
-          <div className="tree-crown"></div>
-        </div>
-      </div>
-
       <div className="register-container">
         <div className="register-form-box">
-          <h1 className="welcome-title">Create Your Account</h1>
-          
+          <h2 className="register-title">Register</h2>
           <form onSubmit={handleSubmit}>
             <div className="input-group">
-              <div className="input-icon user-icon"></div>
               <input
                 type="text"
-                name="fullName"
-                className="input-field"
+                name="name"
                 placeholder="Full Name"
-                value={formData.fullName}
+                className="input-field"
+                value={formData.name}
                 onChange={handleInputChange}
                 required
               />
-              {errors.fullName && <span className="error-message">{errors.fullName}</span>}
+              {errors.name && <span className="error-message">{errors.name}</span>}
             </div>
 
             <div className="input-group">
-              <div className="input-icon email-icon"></div>
               <input
                 type="email"
                 name="email"
+                placeholder="Email"
                 className="input-field"
-                placeholder="Email Address"
                 value={formData.email}
                 onChange={handleInputChange}
                 required
@@ -150,51 +128,37 @@ const Register = () => {
             </div>
 
             <div className="input-group">
-              <div className="input-icon lock-icon"></div>
+              <input
+                type="password"
+                name="password"
+                placeholder="Password"
+                className="input-field"
+                value={formData.password}
+                onChange={handleInputChange}
+                required
+              />
+              {errors.password && <span className="error-message">{errors.password}</span>}
+            </div>
+
+            <div className="input-group">
               <input
                 type="password"
                 name="confirmPassword"
+                placeholder="Confirm Password"
                 className="input-field"
-                placeholder="Password"
                 value={formData.confirmPassword}
                 onChange={handleInputChange}
                 required
               />
               {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
             </div>
-            
-            <div className="form-options">
-              <label className="terms-agreement">
-                <input
-                  type="checkbox"
-                  name="agreeTerms"
-                  checked={formData.agreeTerms}
-                  onChange={handleInputChange}
-                />
-                I agree to the <a href="#" className="terms-link">Terms & Conditions</a>
-              </label>
-              {errors.agreeTerms && <span className="error-message">{errors.agreeTerms}</span>}
-            </div>
-            
-            <button type="submit" className="register-button">
-              Create Account
-            </button>
 
-            <button type="button" className="google-button" onClick={() => alert('Google Sign-In logic here')}>
-              <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo" className="google-logo" />
-              Continue with Google
-            </button>
-
+            <button type="submit" className="register-button">Create Account</button>
             <div className="login-link">
               Already have an account? <a href="/" className="switch-link">Login here</a>
             </div>
-
           </form>
         </div>
-      </div>
-
-      <div className="designer-credit">
-        designed by <span>Team_X</span>
       </div>
     </div>
   );
