@@ -8,3 +8,4 @@ SPRING_DATA_MONGODB_DATABASE=demoTodoList \
 GOOGLE_CLIENT_ID="your-google-client-id.apps.googleusercontent.com" \
 GOOGLE_CLIENT_SECRET="your-google-client-secret" \
 mvn spring-boot:run
+

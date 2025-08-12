@@ -12,4 +12,8 @@ public class AppEnv {
     public static String getBackendUrl() {
         return dotenv.get("BACKEND_URL");
     }
+
+    public static String getGEMINI_API() {
+        return dotenv.get("GEMINI_API_KEY");
+    }
 }

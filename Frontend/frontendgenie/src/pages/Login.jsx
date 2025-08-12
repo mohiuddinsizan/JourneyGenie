@@ -1,7 +1,7 @@
 // Login.jsx
 import React, { useState, useEffect } from 'react';
-import './login.css';
-import './background.css';
+import './Login.css';
+import './Background.css';
 
 const Login = () => {
   const [formData, setFormData] = useState({

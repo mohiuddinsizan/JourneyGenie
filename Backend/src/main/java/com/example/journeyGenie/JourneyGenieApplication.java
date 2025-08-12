@@ -18,6 +18,7 @@ public class JourneyGenieApplication {
 		System.out.println("Testing environment variables");
 		System.out.println("FRONTEND_URL: " + AppEnv.getFrontendUrl());
 		System.out.println("BACKEND_URL: " + AppEnv.getBackendUrl());
+		System.out.println("API "+ AppEnv.getGEMINI_API());
 	}
 
 	// api for demonstration purpose (no usage)
