@@ -35,7 +35,7 @@ public class Tour {
     @Column(nullable = false)
     private String destination;
 
-    private Long budget;
+    private String budget;
 
     private String video;
 

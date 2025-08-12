@@ -1,8 +1,8 @@
 // Register.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './register.css';
-import './background.css';
+import './Register.css';
+import './Background.css';
 
 const Register = () => {
   const navigate = useNavigate();
