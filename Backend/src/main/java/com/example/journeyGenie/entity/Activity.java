@@ -19,6 +19,9 @@ public class Activity {
 
     private String description;
 
+    @Column(nullable = false, columnDefinition = "VARCHAR(255) DEFAULT 'pending'")
+    private String status = "pending";
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "dayid", nullable = false)
     @JsonBackReference

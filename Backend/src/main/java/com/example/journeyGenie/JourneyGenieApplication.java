@@ -14,7 +14,7 @@ public class JourneyGenieApplication {
 
 		SpringApplication.run(JourneyGenieApplication.class, args);
 
-		System.out.println("todoListApplication started");
+		System.out.println("JourneyGenie Application Started Successfully!");
 		System.out.println("Testing environment variables");
 		System.out.println("FRONTEND_URL: " + AppEnv.getFrontendUrl());
 		System.out.println("BACKEND_URL: " + AppEnv.getBackendUrl());

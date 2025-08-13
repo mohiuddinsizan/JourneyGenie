@@ -36,6 +36,7 @@ public class ActivityService {
         // Create a new Activity entity from the DTO
         Activity newActivity = new Activity();
         newActivity.setDescription(activity.getDescription());
+        newActivity.setStatus("done");
         Day day = dayRepository.findById(activity.getDayid())
                 .orElseThrow(() -> new RuntimeException("Day not found with id: " + activity.getDayid()));
         newActivity.setDay(day);

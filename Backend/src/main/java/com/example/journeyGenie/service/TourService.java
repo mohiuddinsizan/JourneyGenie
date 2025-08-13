@@ -38,7 +38,6 @@ public class TourService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
         }
         tour.setUser(existingUser);
-        tour.setDays(dayService.createDays(tour, tour.getStartDate(), tour.getEndDate()));
         tourRepository.save(tour);
         existingUser.getTours().add(tour);
         userRepository.save(existingUser);
