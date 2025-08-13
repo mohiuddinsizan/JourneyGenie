@@ -99,13 +99,24 @@ export default function Plan() {
         credentials: 'include',
         body: JSON.stringify(preview),
       });
-
+    
       if (!res.ok) {
-        const errorText = await res.text();
+        const errorText = await res.text();     // text() is fine here (only once)
         throw new Error(errorText || `Server error: ${res.status}`);
       }
-      
-      await res.json();
+    
+      // Read the body ONCE
+      const updatedUser = await res.json();
+    
+      // Avoid storing the password hash
+      const { password, ...safeUser } = updatedUser;
+    
+      // IMPORTANT: key must be "user"
+      localStorage.setItem('user', JSON.stringify(safeUser));
+    
+      // Tell the profile to refresh (TourGuideApp listens for this)
+      window.dispatchEvent(new CustomEvent('tours:updated', { detail: { reason: 'create' } }));
+    
       setCommitMsg('🎉 Tour saved successfully! Your adventure awaits!');
     } catch (err) {
       setError(err.message || 'Failed to save tour');
@@ -113,6 +124,7 @@ export default function Plan() {
     } finally {
       setCommitting(false);
     }
+    
   };
 
   return (
@@ -128,7 +140,7 @@ export default function Plan() {
       {/* Navbar */}
       <nav className="navbar">
         <button onClick={() => navigate('/profile')}>Profile</button>
-        <button onClick={() => navigate('/plan')}>Tour</button>
+        <button onClick={() => navigate('/plan')}>Plan</button>
       </nav>
 
       <div 
