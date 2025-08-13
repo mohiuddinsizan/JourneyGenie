@@ -17,13 +17,4 @@ public class TourController {
     @Autowired
     private TourService tourService;
 
-    @PostMapping("/create")
-    public ResponseEntity<?> createTour(@RequestBody Tour tour, HttpServletRequest request) {
-        Debug.log("Creating tour: ");
-        Debug.log("Destination: " + tour.getDestination());
-        Debug.log("Start Date: " + tour.getStartDate());
-        Debug.log("End Date: " + tour.getEndDate());
-        return tourService.createTour(tour, request);
-    }
-
 }

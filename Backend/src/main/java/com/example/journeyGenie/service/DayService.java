@@ -15,25 +15,4 @@ import java.util.List;
 public class DayService {
     @Autowired
     private DayRepository dayRepository;
-
-    public List<Day> createDays(Tour tour, String startDate, String endDate) {
-        List<Day> days = new ArrayList<>();
-
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        LocalDate start = LocalDate.parse(startDate, formatter);
-        LocalDate end = LocalDate.parse(endDate, formatter);
-
-        while (!start.isAfter(end)) {
-            Day day = new Day();
-            day.setDate(start.format(formatter));
-            day.setTour(tour);
-            day.setActivities(new ArrayList<>());
-            day.setPhotos(new ArrayList<>());
-
-            days.add(day);
-            start = start.plusDays(1);
-        }
-
-        return days;
-    }
 }
