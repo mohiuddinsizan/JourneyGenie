@@ -1,14 +1,15 @@
-// src/pages/Plan.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Plan.css';
 
-// Determine backend URL; adjust port if needed
 const BASE_URL =
   import.meta.env.VITE_BACKEND_URL
     ? import.meta.env.VITE_BACKEND_URL.replace(/\/$/, '')
     : 'http://localhost:8080';
 
 export default function Plan() {
+  const navigate = useNavigate();
+
   const [form, setForm] = useState({
     destination: '',
     startDate: '',
@@ -19,61 +20,127 @@ export default function Plan() {
   const [loading, setLoading] = useState(false);
   const [commitMsg, setCommitMsg] = useState('');
   const [error, setError] = useState('');
+  const [committing, setCommitting] = useState(false);
+
+  // Page styling fix on mount
+  useEffect(() => {
+    document.documentElement.style.overflow = 'auto';
+    document.documentElement.style.height = 'auto';
+    document.body.style.overflow = 'auto';
+    document.body.style.height = 'auto';
+    
+    const root = document.getElementById('root');
+    if (root) {
+      root.style.overflow = 'auto';
+      root.style.height = 'auto';
+      root.style.minHeight = '100vh';
+    }
+  }, []);
+
+  // Scroll to preview when ready
+  useEffect(() => {
+    if (preview) {
+      const previewElement = document.querySelector('.preview');
+      if (previewElement) {
+        setTimeout(() => {
+          previewElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+          });
+        }, 100);
+      }
+    }
+  }, [preview]);
 
   const onChange = (e) =>
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
   const handlePreview = async (e) => {
     e.preventDefault();
-    setLoading(true); setError(''); setCommitMsg(''); setPreview(null);
+    setLoading(true); 
+    setError(''); 
+    setCommitMsg(''); 
+    setPreview(null);
+    
     try {
       const res = await fetch(`${BASE_URL}/api/plan/preview`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include', // if logged in, include JWT cookie
+        credentials: 'include',
         body: JSON.stringify(form),
       });
-      if (!res.ok) throw new Error(await res.text());
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || `Server error: ${res.status}`);
+      }
+      
       const data = await res.json();
       setPreview(data);
     } catch (err) {
       setError(err.message || 'Preview failed');
+      console.error('Preview error:', err);
     } finally {
       setLoading(false);
     }
   };
 
-const handleCommit = async () => {
-  if (!preview) return;
-  setError(''); setCommitMsg('');
+  const handleCommit = async () => {
+    if (!preview) return;
+    
+    setError(''); 
+    setCommitMsg('');
+    setCommitting(true);
 
-  try {
-    const res = await fetch(`${BASE_URL}/api/plan/commit`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include', // send JWT cookie
-      body: JSON.stringify({
-        destination: form.destination,
-        startDate: form.startDate,
-        endDate: form.endDate,
-        budget: form.budget,
-        plan: preview,
-      }),
-    });
+    try {
+      const res = await fetch(`${BASE_URL}/api/plan/commit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(preview),
+      });
 
-    if (!res.ok) throw new Error(await res.text());
-    await res.json();
-    setCommitMsg('Tour saved!');
-  } catch (err) {
-    setError(err.message || 'Failed to save tour');
-  }
-};
-
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || `Server error: ${res.status}`);
+      }
+      
+      await res.json();
+      setCommitMsg('🎉 Tour saved successfully! Your adventure awaits!');
+    } catch (err) {
+      setError(err.message || 'Failed to save tour');
+      console.error('Commit error:', err);
+    } finally {
+      setCommitting(false);
+    }
+  };
 
   return (
-    <div className="plan-page">
-      <div className="plan-card">
+    <div 
+      className="plan-page" 
+      style={{
+        overflow: 'auto',
+        height: 'auto',
+        minHeight: '100vh',
+        maxHeight: 'none'
+      }}
+    >
+      {/* Navbar */}
+      <nav className="navbar">
+        <button onClick={() => navigate('/profile')}>Profile</button>
+        <button onClick={() => navigate('/plan')}>Tour</button>
+      </nav>
+
+      <div 
+        className="plan-card"
+        style={{
+          overflow: 'visible',
+          height: 'auto',
+          maxHeight: 'none'
+        }}
+      >
         <h2>Plan Your Adventure</h2>
+        
         <form onSubmit={handlePreview} className="plan-form">
           <input
             name="destination"
@@ -82,6 +149,7 @@ const handleCommit = async () => {
             onChange={onChange}
             required
           />
+          
           <div className="row">
             <div className="col">
               <label>Start date</label>
@@ -104,6 +172,7 @@ const handleCommit = async () => {
               />
             </div>
           </div>
+          
           <div className="row">
             <div className="col">
               <label>Budget</label>
@@ -114,14 +183,27 @@ const handleCommit = async () => {
               </select>
             </div>
           </div>
+          
           <button type="submit" className="btn primary" disabled={loading}>
             {loading ? 'Generating…' : 'Generate My Tour Plan'}
           </button>
         </form>
 
         {error && <div className="error">{error}</div>}
+        {commitMsg && <div className="success-msg">{commitMsg}</div>}
 
-        {preview && (
+        {/* Loader while fetching */}
+        {loading && (
+          <div className="travel-loader">
+            <div className="travel-cloud one"></div>
+            <div className="travel-cloud two"></div>
+            <div className="travel-mountain small"></div>
+            <div className="travel-mountain big"></div>
+          </div>
+        )}
+
+        {/* Preview only when not loading */}
+        {!loading && preview && (
           <div className="preview">
             <div className="preview-header">
               <div>
@@ -131,56 +213,81 @@ const handleCommit = async () => {
                 </h3>
                 <p className="muted">AI-generated itinerary (not saved yet)</p>
               </div>
-              <button className="btn success" onClick={handleCommit}>
-                Start Tour
+              <button 
+                className="btn success" 
+                onClick={handleCommit}
+                disabled={committing}
+              >
+                {committing ? 'Starting Tour...' : 'Start Tour'}
               </button>
             </div>
+            
             <div className="days">
               {preview.days?.length ? (
-                preview.days.map((d, idx) => (
+                preview.days.map((day, idx) => (
                   <div className="day-card" key={idx}>
                     <div className="day-head">
-                      <h4>Day {idx + 1} — {d.date}</h4>
-                      <span className="chip">{d.title}</span>
+                      <h4>
+                        <span className="day-number">{idx + 1}</span>
+                        {day.date}
+                      </h4>
+                      {day.title && <span className="chip">{day.title}</span>}
                     </div>
-                    <div className="kv">
-                      <span className="k">Transportation:</span>
-                      <span className="v">{d.transportation}</span>
-                    </div>
-                    <div className="kv">
-                      <span className="k">Hotel:</span>
-                      <span className="v">{d.hotel || '—'}</span>
-                    </div>
-                    <div className="activities">
-                      <div className="section-title">Activities</div>
-                      {d.activities?.length ? (
-                        <ul>
-                          {d.activities.map((a, i) => (
-                            <li key={i}>
-                              <strong>{a.name}</strong>
-                              {a.timeOfDay ? <span className="pill">{a.timeOfDay}</span> : null}
-                              {a.cost ? <span className="muted"> — {a.cost}</span> : null}
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <div className="muted">No activities suggested.</div>
+                    
+                    <div className="day-content">
+                      {day.transportation && (
+                        <div className="kv">
+                          <span className="k">🚗 Transport</span>
+                          <span className="v">{day.transportation}</span>
+                        </div>
+                      )}
+                      
+                      {day.hotel && (
+                        <div className="kv">
+                          <span className="k">🏨 Hotel</span>
+                          <span className="v">{day.hotel}</span>
+                        </div>
+                      )}
+                      
+                      <div className="activities">
+                        <div className="section-title">Activities</div>
+                        {day.activities?.length ? (
+                          <ul>
+                            {day.activities.map((activity, i) => (
+                              <li key={i}>
+                                <strong>{activity.name}</strong>
+                                <div>
+                                  {activity.timeOfDay && (
+                                    <span className="pill">{activity.timeOfDay}</span>
+                                  )}
+                                  {activity.cost && (
+                                    <span className="activity-cost">{activity.cost}</span>
+                                  )}
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <div className="muted">No activities suggested.</div>
+                        )}
+                      </div>
+                      
+                      {day.photoLinks?.length && (
+                        <div className="photos">
+                          <div className="photos-grid">
+                            {day.photoLinks.slice(0, 4).map((url, i) => (
+                              <img src={url} alt={`Day ${idx + 1} photo ${i + 1}`} key={i} />
+                            ))}
+                          </div>
+                        </div>
                       )}
                     </div>
-                    {d.photoLinks?.length ? (
-                      <div className="photos">
-                        {d.photoLinks.slice(0, 4).map((url, i) => (
-                          <img src={url} alt="" key={i} />
-                        ))}
-                      </div>
-                    ) : null}
                   </div>
                 ))
               ) : (
                 <div className="muted">No days returned.</div>
               )}
             </div>
-            {commitMsg && <div className="success-msg">{commitMsg}</div>}
           </div>
         )}
       </div>
