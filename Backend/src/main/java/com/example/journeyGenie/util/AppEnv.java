@@ -16,4 +16,8 @@ public class AppEnv {
     public static String getGEMINI_API() {
         return dotenv.get("GEMINI_API_KEY");
     }
+
+    public static String getCloudinary_API(){return dotenv.get("CLOUDINARY_URL");}
+
+    public static String getCloudinaryName(){return dotenv.get("CLOUD_NAME");}
 }

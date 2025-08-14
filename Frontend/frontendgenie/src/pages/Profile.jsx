@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
  * - Optionally can fetch from /user/me if you add that endpoint
  * - Assigns tour thumbnails from 10 local assets: ../assets/tour-thumbnail-1..10.(png/jpg/jpeg/webp)
  *   in a circular way using tour.id (stable) and falls back to index if id is missing
- */
+ */ 
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
 
@@ -45,6 +45,7 @@ function normalizeTours(rawTours = []) {
 }
 
 const TourGuideApp = () => {
+
   const navigate = useNavigate();
 
   const [currentView, setCurrentView] = useState('profile');
@@ -257,6 +258,143 @@ const addActivity = async (tourId, dayId, textOverride) => {
   }
 };
 
+// Add Photo (child handles typing; we only run on submit)
+const addPhoto = async (tourId, dayId, urlOverride) => {
+  const link = (urlOverride ?? '').trim();
+  if (!link) {
+    alert('Please paste a photo URL.');
+    return;
+  }
+  try {
+    const res = await fetch(`${API_BASE}/photo/add`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({ link, dayid: dayId }),
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(err || `HTTP ${res.status}`);
+    }
+
+    const updatedUser = await res.json();
+    const { password, ...safeUser } = updatedUser || {};
+
+    setUserData(safeUser);
+    setTours(normalizeTours(safeUser.tours || []));
+
+    setSelectedTour(prev => {
+      if (!prev) return prev;
+      const next = (safeUser.tours || []).find(t => t.id === prev.id);
+      return next ? { ...next, thumbnail: getTourThumb(next, 0) } : prev;
+    });
+
+    localStorage.setItem('user', JSON.stringify(safeUser));
+    window.dispatchEvent(new CustomEvent('tours:updated', { detail: { reason: 'photo-added', dayId } }));
+  } catch (e) {
+    console.error('[addPhoto] failed:', e);
+    alert(e?.message || 'Failed to add photo');
+  }
+};
+// Update your uploadPhotoFile function in frontend
+// Fixed uploadPhotoFile function - use cookies like your other API calls
+const uploadPhotoFile = async (tourId, dayId, file) => {
+  try {
+    console.log('Starting photo upload...', { tourId, dayId, fileName: file.name });
+    
+    // Create FormData properly
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('dayid', dayId.toString()); // Ensure it's a string
+    
+    // Debug FormData contents
+    console.log('FormData contents:');
+    for (let [key, value] of formData.entries()) {
+      console.log(`${key}:`, value);
+    }
+
+    // Upload to backend using cookies
+    const response = await fetch(`${API_BASE}/photo/upload`, {
+      method: 'POST',
+      credentials: 'include',
+      // DO NOT set Content-Type header - let browser set it automatically
+      body: formData
+    });
+
+    console.log('Response status:', response.status);
+    console.log('Response headers:', [...response.headers.entries()]);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Error response:', errorText);
+      
+      if (response.status === 401) {
+        throw new Error('Authentication failed. Please login again.');
+      } else if (response.status === 403) {
+        throw new Error('Access forbidden. You don\'t have permission to upload photos.');
+      } else if (response.status === 415) {
+        throw new Error('Unsupported media type. Please try again.');
+      } else {
+        throw new Error(`Upload failed with status: ${response.status} - ${errorText}`);
+      }
+    }
+
+    const result = await response.json();
+    console.log('Photo upload successful:', result);
+
+    // Update the UI state
+    setSelectedTour(prevTour => {
+      const updatedTour = { ...prevTour };
+      const dayIndex = updatedTour.days?.findIndex(day => day.id === dayId);
+      
+      if (dayIndex !== -1 && dayIndex !== undefined) {
+        if (!updatedTour.days[dayIndex].photos) {
+          updatedTour.days[dayIndex].photos = [];
+        }
+        
+        updatedTour.days[dayIndex].photos.push({
+          id: result.photoId,
+          link: result.photoUrl
+        });
+      }
+      
+      return updatedTour;
+    });
+
+    return result;
+    
+  } catch (error) {
+    console.error('Photo upload error:', error);
+    alert(`Failed to upload photo: ${error.message}`);
+    throw error;
+  }
+};
+
+// Alternative with better error handling and loading state
+const uploadPhotoFileWithLoading = async (tourId, dayId, file, setLoading) => {
+  setLoading?.(true);
+  
+  try {
+    const result = await uploadPhotoFile(tourId, dayId, file);
+    
+    // Show success message
+    console.log('✅ Photo uploaded successfully!');
+    // You could show a toast notification here
+    
+    return result;
+    
+  } catch (error) {
+    console.error('❌ Photo upload failed:', error);
+    // Handle error (show notification, etc.)
+    
+  } finally {
+    setLoading?.(false);
+  }
+};
 // Derived stats
   const totalTours = tours.length;
   const rating = userData?.rating ?? null; // optional
@@ -307,7 +445,7 @@ const addActivity = async (tourId, dayId, textOverride) => {
         <div className="plan-card">
           <h2>We couldn't load your account</h2>
           <p className="muted">{error}</p>
-          <button className="btn success" onClick={() => navigate('/login')}>Go to Login</button>
+          <button className="btn success" onClick={() => navigate('/')}>Go to Login</button>
         </div>
       </div>
     );
@@ -410,8 +548,8 @@ const addActivity = async (tourId, dayId, textOverride) => {
       <div className="plan-page">
         <div className="navbar">
           <button onClick={handleBack}>← Back to Profile</button>
-          {/* <button>Edit Tour</button>
-          <button>Share</button> */}
+          <button>Edit Tour</button>
+          <button>Share</button>
         </div>
 
         <div className="plan-card">
@@ -499,10 +637,7 @@ const addActivity = async (tourId, dayId, textOverride) => {
                         )}
 
                         {/* Add Photo Button */}
-                        <button className="btn success" style={{ width: '100%' }}>
-                          <Image size={16} />
-                          &nbsp;Add Photo
-                        </button>
+                        <AddPhotoRow onUpload={(file) => uploadPhotoFile(selectedTour.id, day.id, file)} />
                       </div>
                     )}
                   </div>
@@ -616,6 +751,48 @@ const AddActivityRow = React.memo(function AddActivityRow({ onAdd }) {
       >
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
           <Plus size={16} /> Add Activity
+        </span>
+      </button>
+    </div>
+  );
+});
+
+// Child component: Add Photo (UPLOAD ONLY)
+const AddPhotoRow = React.memo(function AddPhotoRow({ onUpload }) {
+  const [fileName, setFileName] = useState('');
+  const [fileObj, setFileObj] = useState(null);
+  const inputRef = React.useRef(null);
+
+  const submitFile = () => {
+    if (!fileObj) return alert('Choose a file');
+    onUpload(fileObj);
+    setFileObj(null);
+    setFileName('');
+    if (inputRef.current) inputRef.current.value = '';
+  };
+
+  return (
+    <div className="add-activity" style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+      <label className="btn" style={{ cursor: 'pointer' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <Image size={16} /> {fileName || 'Choose image'}
+        </span>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          style={{ display: 'none' }}
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            setFileObj(f || null);
+            setFileName(f ? f.name : '');
+          }}
+        />
+      </label>
+      <button type="button" className="btn success" onClick={submitFile} title="Upload Photo" style={{ width: 160 }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <Image size={16} /> Upload
         </span>
       </button>
     </div>
