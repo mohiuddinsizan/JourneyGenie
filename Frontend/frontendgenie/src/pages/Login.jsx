@@ -30,12 +30,19 @@ const Login = () => {
 
       if (res.ok) {
         const user = await res.json();
+      
+        // (optional) avoid storing the password hash
+        const { password, ...safeUser } = user;
+        localStorage.setItem('user', JSON.stringify(safeUser));
+      
         alert(`Welcome, ${user.name}`);
-        window.location.href = '/home';
+        // Make sure this route renders the TourGuideApp
+        window.location.replace('/profile'); // or navigate('/profile') if using react-router
       } else {
         const errorText = await res.text();
         alert('Login failed: ' + errorText);
       }
+      
     } catch (err) {
       console.error('Login error:', err);
       alert('Something went wrong');
