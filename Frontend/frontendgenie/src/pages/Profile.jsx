@@ -1,6 +1,6 @@
 // File: src/pages/TourGuideApp.jsx
 import React, { useEffect, useMemo, useState } from 'react';
-import { MapPin, Calendar, DollarSign, Users, Star, Clock, CheckCircle, Plus, Image, RefreshCw } from 'lucide-react';
+import { MapPin, Calendar, DollarSign, Users, Star, Clock, CheckCircle, Plus, Image, RefreshCw, List, CheckSquare, Video } from 'lucide-react';
 import './Profile.css';
 import { useNavigate } from 'react-router-dom';
 
@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
  * - Optionally can fetch from /user/me if you add that endpoint
  * - Assigns tour thumbnails from 10 local assets: ../assets/tour-thumbnail-1..10.(png/jpg/jpeg/webp)
  *   in a circular way using tour.id (stable) and falls back to index if id is missing
- */ 
+ */
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
 
@@ -45,7 +45,6 @@ function normalizeTours(rawTours = []) {
 }
 
 const TourGuideApp = () => {
-
   const navigate = useNavigate();
 
   const [currentView, setCurrentView] = useState('profile');
@@ -300,101 +299,49 @@ const addPhoto = async (tourId, dayId, urlOverride) => {
     alert(e?.message || 'Failed to add photo');
   }
 };
-// Update your uploadPhotoFile function in frontend
-// Fixed uploadPhotoFile function - use cookies like your other API calls
-const uploadPhotoFile = async (tourId, dayId, file) => {
-  try {
-    console.log('Starting photo upload...', { tourId, dayId, fileName: file.name });
-    
-    // Create FormData properly
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('dayid', dayId.toString()); // Ensure it's a string
-    
-    // Debug FormData contents
-    console.log('FormData contents:');
-    for (let [key, value] of formData.entries()) {
-      console.log(`${key}:`, value);
-    }
 
-    // Upload to backend using cookies
-    const response = await fetch(`${API_BASE}/photo/upload`, {
+// Upload Photo file -> backend (Cloudinary)
+const uploadPhotoFile = async (tourId, dayId, file) => {
+  if (!file) {
+    alert('Please choose an image file.');
+    return;
+  }
+  try {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('dayid', String(dayId));
+
+    const res = await fetch(`${API_BASE}/photo/upload`, {
       method: 'POST',
       credentials: 'include',
-      // DO NOT set Content-Type header - let browser set it automatically
-      body: formData
+      body: fd, // do NOT set Content-Type; browser will set multipart boundary
     });
 
-    console.log('Response status:', response.status);
-    console.log('Response headers:', [...response.headers.entries()]);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Error response:', errorText);
-      
-      if (response.status === 401) {
-        throw new Error('Authentication failed. Please login again.');
-      } else if (response.status === 403) {
-        throw new Error('Access forbidden. You don\'t have permission to upload photos.');
-      } else if (response.status === 415) {
-        throw new Error('Unsupported media type. Please try again.');
-      } else {
-        throw new Error(`Upload failed with status: ${response.status} - ${errorText}`);
-      }
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(err || `HTTP ${res.status}`);
     }
 
-    const result = await response.json();
-    console.log('Photo upload successful:', result);
+    const updatedUser = await res.json();
+    const { password, ...safeUser } = updatedUser || {};
 
-    // Update the UI state
-    setSelectedTour(prevTour => {
-      const updatedTour = { ...prevTour };
-      const dayIndex = updatedTour.days?.findIndex(day => day.id === dayId);
-      
-      if (dayIndex !== -1 && dayIndex !== undefined) {
-        if (!updatedTour.days[dayIndex].photos) {
-          updatedTour.days[dayIndex].photos = [];
-        }
-        
-        updatedTour.days[dayIndex].photos.push({
-          id: result.photoId,
-          link: result.photoUrl
-        });
-      }
-      
-      return updatedTour;
+    setUserData(safeUser);
+    setTours(normalizeTours(safeUser.tours || []));
+
+    setSelectedTour(prev => {
+      if (!prev) return prev;
+      const next = (safeUser.tours || []).find(t => t.id === prev.id);
+      return next ? { ...next, thumbnail: getTourThumb(next, 0) } : prev;
     });
 
-    return result;
-    
-  } catch (error) {
-    console.error('Photo upload error:', error);
-    alert(`Failed to upload photo: ${error.message}`);
-    throw error;
+    localStorage.setItem('user', JSON.stringify(safeUser));
+    window.dispatchEvent(new CustomEvent('tours:updated', { detail: { reason: 'photo-uploaded', dayId } }));
+  } catch (e) {
+    console.error('[uploadPhotoFile] failed:', e);
+    alert(e?.message || 'Failed to upload photo');
   }
 };
 
-// Alternative with better error handling and loading state
-const uploadPhotoFileWithLoading = async (tourId, dayId, file, setLoading) => {
-  setLoading?.(true);
-  
-  try {
-    const result = await uploadPhotoFile(tourId, dayId, file);
-    
-    // Show success message
-    console.log('✅ Photo uploaded successfully!');
-    // You could show a toast notification here
-    
-    return result;
-    
-  } catch (error) {
-    console.error('❌ Photo upload failed:', error);
-    // Handle error (show notification, etc.)
-    
-  } finally {
-    setLoading?.(false);
-  }
-};
 // Derived stats
   const totalTours = tours.length;
   const rating = userData?.rating ?? null; // optional
@@ -445,7 +392,7 @@ const uploadPhotoFileWithLoading = async (tourId, dayId, file, setLoading) => {
         <div className="plan-card">
           <h2>We couldn't load your account</h2>
           <p className="muted">{error}</p>
-          <button className="btn success" onClick={() => navigate('/')}>Go to Login</button>
+          <button className="btn success" onClick={() => navigate('/login')}>Go to Login</button>
         </div>
       </div>
     );
@@ -544,6 +491,27 @@ const uploadPhotoFileWithLoading = async (tourId, dayId, file, setLoading) => {
   const TourDetailsPage = () => {
     if (!selectedTour) return null;
 
+    // Day filtering controls
+    const [dayMode, setDayMode] = useState('all'); // 'all' | 'selected'
+    const [selectedDays, setSelectedDays] = useState(new Set()); // store day.id values
+
+    const dayCount = selectedTour.days?.length || 0;
+
+    const daysToRender = useMemo(() => {
+      const list = selectedTour.days || [];
+      if (dayMode === 'all') return list;
+      if (!selectedDays.size) return [];
+      return list.filter((d) => selectedDays.has(d.id));
+    }, [dayMode, selectedTour, selectedDays]);
+
+    const toggleDay = (id) => {
+      setSelectedDays((prev) => {
+        const next = new Set(prev);
+        if (next.has(id)) next.delete(id); else next.add(id);
+        return next;
+      });
+    };
+
     return (
       <div className="plan-page">
         <div className="navbar">
@@ -567,82 +535,166 @@ const uploadPhotoFileWithLoading = async (tourId, dayId, file, setLoading) => {
               </div>
             </div>
 
+            {/* Filter Bar */}
+            <div className="filter-bar" style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', margin: '12px 0 8px' }}>
+              <button
+                type="button"
+                className={`btn ${dayMode === 'all' ? 'success' : ''}`}
+                onClick={() => setDayMode('all')}
+                title="Show all days"
+              >
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <List size={16} /> All Days
+                </span>
+              </button>
+              <button
+                type="button"
+                className={`btn ${dayMode === 'selected' ? 'success' : ''}`}
+                onClick={() => setDayMode('selected')}
+                title="Show only selected days"
+              >
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <CheckSquare size={16} /> Selected Days
+                </span>
+              </button>
+              {dayMode === 'selected' && (
+                <span className="muted" style={{ marginLeft: 4 }}>
+                  Choose which days to display below
+                </span>
+              )}
+            </div>
+
+            {/* Day selector (only in Selected mode) */}
+            {dayMode === 'selected' && (
+              <div className="day-selector" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, margin: '0 0 12px 0' }}>
+                {(selectedTour.days || []).map((d, i) => (
+                  <label
+                    key={d.id}
+                    className="chip"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
+                    title={`Toggle Day ${i + 1}`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedDays.has(d.id)}
+                      onChange={() => toggleDay(d.id)}
+                      style={{ accentColor: '#ec4899' }}
+                    />
+                    Day {i + 1}
+                    <span className="pill">{new Date(d.date).toLocaleDateString()}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+
             {/* Tour Days */}
             <div className="days">
-              {selectedTour.days?.map((day, index) => (
-                <div key={day.id} className="day-card">
-                  <div className="day-head">
-                    <h4>
-                      <span className="day-number">{index + 1}</span>
-                      Day {index + 1} - {new Date(day.date).toLocaleDateString()}
-                    </h4>
-                    <div className="chip">
-                      {day.activities?.filter((a) => a.status === 'done').length || 0} /{' '}
-                      {day.activities?.length || 0} completed
-                    </div>
-                  </div>
-
-                  <div className="day-content">
-                    {/* Activities (always render) */}
-                    <div className="activities">
-                      <h4 className="section-title">Activities</h4>
-                      {day.activities && day.activities.length > 0 ? (
-                        <ul>
-                          {day.activities.map((activity) => (
-                            <li key={activity.id}>
-                              <strong>{activity.description}</strong>
-                              <div className="activity-actions" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                {activity.status === 'done' ? (
-                                  <>
-                                    <CheckCircle size={18} />
-                                    <span className="pill">done</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Clock size={18} />
-                                    <span className="pill">pending</span>
-                                    <button
-                                      type="button"
-                                      className="btn success"
-                                      onClick={() => setConfirmDlg({ open: true, tourId: selectedTour.id, dayId: day.id, activityId: activity.id })}
-                                      title="Mark this activity as done"
-                                    >
-                                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                                        <CheckCircle size={16} /> Mark done
-                                      </span>
-                                    </button>
-                                  </>
-                                )}
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p className="muted">No activities yet for this day.</p>
-                      )}
-
-                      {/* Add Activity UI (self-contained child so typing doesn't re-render parent) */}
-                      <AddActivityRow onAdd={(desc) => addActivity(selectedTour.id, day.id, desc)} />
+              {daysToRender.length ? (
+                daysToRender.map((day, index) => (
+                  <div key={day.id} className="day-card">
+                    <div className="day-head">
+                      <h4>
+                        <span className="day-number">{(selectedTour.days || []).findIndex(d => d.id === day.id) + 1}</span>
+                        Day {(selectedTour.days || []).findIndex(d => d.id === day.id) + 1} - {new Date(day.date).toLocaleDateString()}
+                      </h4>
+                      <div className="chip">
+                        {day.activities?.filter((a) => a.status === 'done').length || 0} /{' '}
+                        {day.activities?.length || 0} completed
+                      </div>
                     </div>
 
-                    {/* Photos */}
-                    {day.photos && (
-                      <div className="photos">
-                        {day.photos.length > 0 && (
-                          <div className="photos-grid">
-                            {day.photos.map((photo) => (
-                              <img key={photo.id} src={photo.link} alt="Tour moment" />
+                    <div className="day-content">
+                      {/* Activities (always render) */}
+                      <div className="activities">
+                        <h4 className="section-title">Activities</h4>
+                        {day.activities && day.activities.length > 0 ? (
+                          <ul>
+                            {day.activities.map((activity) => (
+                              <li key={activity.id}>
+                                <strong>{activity.description}</strong>
+                                <div className="activity-actions" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                  {activity.status === 'done' ? (
+                                    <>
+                                      <CheckCircle size={18} />
+                                      <span className="pill">done</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Clock size={18} />
+                                      <span className="pill">pending</span>
+                                      <button
+                                        type="button"
+                                        className="btn success"
+                                        onClick={() => setConfirmDlg({ open: true, tourId: selectedTour.id, dayId: day.id, activityId: activity.id })}
+                                        title="Mark this activity as done"
+                                      >
+                                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                                          <CheckCircle size={16} /> Mark done
+                                        </span>
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              </li>
                             ))}
-                          </div>
+                          </ul>
+                        ) : (
+                          <p className="muted">No activities yet for this day.</p>
                         )}
 
-                        {/* Add Photo Button */}
-                        <AddPhotoRow onUpload={(file) => uploadPhotoFile(selectedTour.id, day.id, file)} />
+                        {/* Add Activity UI */}
+                        <AddActivityRow onAdd={(desc) => addActivity(selectedTour.id, day.id, desc)} />
                       </div>
-                    )}
+
+                      {/* Photos */}
+                      {day.photos && (
+                        <div className="photos">
+                          {day.photos.length > 0 && (
+                            <div className="photos-grid">
+                              {day.photos.map((photo) => (
+                                <img key={photo.id} src={photo.link} alt="Tour moment" />
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Add Photo Button */}
+                          <AddPhotoRow onUpload={(file) => uploadPhotoFile(selectedTour.id, day.id, file)} />
+                        </div>
+                      )}
+                    </div>
                   </div>
+                ))
+              ) : (
+                <div className="muted" style={{ padding: '8px 0' }}>
+                  {dayMode === 'selected' ? 'No days selected. Use the checkboxes above.' : 'No days to show.'}
                 </div>
-              ))}
+              )}
+            </div>
+
+            {/* Video Section (dummy for now) */}
+            <div className="video-section" style={{ marginTop: 16 }}>
+              <h4 className="section-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Video size={18} /> Trip Video
+              </h4>
+              <div
+                style={{
+                  position: 'relative',
+                  width: '100%',
+                  paddingTop: '56.25%', // 16:9
+                  borderRadius: 12,
+                  overflow: 'hidden',
+                  boxShadow: '0 6px 18px rgba(0,0,0,0.15)',
+                  marginTop: 8,
+                }}
+              >
+                <iframe
+                  src="https://www.youtube.com/embed/Scxs7L0vhZ4"
+                  title="Trip Video"
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -739,7 +791,7 @@ const AddActivityRow = React.memo(function AddActivityRow({ onAdd }) {
           flex: 1,
           padding: '10px 12px',
           borderRadius: 10,
-          border: '1px solid #ec4899',
+          border: '1px solid #e5e7eb',
           outline: 'none',
         }}
       />
