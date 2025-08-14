@@ -38,6 +38,9 @@ const Login = () => {
     password: '',
   });
 
+  // NEW: pretty welcome popup state
+  const [welcome, setWelcome] = useState({ open: false, name: '' });
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -64,9 +67,11 @@ const Login = () => {
         const { password, ...safeUser } = user;
         localStorage.setItem('user', JSON.stringify(safeUser));
 
-        alert(`Welcome, ${user.name}`);
-        // Make sure this route renders the TourGuideApp
-        window.location.replace('/profile'); // or navigate('/profile') if using react-router
+        // ✨ instead of alert — show a beautiful welcome and then redirect
+        setWelcome({ open: true, name: user?.name || 'Traveler' });
+        setTimeout(() => {
+          window.location.replace('/profile');
+        }, 1400);
       } else {
         const errorText = await res.text();
         alert('Login failed: ' + errorText);
@@ -95,8 +100,18 @@ const Login = () => {
     };
   }, []);
 
+  // Small local CSS for the welcome animation (kept inside component)
+  const welcomeCss = `
+    @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+    @keyframes popIn { 0% { transform: scale(.95); opacity: 0 } 100% { transform: scale(1); opacity: 1 } }
+    @keyframes bar { 0% { width: 0 } 100% { width: 100% } }
+  `;
+
   return (
     <div className="login-page">
+      {/* local animation keyframes */}
+      <style>{welcomeCss}</style>
+
       <div className="background"></div>
       <div className="stars" id="stars"></div>
       <div className="login-container">
@@ -147,6 +162,74 @@ const Login = () => {
           </form>
         </div>
       </div>
+
+      {/* ✨ Welcome overlay (shows after successful login) */}
+      {welcome.open && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.45)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000,
+            animation: 'fadeIn .2s ease-out',
+          }}
+        >
+          <div
+            style={{
+              width: 'min(420px, 92%)',
+              background: 'linear-gradient(135deg, #ffffff 0%, #fdf2f8 100%)',
+              borderRadius: 16,
+              padding: 24,
+              boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+              animation: 'popIn .25s ease-out',
+              textAlign: 'center',
+            }}
+          >
+            <div
+              style={{
+                width: 64,
+                height: 64,
+                borderRadius: '50%',
+                margin: '0 auto 12px',
+                background: '#ec4899',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#fff',
+                fontSize: 30,
+                boxShadow: '0 8px 16px rgba(236, 72, 153, .35)'
+              }}
+            >
+              ✓
+            </div>
+            <h3 style={{ margin: '0 0 4px', color: '#111827', fontSize: 22 }}>Welcome, {welcome.name}!</h3>
+            <p className="muted" style={{ margin: 0 }}>Redirecting to your profile…</p>
+
+            {/* Progress bar */}
+            <div
+              style={{
+                height: 6,
+                borderRadius: 999,
+                background: '#fce7f3',
+                marginTop: 16,
+                overflow: 'hidden',
+              }}
+            >
+              <div
+                style={{
+                  height: '100%',
+                  background: '#ec4899',
+                  width: 0,
+                  animation: 'bar 1.2s linear forwards',
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,3 +1,4 @@
+// File: src/main/java/com/example/journeyGenie/controller/PlanController.java
 package com.example.journeyGenie.controller;
 
 import com.example.journeyGenie.entity.*;
@@ -29,14 +30,17 @@ public class PlanController {
 
     private static final String GEMINI_API_URL =
             "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
-
-    // Your Google API key for Gemini here:
     private static final String API_KEY = AppEnv.getGEMINI_API();
+
+    // Adjust this if you want a different assumed rate (used ONLY to guide Gemini)
+    private static final double APPROX_USD_TO_BDT = 120.0;
 
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    // Now includes startLocation
     public static class PlanRequest {
+        public String startLocation;
         public String destination;
         public String startDate;
         public String endDate;
@@ -47,6 +51,13 @@ public class PlanController {
     public ResponseEntity<?> preview(@RequestBody PlanRequest req, HttpServletRequest request) {
         Debug.log("preparing plan preview");
         try {
+            if (req.startLocation == null || req.startLocation.isBlank()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Start location is required");
+            }
+            if (req.destination == null || req.destination.isBlank()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Destination is required");
+            }
+
             LocalDate start = LocalDate.parse(req.startDate);
             LocalDate end = LocalDate.parse(req.endDate);
             long days = ChronoUnit.DAYS.between(start, end) + 1;
@@ -54,73 +65,59 @@ public class PlanController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid date range");
             }
 
-            String prompt = buildGeminiPrompt(req.destination, days, req.budget, req.startDate);
-            Debug.log("Prompt: " + prompt);
+            String prompt = buildGeminiPrompt(
+                    req.startLocation,
+                    req.destination,
+                    days,
+                    req.budget,
+                    req.startDate,
+                    APPROX_USD_TO_BDT
+            );
+            Debug.log("Prompt:\n" + prompt);
 
             ObjectNode geminiResponse = callGeminiApiNew(prompt);
-
-            Debug.log("checkpoint 5");
             if (geminiResponse == null) {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to get response from Gemini");
             }
 
-            Debug.log("Full Gemini response: " + geminiResponse.toString());
-            Debug.log("checkpoint 6");
-
-            // Check if response has candidates
             JsonNode candidates = geminiResponse.get("candidates");
             if (candidates == null || candidates.isEmpty()) {
-                Debug.log("No candidates in response");
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("No candidates in Gemini response");
             }
 
-            // Extract the generated content text - correct path for Gemini API
             JsonNode firstCandidate = candidates.get(0);
             JsonNode content = firstCandidate.get("content");
             if (content == null) {
-                Debug.log("No content in first candidate");
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("No content in Gemini response");
             }
 
             JsonNode parts = content.get("parts");
             if (parts == null || parts.isEmpty()) {
-                Debug.log("No parts in content");
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("No parts in Gemini response");
             }
 
             String textContent = parts.get(0).get("text").asText();
-            Debug.log("Raw text content: " + textContent);
 
-            // Clean the JSON content (remove markdown code blocks if present)
-            String cleanedContent = textContent.trim();
-            if (cleanedContent.startsWith("```json")) {
-                cleanedContent = cleanedContent.substring(7);
-            }
-            if (cleanedContent.endsWith("```")) {
-                cleanedContent = cleanedContent.substring(0, cleanedContent.length() - 3);
-            }
-            cleanedContent = cleanedContent.trim();
+            // strip ```json fences if present
+            String cleaned = textContent.trim();
+            if (cleaned.startsWith("```json")) cleaned = cleaned.substring(7);
+            if (cleaned.endsWith("```")) cleaned = cleaned.substring(0, cleaned.length() - 3);
+            cleaned = cleaned.trim();
 
-            Debug.log("Cleaned content: " + cleanedContent);
-
-            // Parse the content JSON string into Map
             Map<String, Object> planMap;
             try {
-                planMap = objectMapper.readValue(cleanedContent, Map.class);
+                planMap = objectMapper.readValue(cleaned, Map.class);
             } catch (Exception e) {
-                Debug.log("Failed to parse JSON: " + e.getMessage());
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to parse Gemini response as JSON: " + e.getMessage());
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body("Failed to parse Gemini response as JSON: " + e.getMessage());
             }
 
-            Debug.log("checkpoint 7");
-
-            // Add original fields for frontend display
+            // Echo inputs so frontend sees them in preview/commit
+            planMap.put("startLocation", req.startLocation);
             planMap.put("destination", req.destination);
             planMap.put("startDate", req.startDate);
             planMap.put("endDate", req.endDate);
             planMap.put("budget", req.budget);
-
-            Debug.log("checkpoint 8");
 
             return ResponseEntity.ok(planMap);
 
@@ -130,27 +127,21 @@ public class PlanController {
         }
     }
 
-    // New endpoint to commit the plan into DB
-    // Method 1: Using ObjectMapper to convert to JSON (Recommended)
     @PostMapping("/commit")
     public ResponseEntity<?> commitPlan(@RequestBody Map<String, Object> planRequest, HttpServletRequest request) {
         try {
             Tour tour = new Tour();
 
-            // Extract base fields
+            tour.setStartLocation((String) planRequest.get("startLocation"));
             tour.setDestination((String) planRequest.get("destination"));
             tour.setStartDate((String) planRequest.get("startDate"));
             tour.setEndDate((String) planRequest.get("endDate"));
             tour.setBudget((String) planRequest.get("budget"));
-
-            // TODO: set user from session/auth if applicable
-            tour.setUser(null);
+            tour.setUser(null); // bound in service
 
             List<Day> days = new ArrayList<>();
-
             Object daysObj = planRequest.get("days");
-            if (daysObj instanceof List<?>) {
-                List<?> daysList = (List<?>) daysObj;
+            if (daysObj instanceof List<?> daysList) {
                 for (Object dayObj : daysList) {
                     if (!(dayObj instanceof Map)) continue;
                     Map<?, ?> dayMap = (Map<?, ?>) dayObj;
@@ -159,38 +150,62 @@ public class PlanController {
                     day.setDate((String) dayMap.get("date"));
                     day.setTour(tour);
 
-                    // Activities
+                    // Collect real activities from Gemini
                     List<Activity> activities = new ArrayList<>();
                     Object activitiesObj = dayMap.get("activities");
-                    if (activitiesObj instanceof List<?>) {
-                        List<?> activitiesList = (List<?>) activitiesObj;
+                    if (activitiesObj instanceof List<?> activitiesList) {
                         for (Object activityObj : activitiesList) {
                             if (!(activityObj instanceof Map)) continue;
                             Map<?, ?> activityMap = (Map<?, ?>) activityObj;
 
                             Activity activity = new Activity();
-
-                            String description = null;
-                            if (activityMap.get("description") != null) {
-                                description = (String) activityMap.get("description");
-                            } else {
-                                StringBuilder sb = new StringBuilder();
-                                Object name = activityMap.get("name");
-                                Object timeOfDay = activityMap.get("timeOfDay");
-                                Object cost = activityMap.get("cost");
-
-                                if (name != null) sb.append(name);
-                                if (timeOfDay != null) sb.append(" (").append(timeOfDay).append(")");
-                                if (cost != null) sb.append(" - Cost: ").append(cost);
-
-                                description = sb.toString();
-                            }
-
+                            String description = buildActivityDescriptionWithBdt(activityMap);
                             activity.setDescription(description);
                             activity.setDay(day);
                             activities.add(activity);
                         }
                     }
+
+                    // ─────────────────────────────────────────────────────────────
+                    // NEW: inject transport/hotel as synthetic activities so they
+                    // render in the "Activities" list with costs.
+                    // ─────────────────────────────────────────────────────────────
+                    String transport = optString(dayMap, "transportation");
+                    Double transportCost = readNumber(dayMap, "transportationCostBdt", "transportation_cost_bdt");
+                    if (hasText(transport) || (transportCost != null && transportCost > 0)) {
+                        Activity a = new Activity();
+                        StringBuilder sb = new StringBuilder("Transport: ");
+                        sb.append(hasText(transport) ? transport : "—");
+                        if (transportCost != null) {
+                            sb.append(" - Cost: ").append(formatBdt(transportCost));
+                        } else {
+                            sb.append(" - Cost: ").append("৳0");
+                        }
+                        a.setDescription(sb.toString());
+                        a.setDay(day);
+                        // Put transport at the TOP of the list
+                        activities.add(0, a);
+                    }
+
+                    String hotel = optString(dayMap, "hotel");
+                    Double hotelCost = readNumber(dayMap, "hotelCostBdt", "hotel_cost_bdt");
+                    if (hasText(hotel) || (hotelCost != null && hotelCost > 0)) {
+                        Activity a = new Activity();
+                        StringBuilder sb = new StringBuilder("Hotel: ");
+                        sb.append(hasText(hotel) ? hotel : "—");
+                        if (hotelCost != null) {
+                            sb.append(" - Cost: ").append(formatBdt(hotelCost));
+                        } else {
+                            sb.append(" - Cost: ").append("৳0");
+                        }
+                        a.setDescription(sb.toString());
+                        a.setDay(day);
+                        // Put hotel right after transport (if any)
+                        int insertAt = !activities.isEmpty() && activities.get(0).getDescription().startsWith("Transport:")
+                                ? 1 : 0;
+                        activities.add(insertAt, a);
+                    }
+                    // ─────────────────────────────────────────────────────────────
 
                     day.setActivities(activities);
                     day.setPhotos(new ArrayList<>());
@@ -199,48 +214,6 @@ public class PlanController {
             }
 
             tour.setDays(days);
-
-            // Method 1: Print as JSON (Most readable and detailed)
-            try {
-                ObjectMapper mapper = new ObjectMapper();
-                // Configure to handle circular references if any
-                mapper.configure(com.fasterxml.jackson.databind.SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-                String tourJson = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(tour);
-                System.out.println("=== COMPLETE TOUR OBJECT AS JSON ===");
-                System.out.println(tourJson);
-                System.out.println("=== END TOUR OBJECT ===");
-            } catch (Exception e) {
-                System.err.println("Failed to serialize tour to JSON: " + e.getMessage());
-            }
-
-            // Method 2: Print basic tour info
-            System.out.println("=== TOUR SUMMARY ===");
-            System.out.println("Destination: " + tour.getDestination());
-            System.out.println("Start Date: " + tour.getStartDate());
-            System.out.println("End Date: " + tour.getEndDate());
-            System.out.println("Budget: " + tour.getBudget());
-            System.out.println("Total Days: " + tour.getDays().size());
-
-            // Method 3: Print each day with activities
-            System.out.println("=== DETAILED DAY-BY-DAY BREAKDOWN ===");
-            for (int i = 0; i < tour.getDays().size(); i++) {
-                Day day = tour.getDays().get(i);
-                System.out.println("Day " + (i + 1) + " (" + day.getDate() + "):");
-                System.out.println("  Activities: " + day.getActivities().size());
-                for (int j = 0; j < day.getActivities().size(); j++) {
-                    Activity activity = day.getActivities().get(j);
-                    System.out.println("    Activity " + (j + 1) + ": " + activity.getDescription());
-                }
-            }
-
-            // Method 4: Count totals
-            int totalActivities = tour.getDays().stream()
-                    .mapToInt(day -> day.getActivities().size())
-                    .sum();
-            System.out.println("=== TOUR STATISTICS ===");
-            System.out.println("Total Days: " + tour.getDays().size());
-            System.out.println("Total Activities: " + totalActivities);
-
             return tourService.createTour(tour, request);
 
         } catch (Exception e) {
@@ -249,115 +222,183 @@ public class PlanController {
         }
     }
 
-    // Alternative Method: Create a separate utility method for printing tours
-    private void printTourDetails(Tour tour) {
-        System.out.println("==========================================");
-        System.out.println("           TOUR DETAILS");
-        System.out.println("==========================================");
-        System.out.println("Destination: " + tour.getDestination());
-        System.out.println("Dates: " + tour.getStartDate() + " to " + tour.getEndDate());
-        System.out.println("Budget: " + tour.getBudget());
-        System.out.println("User: " + (tour.getUser() != null ? tour.getUser().getEmail() : "Not set"));
-        System.out.println("------------------------------------------");
-
-        for (int dayIndex = 0; dayIndex < tour.getDays().size(); dayIndex++) {
-            Day day = tour.getDays().get(dayIndex);
-            System.out.println("DAY " + (dayIndex + 1) + " - " + day.getDate());
-            System.out.println("Activities (" + day.getActivities().size() + "):");
-
-            for (int actIndex = 0; actIndex < day.getActivities().size(); actIndex++) {
-                Activity activity = day.getActivities().get(actIndex);
-                System.out.println("  " + (actIndex + 1) + ". " + activity.getDescription());
-            }
-
-            System.out.println("Photos: " + day.getPhotos().size());
-            System.out.println("------------------------------------------");
-        }
-        System.out.println("==========================================");
+    // helpers (keep these in the same controller class)
+    private static boolean hasText(String s) {
+        return s != null && !s.trim().isEmpty();
     }
 
-// Then call it like this:
-// printTourDetails(tour);
+    private static String formatBdt(double v) {
+        return "৳" + Math.round(v);
+    }
 
-    private String buildGeminiPrompt(String destination, long days, String budget, String startDate) {
+    private static Double readNumber(Map<?, ?> map, String... keys) {
+        for (String k : keys) {
+            Object v = map.get(k);
+            if (v instanceof Number n) return n.doubleValue();
+            if (v != null) {
+                try {
+                    String s = String.valueOf(v).replaceAll("[^0-9.\\-]", "");
+                    if (hasText(s)) return Double.parseDouble(s);
+                } catch (Exception ignored) {}
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Build a user-friendly description string that always includes BDT cost when available.
+     * Accepts several possible keys Gemini might return:
+     *   - name / description
+     *   - costBdt / cost_bdt (number or string)
+     *   - cost (string like "$20" — we keep as fallback)
+     */
+    private String buildActivityDescriptionWithBdt(Map<?, ?> activityMap) {
+        String name = optString(activityMap, "description");
+        if (name == null || name.isBlank()) {
+            name = optString(activityMap, "name");
+        }
+        String timeOfDay = optString(activityMap, "timeOfDay");
+
+        // prefer numeric BDT if provided
+        String bdtText = null;
+        Object costBdtObj = firstNonNull(
+                activityMap.get("costBdt"),
+                activityMap.get("cost_bdt"),
+                activityMap.get("priceBdt"),
+                activityMap.get("price_bdt")
+        );
+        if (costBdtObj != null) {
+            try {
+                double v = costBdtObj instanceof Number
+                        ? ((Number) costBdtObj).doubleValue()
+                        : Double.parseDouble(String.valueOf(costBdtObj).replaceAll("[^0-9.]", ""));
+                bdtText = "৳" + Math.round(v);
+            } catch (Exception ignored) { /* fall back below */ }
+        }
+
+        // fallback to 'cost' (string like "$20")
+        String costText = optString(activityMap, "cost");
+
+        StringBuilder sb = new StringBuilder();
+        if (name != null) sb.append(name);
+        if (timeOfDay != null && !timeOfDay.isBlank()) sb.append(" (").append(timeOfDay).append(")");
+        if (bdtText != null) {
+            sb.append(" - Cost: ").append(bdtText);
+        } else if (costText != null && !costText.isBlank()) {
+            sb.append(" - Cost: ").append(costText);
+        } else {
+            sb.append(" - Cost: ৳0");
+        }
+        return sb.toString();
+    }
+
+    private static Object firstNonNull(Object... xs) {
+        for (Object x : xs) if (x != null) return x;
+        return null;
+    }
+
+    private static String optString(Map<?, ?> m, String key) {
+        Object v = m.get(key);
+        return v == null ? null : String.valueOf(v);
+    }
+
+    // ROUND-TRIP prompt with explicit BDT costs & totals
+    private String buildGeminiPrompt(String startLocation,
+                                     String destination,
+                                     long days,
+                                     String budget,
+                                     String tripStartDate,
+                                     double usdToBdt) {
         return String.format("""
-            You are a travel assistant AI. Create a detailed %d-day tour plan for a trip to %s.
-            The budget is %s level.
-            For each day, suggest:
-             - date (in yyyy-MM-dd format)
-             - title (short summary)
-             - transportation option(s)
-             - hotel name or recommendation
-             - a list of activities with name, optional timeOfDay (morning, afternoon, evening), and approximate cost.
-            
-            IMPORTANT: Return ONLY the JSON response, no additional text or markdown formatting.
-            
-            Return the plan as JSON in the following format:
+            You are a travel assistant AI. Create a detailed %d-day ROUND-TRIP itinerary that:
+              • STARTS in %s,
+              • TRAVELS to %s,
+              • and RETURNS to %s by the end of the trip.
+
+            Budget level: %s.
+            Use calendar dates starting from %s (yyyy-MM-dd).
+            For currency, ALWAYS provide **Bangladeshi Taka (BDT)** values for costs, using an approximate conversion of
+            1 USD ≈ %.2f BDT when needed.
+
+            HARD REQUIREMENTS:
+            - Day 1 must include transit from %s to %s (with a realistic transport option AND cost in BDT).
+            - The FINAL day must include transit from %s back to %s (with transport option AND cost in BDT).
+            - Each day must contain:
+                • "date" (yyyy-MM-dd)
+                • "title" (short summary)
+                • "transportation" (string for the day's movement; put the long-haul legs on Day 1 and final day)
+                • "transportationCostBdt" (number, estimated)
+                • "hotel" (name/suggestion; can be the same across multiple days)
+                • "hotelCostBdt" (number, estimated for that night; 0 if not applicable)
+                • "activities": array of objects with:
+                    {
+                      "name": "Visit XYZ",
+                      "timeOfDay": "morning|afternoon|evening",
+                      "costBdt": 0 | number (always present; put 0 for free)
+                    }
+                • "dailyTotalBdt": number = transportationCostBdt + hotelCostBdt + sum(activity.costBdt)
+
+            ALSO RETURN a top-level "tripTotalBdt": sum of dailyTotalBdt across all days.
+
+            OUTPUT FORMAT:
+            Return ONLY valid JSON (no markdown). Use exactly this schema:
 
             {
               "days": [
                 {
                   "date": "2025-08-15",
                   "title": "Arrival and sightseeing",
-                  "transportation": "Taxi from airport",
+                  "transportation": "Flight from START → DEST, taxi to hotel",
+                  "transportationCostBdt": 0,
                   "hotel": "Hotel Sunshine",
+                  "hotelCostBdt": 0,
                   "activities": [
-                    {"name": "Visit the Old Town", "timeOfDay": "morning", "cost": "$20"},
-                    {"name": "Lunch at local restaurant", "timeOfDay": "afternoon", "cost": "$15"},
-                    {"name": "Evening river walk", "timeOfDay": "evening", "cost": "$0"}
-                  ]
+                    {"name": "Visit the Old Town", "timeOfDay": "morning", "costBdt": 0},
+                    {"name": "Lunch at local restaurant", "timeOfDay": "afternoon", "costBdt": 1500},
+                    {"name": "Evening river walk", "timeOfDay": "evening", "costBdt": 0}
+                  ],
+                  "dailyTotalBdt": 0
                 }
-              ]
+              ],
+              "tripTotalBdt": 0
             }
 
-            Make the plan realistic and varied, based on the %s budget level.
-            Use dates starting from the trip start date %s.
-            Ensure all activities have a cost field, use "$0" for free activities.
-            """, days, destination, budget, budget, startDate);
+            Make the plan realistic for the specified budget and city.
+            """,
+                days, startLocation, destination, startLocation,
+                budget,
+                tripStartDate,
+                usdToBdt,
+                startLocation, destination,
+                destination, startLocation
+        );
     }
 
     private ObjectNode callGeminiApiNew(String prompt) throws IOException, InterruptedException {
-        // Build request JSON body with generation config for better JSON output
-        ObjectNode textPart = objectMapper.createObjectNode();
-        textPart.put("text", prompt);
-        Debug.log("checkpoint 1");
+        ObjectNode textPart = objectMapper.createObjectNode().put("text", prompt);
+        ObjectNode partNode = objectMapper.createObjectNode().set("parts", objectMapper.createArrayNode().add(textPart));
 
-        ObjectNode partNode = objectMapper.createObjectNode();
-        partNode.set("parts", objectMapper.createArrayNode().add(textPart));
-
-        // Add generation config for more consistent JSON output
         ObjectNode generationConfig = objectMapper.createObjectNode();
-        generationConfig.put("temperature", 0.7);
+        generationConfig.put("temperature", 0.6);
         generationConfig.put("topK", 40);
-        generationConfig.put("topP", 0.95);
+        generationConfig.put("topP", 0.9);
         generationConfig.put("maxOutputTokens", 8192);
 
         ObjectNode bodyJson = objectMapper.createObjectNode();
         bodyJson.set("contents", objectMapper.createArrayNode().add(partNode));
         bodyJson.set("generationConfig", generationConfig);
 
-        Debug.log("Request body: " + bodyJson.toString());
-        Debug.log("checkpoint 2");
-
-        HttpRequest request = HttpRequest.newBuilder()
+        HttpRequest httpReq = HttpRequest.newBuilder()
                 .uri(URI.create(GEMINI_API_URL + "?key=" + API_KEY))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(bodyJson.toString()))
                 .build();
 
-        Debug.log("checkpoint 3");
-
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-        Debug.log("Response status: " + response.statusCode());
-        Debug.log("Response body: " + response.body());
-        Debug.log("checkpoint 4");
-
-        if (response.statusCode() != 200) {
-            System.err.println("Gemini API error: " + response.body());
+        HttpResponse<String> resp = httpClient.send(httpReq, HttpResponse.BodyHandlers.ofString());
+        if (resp.statusCode() != 200) {
+            System.err.println("Gemini API error: " + resp.body());
             return null;
         }
-
-        return (ObjectNode) objectMapper.readTree(response.body());
+        return (ObjectNode) objectMapper.readTree(resp.body());
     }
 }

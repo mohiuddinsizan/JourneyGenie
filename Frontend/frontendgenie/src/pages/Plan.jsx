@@ -1,3 +1,4 @@
+// File: src/pages/Plan.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Plan.css';
@@ -7,10 +8,23 @@ const BASE_URL =
     ? import.meta.env.VITE_BACKEND_URL.replace(/\/$/, '')
     : 'http://localhost:8080';
 
+// --- helpers (display-only) ---
+const numOrNull = (v) => {
+  if (v == null) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+};
+const fmtBdt = (v) => {
+  const n = numOrNull(v);
+  if (n == null) return null;
+  return `৳${Math.round(n).toLocaleString('en-BD')}`;
+};
+
 export default function Plan() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
+    startLocation: '',     // required
     destination: '',
     startDate: '',
     endDate: '',
@@ -61,6 +75,15 @@ export default function Plan() {
     setError(''); 
     setCommitMsg(''); 
     setPreview(null);
+
+    // required field guard
+    if (!form.startLocation || !form.startLocation.trim()) {
+      setLoading(false);
+      setError('Please enter your starting location.');
+      const el = document.getElementById('startLocationInput');
+      if (el) el.focus();
+      return;
+    }
     
     try {
       const res = await fetch(`${BASE_URL}/api/plan/preview`, {
@@ -101,22 +124,14 @@ export default function Plan() {
       });
     
       if (!res.ok) {
-        const errorText = await res.text();     // text() is fine here (only once)
+        const errorText = await res.text();
         throw new Error(errorText || `Server error: ${res.status}`);
       }
     
-      // Read the body ONCE
       const updatedUser = await res.json();
-    
-      // Avoid storing the password hash
       const { password, ...safeUser } = updatedUser;
-    
-      // IMPORTANT: key must be "user"
       localStorage.setItem('user', JSON.stringify(safeUser));
-    
-      // Tell the profile to refresh (TourGuideApp listens for this)
       window.dispatchEvent(new CustomEvent('tours:updated', { detail: { reason: 'create' } }));
-    
       setCommitMsg('🎉 Tour saved successfully! Your adventure awaits!');
     } catch (err) {
       setError(err.message || 'Failed to save tour');
@@ -124,7 +139,6 @@ export default function Plan() {
     } finally {
       setCommitting(false);
     }
-    
   };
 
   return (
@@ -154,6 +168,16 @@ export default function Plan() {
         <h2>Plan Your Adventure</h2>
         
         <form onSubmit={handlePreview} className="plan-form">
+          {/* required field */}
+          <input
+            id="startLocationInput"
+            name="startLocation"
+            placeholder="Where are you starting from?"
+            value={form.startLocation}
+            onChange={onChange}
+            required
+          />
+
           <input
             name="destination"
             placeholder="Where do you want to go?"
@@ -220,8 +244,15 @@ export default function Plan() {
             <div className="preview-header">
               <div>
                 <h3>
+                  {form.startLocation ? `${form.startLocation} → ` : ''}
                   {preview.destination} — {preview.startDate} → {preview.endDate}
                   <span className="badge">{(preview.budget || '').toUpperCase()}</span>
+                  {/* Trip total (if backend provides it) */}
+                  {fmtBdt(preview.tripTotalBdt ?? preview.trip_total_bdt) && (
+                    <span className="badge" style={{ marginLeft: 8 }}>
+                      Total: {fmtBdt(preview.tripTotalBdt ?? preview.trip_total_bdt)}
+                    </span>
+                  )}
                 </h3>
                 <p className="muted">AI-generated itinerary (not saved yet)</p>
               </div>
@@ -247,23 +278,46 @@ export default function Plan() {
                     </div>
                     
                     <div className="day-content">
+                      {/* Transportation (with BDT cost if present) */}
                       {day.transportation && (
                         <div className="kv">
                           <span className="k">🚗 Transport</span>
-                          <span className="v">{day.transportation}</span>
+                          <span
+                            className="v"
+                            style={{ display: 'inline-flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}
+                          >
+                            {day.transportation}
+                            {fmtBdt(day.transportationCostBdt ?? day.transportation_cost_bdt) && (
+                              <span className="pill">
+                                {fmtBdt(day.transportationCostBdt ?? day.transportation_cost_bdt)}
+                              </span>
+                            )}
+                          </span>
                         </div>
                       )}
                       
+                      {/* Hotel (with BDT cost if present) */}
                       {day.hotel && (
                         <div className="kv">
                           <span className="k">🏨 Hotel</span>
-                          <span className="v">{day.hotel}</span>
+                          <span
+                            className="v"
+                            style={{ display: 'inline-flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}
+                          >
+                            {day.hotel}
+                            {fmtBdt(day.hotelCostBdt ?? day.hotel_cost_bdt) && (
+                              <span className="pill">
+                                {fmtBdt(day.hotelCostBdt ?? day.hotel_cost_bdt)}
+                              </span>
+                            )}
+                          </span>
                         </div>
                       )}
                       
+                      {/* Activities (each with BDT cost if present) */}
                       <div className="activities">
                         <div className="section-title">Activities</div>
-                        {day.activities?.length ? (
+                        {Array.isArray(day.activities) && day.activities.length ? (
                           <ul>
                             {day.activities.map((activity, i) => (
                               <li key={i}>
@@ -272,8 +326,11 @@ export default function Plan() {
                                   {activity.timeOfDay && (
                                     <span className="pill">{activity.timeOfDay}</span>
                                   )}
-                                  {activity.cost && (
-                                    <span className="activity-cost">{activity.cost}</span>
+                                  {/* prefer costBdt; fall back to nothing */}
+                                  {fmtBdt(activity.costBdt ?? activity.cost_bdt) && (
+                                    <span className="activity-cost">
+                                      {fmtBdt(activity.costBdt ?? activity.cost_bdt)}
+                                    </span>
                                   )}
                                 </div>
                               </li>
@@ -283,7 +340,15 @@ export default function Plan() {
                           <div className="muted">No activities suggested.</div>
                         )}
                       </div>
+
+                      {/* Daily total (BDT) */}
+                      {fmtBdt(day.dailyTotalBdt ?? day.daily_total_bdt) && (
+                        <div style={{ marginTop: 8, textAlign: 'right' }}>
+                          <span className="badge">Daily Total: {fmtBdt(day.dailyTotalBdt ?? day.daily_total_bdt)}</span>
+                        </div>
+                      )}
                       
+                      {/* Optional photos preview if provided in AI response */}
                       {day.photoLinks?.length && (
                         <div className="photos">
                           <div className="photos-grid">
