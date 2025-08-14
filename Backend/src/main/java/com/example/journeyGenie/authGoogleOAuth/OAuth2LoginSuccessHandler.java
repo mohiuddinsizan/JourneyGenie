@@ -4,6 +4,7 @@ import com.example.journeyGenie.authJWT.JWTService;
 import com.example.journeyGenie.entity.User;
 import com.example.journeyGenie.repository.UserRepository;
 import com.example.journeyGenie.util.AppEnv;
+import com.example.journeyGenie.util.Debug;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,6 +26,8 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     @Autowired
     private UserRepository userRepository;
 
+    private String defaultPassword = "googleNoPass";
+
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException, ServletException {
@@ -33,17 +36,23 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         String email = oAuth2User.getAttribute("email");
         String name = oAuth2User.getAttribute("name");
 
-        System.out.println("OAuth2 login success ");
-        System.out.println("email: " + email);
-        System.out.println("name: " + name);
+        Debug.log("OAuth2 login success ");
+        Debug.log("email: " + email);
+        Debug.log("name: " + name);
 
         // Save user if new
         if (userRepository.findByEmail(email) == null) {
+            Debug.log("New user detected, saving to database.");
+            Debug.log("Saving user with email: " + email + " and name: " + name);
+            Debug.log("Saving user to database with default password " + defaultPassword);
             User user = new User();
             user.setEmail(email);
             user.setName(name);
+            user.setPassword(defaultPassword);
             userRepository.save(user);
         }
+
+        Debug.log("Generating JWT token");
 
         // Generate JWT
         String jwt = jwtService.generateToken(email);
@@ -56,7 +65,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         cookie.setAttribute("SameSite", "None"); // set true in production
 
         response.addCookie(cookie);
-        System.out.println("redirecting to "+ AppEnv.getFrontendUrl()+"/homeUser");
-        response.sendRedirect(AppEnv.getFrontendUrl()+"/homeUser");
+        Debug.log("redirecting to "+ AppEnv.getFrontendUrl()+"/home");
+        response.sendRedirect(AppEnv.getFrontendUrl()+"/home");
     }
 }

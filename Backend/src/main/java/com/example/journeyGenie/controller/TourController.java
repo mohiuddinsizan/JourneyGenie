@@ -1,5 +1,6 @@
 package com.example.journeyGenie.controller;
 
+import com.example.journeyGenie.dto.TitleDTO;
 import com.example.journeyGenie.entity.Tour;
 import com.example.journeyGenie.entity.User;
 import com.example.journeyGenie.service.TourService;
@@ -16,5 +17,13 @@ public class TourController {
 
     @Autowired
     private TourService tourService;
+
+    @PostMapping("/title")
+    public ResponseEntity<?> updateTitle(@RequestBody TitleDTO titleDTO, HttpServletRequest request) {
+        Debug.log("Updating tour title: ");
+        Debug.log("Tour ID: " + titleDTO.getTourid());
+        Debug.log("New Title: " + titleDTO.getTitle());
+        return tourService.updateTitle(titleDTO, request);
+    }
 
 }
