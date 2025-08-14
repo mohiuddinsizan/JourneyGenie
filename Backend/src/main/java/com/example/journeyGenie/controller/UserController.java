@@ -44,4 +44,9 @@ public class UserController {
         return userService.getUserName(request);
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<?> getUser(HttpServletRequest request) {
+        Debug.log("Fetching user details from JWT token");
+        return userService.getUser(request);
+    }
 }
