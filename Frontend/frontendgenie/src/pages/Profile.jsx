@@ -739,7 +739,7 @@ const AddActivityRow = React.memo(function AddActivityRow({ onAdd }) {
           flex: 1,
           padding: '10px 12px',
           borderRadius: 10,
-          border: '1px solid #e5e7eb',
+          border: '1px solid #ec4899',
           outline: 'none',
         }}
       />
