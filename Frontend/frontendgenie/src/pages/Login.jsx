@@ -3,6 +3,35 @@ import React, { useState, useEffect } from 'react';
 import './Login.css';
 import './Background.css';
 
+const apiUrl = 'http://localhost:8080';
+const loginWithGoogle = apiUrl + "/oauth2/authorization/google";
+
+const styles = {
+  googleButton: {
+    // marginTop: '12px',
+    padding: '8px 12px',
+    background: '#ffffff',
+    color: '#444',
+    borderRadius: '6px',
+    fontWeight: 500,
+    fontSize: '0.85em',
+    border: '1px solid #ccc',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    transition: 'background 0.3s',
+  },
+  googleIcon: {
+    width: '16px',
+    height: '16px',
+  },
+  googleText: {
+    color: '#444',
+  }
+};
+
 const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
@@ -30,11 +59,11 @@ const Login = () => {
 
       if (res.ok) {
         const user = await res.json();
-      
+
         // (optional) avoid storing the password hash
         const { password, ...safeUser } = user;
         localStorage.setItem('user', JSON.stringify(safeUser));
-      
+
         alert(`Welcome, ${user.name}`);
         // Make sure this route renders the TourGuideApp
         window.location.replace('/profile'); // or navigate('/profile') if using react-router
@@ -42,7 +71,7 @@ const Login = () => {
         const errorText = await res.text();
         alert('Login failed: ' + errorText);
       }
-      
+
     } catch (err) {
       console.error('Login error:', err);
       alert('Something went wrong');
@@ -104,6 +133,17 @@ const Login = () => {
             >
               Create New Account
             </button>
+            {/* Google Login Button */}
+            <a href={loginWithGoogle} style={{ marginTop: '12px', textDecoration: 'none' }}>
+              <div style={styles.googleButton}>
+                <img
+                  src="https://developers.google.com/identity/images/g-logo.png"
+                  alt="Google"
+                  style={styles.googleIcon}
+                />
+                <span style={styles.googleText}>Login with Google</span>
+              </div>
+            </a>
           </form>
         </div>
       </div>
