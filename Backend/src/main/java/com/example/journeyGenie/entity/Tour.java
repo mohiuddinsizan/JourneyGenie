@@ -26,11 +26,15 @@ public class Tour {
     @JsonBackReference
     private User user;
 
+    private String title;
+
     @Column(nullable = false)
     private String startDate;
 
     @Column(nullable = false)
     private String endDate;
+
+    private String startLocation;
 
     @Column(nullable = false)
     private String destination;

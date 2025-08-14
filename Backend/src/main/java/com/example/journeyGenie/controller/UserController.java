@@ -31,6 +31,13 @@ public class UserController {
         return userService.loginUser(user,response);
     }
 
+    // endpoint to get user from JWT token
+    @GetMapping("/me")
+    public ResponseEntity<?> getUser(HttpServletRequest request) {
+        Debug.log("Fetching user details from JWT token");
+        return userService.getUser(request);
+    }
+
     // endpoint to get username from JWT token
     @GetMapping("/getName")
     public ResponseEntity<?> getUserName(HttpServletRequest request) {
