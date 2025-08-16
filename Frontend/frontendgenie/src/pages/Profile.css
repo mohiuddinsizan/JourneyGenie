@@ -818,3 +818,58 @@ html {
     font-weight: 600;
   }
   
+
+  /* ===== TourGuideApp extracted styles ===== */
+
+/* utilities */
+.tg-inlinecenter-6 { display:inline-flex; align-items:center; gap:6px; }
+.tg-inlinecenter-8 { display:inline-flex; align-items:center; gap:8px; }
+.tg-flex-gap8 { display:flex; gap:8px; }
+.tg-flex-gap8-center { display:flex; align-items:center; gap:8px; }
+.tg-mt-12 { margin-top:12px; }
+.tg-mt-16 { margin-top:16px; }
+.tg-ml-4 { margin-left:4px; }
+.tg-pv-8 { padding:8px 0; }
+.tg-pointer { cursor:pointer; }
+
+/* filter + selectors */
+.filter-bar.tg-filter-bar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:12px 0 8px; }
+.day-selector.tg-day-selector { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 12px 0; }
+.chip.tg-chip-toggle { display:inline-flex; align-items:center; gap:8px; cursor:pointer; }
+/* pink checkbox accent */
+.day-selector input[type="checkbox"] { accent-color:#ec4899; }
+
+/* activity bits */
+.tg-activity-actions { display:flex; align-items:center; gap:8px; }
+
+/* add-activity & add-photo rows */
+.add-activity.tg-row { display:flex; gap:8px; }
+.tg-input {
+  flex:1; padding:10px 12px; border-radius:10px;
+  border:1px solid #ec4899; outline:none;
+}
+
+/* confirm / edit modals */
+.tg-backdrop {
+  position:fixed; inset:0; background:rgba(0,0,0,0.45);
+  display:flex; align-items:center; justify-content:center; z-index:1000; padding:16px;
+}
+.tg-dialog-narrow { width:min(520px, 100%); }
+.preview-header.tg-tight { margin-bottom:8px; }
+.tg-h3-icons { display:flex; align-items:center; gap:8px; margin:0; }
+
+/* video section */
+.tg-video { margin-top:16px; }
+.tg-video-frame {
+  position:relative; width:100%; padding-top:56.25%;
+  border-radius:12px; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,0.15); margin-top:8px;
+}
+.tg-video-iframe { position:absolute; inset:0; width:100%; height:100%; border:0; }
+
+
+/* in your Profile.css */
+.tg-spin { animation: tgspin 1s linear infinite; }
+@keyframes tgspin { to { transform: rotate(360deg); } }
+
+/* optional: dims the "Choose image" label while uploading */
+.tg-disabled { opacity: 0.6; pointer-events: none; }
