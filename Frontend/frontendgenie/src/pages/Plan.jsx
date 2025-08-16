@@ -1,6 +1,8 @@
 // File: src/pages/Plan.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import 'leaflet/dist/leaflet.css';
+import { MapContainer, TileLayer, Polyline } from 'react-leaflet';
 import './Plan.css';
 
 const BASE_URL =
@@ -20,6 +22,58 @@ const fmtBdt = (v) => {
   return `৳${Math.round(n).toLocaleString('en-BD')}`;
 };
 
+// Weather highlight thresholds (tweak as you like)
+const WX_THRESHOLDS = {
+  precipProbPct: 60,  // ≥60% chance of rain
+  precipMm: 10,       // ≥10 mm rain/day
+  windKph: 40,        // ≥40 km/h sustained
+  gustKph: 60,        // ≥60 km/h gusts
+  uv: 7               // ≥7 high UV
+};
+
+// Inline danger style for cells that cross thresholds
+const dangerStyle = (bad) =>
+  bad
+    ? {
+        background: '#FF0000',
+        color: '#FFFFFF',
+        fontWeight: 600,
+        borderRadius: 6,
+      }
+    : {};
+
+// Enhanced Travel Loader Component
+const TravelLoader = () => (
+  <div className="travel-loader">
+    <div className="travel-compass"></div>
+    <div className="loader-text">Planning your adventure</div>
+  </div>
+);
+
+// Or if you want the moving plane on path:
+const TravelLoaderPath = () => (
+  <div className="travel-loader">
+    <div className="travel-path">
+      <div className="travel-icon"></div>
+    </div>
+    <div className="loader-text">Planning your adventure</div>
+  </div>
+);
+
+// Or simple bouncing dots:
+const TravelLoaderDots = () => (
+  <div className="travel-loader">
+    <div className="travel-dots">
+      <div className="travel-dot"></div>
+      <div className="travel-dot"></div>
+      <div className="travel-dot"></div>
+    </div>
+    <div className="loader-text">Planning your adventure</div>
+  </div>
+);
+
+// Use whichever one you like best!
+
 export default function Plan() {
   const navigate = useNavigate();
 
@@ -35,6 +89,14 @@ export default function Plan() {
   const [commitMsg, setCommitMsg] = useState('');
   const [error, setError] = useState('');
   const [committing, setCommitting] = useState(false);
+  const [route, setRoute] = useState(null);
+  const [routeErr, setRouteErr] = useState('');
+  const [routeLoading, setRouteLoading] = useState(false);
+
+  // Weather state (now fetched from backend)
+  const [weather, setWeather] = useState(null);
+  const [weatherErr, setWeatherErr] = useState('');
+  const [weatherLoading, setWeatherLoading] = useState(false);
 
   // Page styling fix on mount
   useEffect(() => {
@@ -69,13 +131,83 @@ export default function Plan() {
   const onChange = (e) =>
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
+  // --- NEW: weather fetch via backend controller ---
+  const fetchWeather = async (place, startDate, endDate) => {
+    try {
+      setWeather(null);
+      setWeatherErr('');
+      setWeatherLoading(true);
+
+      const url = `${BASE_URL}/api/weather?place=${encodeURIComponent(
+        place || ''
+      )}&start=${encodeURIComponent(startDate)}&end=${encodeURIComponent(endDate)}`;
+
+      const res = await fetch(url, { credentials: 'include' });
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(t || `HTTP ${res.status}`);
+      }
+      const payload = await res.json();
+      setWeather(payload);
+      setWeatherErr('');
+    } catch (e) {
+      console.error('Weather fetch failed:', e);
+      setWeather(null);
+      setWeatherErr(e?.message || 'Weather unavailable');
+    } finally {
+      setWeatherLoading(false);
+    }
+  };
+
+  const fetchRoute = async (startPlace, endPlace, mode = 'driving') => {
+    try {
+      setRoute(null);
+      setRouteErr('');
+      setRouteLoading(true);
+  
+      const url = `${BASE_URL}/api/route?start=${encodeURIComponent(startPlace || '')}&end=${encodeURIComponent(endPlace || '')}&mode=${encodeURIComponent(mode)}`;
+      const res = await fetch(url, { method: 'GET', credentials: 'include' });
+      if (!res.ok) throw new Error(await res.text());
+  
+      const data = await res.json();
+      setRoute(data);
+    } catch (e) {
+      console.error('route failed:', e);
+      setRoute(null);
+      setRouteErr(e?.message || 'Route unavailable');
+    } finally {
+      setRouteLoading(false);
+    }
+  };
+  
+  // Simple WMO weather code mapping (if backend returns numeric code)
+  const mapWeatherCode = (c) => {
+    switch (c) {
+      case 0: return 'Clear';
+      case 1: case 2: case 3: return 'Clear/Partly cloudy/Overcast';
+      case 45: case 48: return 'Fog';
+      case 51: case 53: case 55: return 'Drizzle';
+      case 61: case 63: case 65: return 'Rain';
+      case 66: case 67: return 'Freezing rain';
+      case 71: case 73: case 75: return 'Snow';
+      case 77: return 'Snow grains';
+      case 80: case 81: case 82: return 'Rain showers';
+      case 85: case 86: return 'Snow showers';
+      case 95: return 'Thunderstorm';
+      case 96: case 99: return 'Thunderstorm w/ hail';
+      default: return 'Unknown';
+    }
+  };
+
   const handlePreview = async (e) => {
     e.preventDefault();
-    setLoading(true); 
-    setError(''); 
-    setCommitMsg(''); 
+    setLoading(true);
+    setError('');
+    setCommitMsg('');
     setPreview(null);
-
+    setWeather(null);
+    setWeatherErr('');
+  
     // required field guard
     if (!form.startLocation || !form.startLocation.trim()) {
       setLoading(false);
@@ -84,7 +216,7 @@ export default function Plan() {
       if (el) el.focus();
       return;
     }
-    
+  
     try {
       const res = await fetch(`${BASE_URL}/api/plan/preview`, {
         method: 'POST',
@@ -92,14 +224,24 @@ export default function Plan() {
         credentials: 'include',
         body: JSON.stringify(form),
       });
-      
+  
       if (!res.ok) {
         const errorText = await res.text();
         throw new Error(errorText || `Server error: ${res.status}`);
       }
-      
+  
       const data = await res.json();
       setPreview(data);
+  
+      // fetch weather right after preview arrives (via backend)
+      if (data?.destination && data?.startDate && data?.endDate) {
+        fetchWeather(data.destination, data.startDate, data.endDate);
+      }
+  
+      // fetch route here while `data` is in scope
+      if (data?.destination && form?.startLocation) {
+        fetchRoute(form.startLocation, data.destination, 'driving');
+      }
     } catch (err) {
       setError(err.message || 'Preview failed');
       console.error('Preview error:', err);
@@ -107,7 +249,7 @@ export default function Plan() {
       setLoading(false);
     }
   };
-
+  
   const handleCommit = async () => {
     if (!preview) return;
     
@@ -142,29 +284,14 @@ export default function Plan() {
   };
 
   return (
-    <div 
-      className="plan-page" 
-      style={{
-        overflow: 'auto',
-        height: 'auto',
-        minHeight: '100vh',
-        maxHeight: 'none'
-      }}
-    >
+    <div className="plan-page plan-scrollfix">
       {/* Navbar */}
       <nav className="navbar">
         <button onClick={() => navigate('/profile')}>Profile</button>
         <button onClick={() => navigate('/plan')}>Plan</button>
       </nav>
 
-      <div 
-        className="plan-card"
-        style={{
-          overflow: 'visible',
-          height: 'auto',
-          maxHeight: 'none'
-        }}
-      >
+      <div className="plan-card plan-card-fluid">
         <h2>Plan Your Adventure</h2>
         
         <form onSubmit={handlePreview} className="plan-form">
@@ -228,15 +355,8 @@ export default function Plan() {
         {error && <div className="error">{error}</div>}
         {commitMsg && <div className="success-msg">{commitMsg}</div>}
 
-        {/* Loader while fetching */}
-        {loading && (
-          <div className="travel-loader">
-            <div className="travel-cloud one"></div>
-            <div className="travel-cloud two"></div>
-            <div className="travel-mountain small"></div>
-            <div className="travel-mountain big"></div>
-          </div>
-        )}
+        {/* Enhanced Travel Loader */}
+        {loading && <TravelLoader />}
 
         {/* Preview only when not loading */}
         {!loading && preview && (
@@ -249,7 +369,7 @@ export default function Plan() {
                   <span className="badge">{(preview.budget || '').toUpperCase()}</span>
                   {/* Trip total (if backend provides it) */}
                   {fmtBdt(preview.tripTotalBdt ?? preview.trip_total_bdt) && (
-                    <span className="badge" style={{ marginLeft: 8 }}>
+                    <span className="badge badge-ml">
                       Total: {fmtBdt(preview.tripTotalBdt ?? preview.trip_total_bdt)}
                     </span>
                   )}
@@ -264,8 +384,126 @@ export default function Plan() {
                 {committing ? 'Starting Tour...' : 'Start Tour'}
               </button>
             </div>
+
+            {/* ROUTE MAP */}
+            {(routeLoading || route || routeErr) && (
+              <div className="section">
+                <div className="preview-header preview-header-tight">
+                  <div>
+                    <h3 className="m-0">
+                      Route: {form.startLocation || 'Start'} → {preview?.destination || 'Destination'}
+                    </h3>
+                    {route && (
+                      <p className="muted m-0">
+                        {route.profile} • {route.distanceKm} km • {route.durationMin} min
+                      </p>
+                    )}
+                    {routeErr && <p className="muted m-0 text-error">{routeErr}</p>}
+                  </div>
+                </div>
+
+                {routeLoading && <div className="muted pv-8">Loading route…</div>}
+
+                {!routeLoading && route?.latlngs?.length ? (
+                  <div className="map-card">
+                    <MapContainer
+                      className="map-viewport"
+                      // Fit bounds if available, else center on first point
+                      bounds={route.bounds ? [
+                        [route.bounds[0][0], route.bounds[0][1]],
+                        [route.bounds[1][0], route.bounds[1][1]]
+                      ] : undefined}
+                      center={route.latlngs?.length ? route.latlngs[Math.floor(route.latlngs.length / 2)] : [0,0]}
+                      zoom={13}
+                      scrollWheelZoom={false}
+                    >
+                      <TileLayer
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
+                      />
+                      <Polyline positions={route.latlngs} />
+                    </MapContainer>
+                  </div>
+                ) : (
+                  !routeLoading && !routeErr && <div className="muted">No route data.</div>
+                )}
+              </div>
+            )}
+
+            {(weatherLoading || weather || weatherErr) && (
+              <div className="section">
+                <div className="preview-header preview-header-tight">
+                  <div>
+                    <h3 className="m-0">
+                      Weather in {weather?.place || preview?.destination}
+                    </h3>
+                    <p className="muted m-0">
+                      {preview.startDate} → {preview.endDate}
+                      {weather?.note ? ` • ${weather.note}` : ''}
+                      {weatherErr ? ` • ${weatherErr}` : ''}
+                    </p>
+                  </div>
+                </div>
+
+                {weatherLoading && <div className="muted pv-8">Loading weather…</div>}
+
+                {!weatherLoading && weather?.days?.length ? (
+                  <div className="table-container">
+                    <table className="wx-table">
+                      <thead>
+                        <tr className="thead-pink">
+                          <th className="wx-th">Date</th>
+                          <th className="wx-th">Cond</th>
+                          <th className="wx-th">Temp (°C)</th>
+                          <th className="wx-th">Rain&nbsp;Prob</th>
+                          <th className="wx-th">Rain (mm)</th>
+                          <th className="wx-th">Wind (km/h)</th>
+                          <th className="wx-th">Gust (km/h)</th>
+                          <th className="wx-th">UV</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {weather.days.map((d) => {
+                          const cond = d.weather || mapWeatherCode(d.weatherCode);
+                          return (
+                            <tr key={d.date}>
+                              <td className="wx-td">{d.date}</td>
+                              <td className="wx-td">{cond}</td>
+                              <td className="wx-td">
+                                {Math.round(d.tMin)}–{Math.round(d.tMax)}
+                              </td>
+                              <td className="wx-td" style={dangerStyle(Number(d.precipProb) >= WX_THRESHOLDS.precipProbPct)}>
+                                {Math.round(d.precipProb)}%
+                              </td>
+                              <td className="wx-td" style={dangerStyle(Number(d.precipMm) >= WX_THRESHOLDS.precipMm)}>
+                                {Math.round(d.precipMm)}
+                              </td>
+                              <td className="wx-td" style={dangerStyle(Number(d.windMaxKph) >= WX_THRESHOLDS.windKph)}>
+                                {Math.round(d.windMaxKph)}
+                              </td>
+                              <td className="wx-td" style={dangerStyle(Number(d.gustMaxKph) >= WX_THRESHOLDS.gustKph)}>
+                                {Math.round(d.gustMaxKph)}
+                              </td>
+                              <td className="wx-td" style={dangerStyle(Number(d.uvMax) >= WX_THRESHOLDS.uv)}>
+                                {Math.round(d.uvMax)}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                    <div className="muted wx-legend">
+                      <span className="wx-swatch" />
+                      Highlighted cells show critical weather — be careful out there!
+                    </div>
+                  </div>
+                ) : (
+                  !weatherLoading && !weatherErr && <div className="muted">No forecast data.</div>
+                )}
+              </div>
+            )}
             
-            <div className="days">
+            <div className="days days--spaced">
               {preview.days?.length ? (
                 preview.days.map((day, idx) => (
                   <div className="day-card" key={idx}>
@@ -282,10 +520,7 @@ export default function Plan() {
                       {day.transportation && (
                         <div className="kv">
                           <span className="k">🚗 Transport</span>
-                          <span
-                            className="v"
-                            style={{ display: 'inline-flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}
-                          >
+                          <span className="v kv-inline">
                             {day.transportation}
                             {fmtBdt(day.transportationCostBdt ?? day.transportation_cost_bdt) && (
                               <span className="pill">
@@ -300,10 +535,7 @@ export default function Plan() {
                       {day.hotel && (
                         <div className="kv">
                           <span className="k">🏨 Hotel</span>
-                          <span
-                            className="v"
-                            style={{ display: 'inline-flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}
-                          >
+                          <span className="v kv-inline">
                             {day.hotel}
                             {fmtBdt(day.hotelCostBdt ?? day.hotel_cost_bdt) && (
                               <span className="pill">

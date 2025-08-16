@@ -8,7 +8,6 @@ const loginWithGoogle = apiUrl + "/oauth2/authorization/google";
 
 const styles = {
   googleButton: {
-    // marginTop: '12px',
     padding: '8px 12px',
     background: '#ffffff',
     color: '#444',
@@ -23,30 +22,20 @@ const styles = {
     gap: '8px',
     transition: 'background 0.3s',
   },
-  googleIcon: {
-    width: '16px',
-    height: '16px',
-  },
-  googleText: {
-    color: '#444',
-  }
+  googleIcon: { width: '16px', height: '16px' },
+  googleText: { color: '#444' }
 };
 
 const Login = () => {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
+  const [formData, setFormData] = useState({ email: '', password: '' });
 
-  // NEW: pretty welcome popup state
+  // Overlays
   const [welcome, setWelcome] = useState({ open: false, name: '' });
+  const [errorBox, setErrorBox]   = useState({ open: false, message: '' });
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -63,23 +52,24 @@ const Login = () => {
       if (res.ok) {
         const user = await res.json();
 
-        // (optional) avoid storing the password hash
-        const { password, ...safeUser } = user;
+        const { password, ...safeUser } = user || {};
         localStorage.setItem('user', JSON.stringify(safeUser));
 
-        // ✨ instead of alert — show a beautiful welcome and then redirect
         setWelcome({ open: true, name: user?.name || 'Traveler' });
         setTimeout(() => {
-          window.location.replace('/profile');
+          window.location.replace('/home');
         }, 1400);
       } else {
-        const errorText = await res.text();
-        alert('Login failed: ' + errorText);
+        let msg = 'Username or password mismatch';
+        try {
+          const text = (await res.text())?.trim();
+          if (text) msg = text;
+        } catch {}
+        setErrorBox({ open: true, message: msg });
       }
-
     } catch (err) {
       console.error('Login error:', err);
-      alert('Something went wrong');
+      setErrorBox({ open: true, message: 'Username / Password is wrong. Please try again.' });
     }
   };
 
@@ -100,20 +90,35 @@ const Login = () => {
     };
   }, []);
 
-  // Small local CSS for the welcome animation (kept inside component)
-  const welcomeCss = `
+  // Local keyframes used by both success and error overlays
+  const localCss = `
     @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
     @keyframes popIn { 0% { transform: scale(.95); opacity: 0 } 100% { transform: scale(1); opacity: 1 } }
     @keyframes bar { 0% { width: 0 } 100% { width: 100% } }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0) }
+      20% { transform: translateX(-6px) }
+      40% { transform: translateX(6px) }
+      60% { transform: translateX(-4px) }
+      80% { transform: translateX(4px) }
+    }
   `;
+
+  // ESC to close error
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') setErrorBox({ open: false, message: '' }); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   return (
     <div className="login-page">
       {/* local animation keyframes */}
-      <style>{welcomeCss}</style>
+      <style>{localCss}</style>
 
       <div className="background"></div>
       <div className="stars" id="stars"></div>
+
       <div className="login-container">
         <div className="login-form-box">
           <h2 className="login-title">Login</h2>
@@ -127,6 +132,7 @@ const Login = () => {
                 value={formData.email}
                 onChange={handleInputChange}
                 required
+                autoComplete="email"
               />
             </div>
             <div className="input-group">
@@ -138,9 +144,12 @@ const Login = () => {
                 value={formData.password}
                 onChange={handleInputChange}
                 required
+                autoComplete="current-password"
               />
             </div>
+
             <button type="submit" className="login-button">Login</button>
+
             <button
               type="button"
               className="register-nav-button"
@@ -148,6 +157,7 @@ const Login = () => {
             >
               Create New Account
             </button>
+
             {/* Google Login Button */}
             <a href={loginWithGoogle} style={{ marginTop: '12px', textDecoration: 'none' }}>
               <div style={styles.googleButton}>
@@ -163,7 +173,7 @@ const Login = () => {
         </div>
       </div>
 
-      {/* ✨ Welcome overlay (shows after successful login) */}
+      {/* ✅ Welcome overlay */}
       {welcome.open && (
         <div
           style={{
@@ -190,43 +200,106 @@ const Login = () => {
           >
             <div
               style={{
-                width: 64,
-                height: 64,
-                borderRadius: '50%',
+                width: 64, height: 64, borderRadius: '50%',
                 margin: '0 auto 12px',
                 background: '#ec4899',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#fff',
-                fontSize: 30,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#fff', fontSize: 30,
                 boxShadow: '0 8px 16px rgba(236, 72, 153, .35)'
               }}
             >
               ✓
             </div>
             <h3 style={{ margin: '0 0 4px', color: '#111827', fontSize: 22 }}>Welcome, {welcome.name}!</h3>
-            <p className="muted" style={{ margin: 0 }}>Redirecting to your profile…</p>
+            <p className="muted" style={{ margin: 0 }}>What's about a new journey ? </p>
 
             {/* Progress bar */}
             <div
               style={{
-                height: 6,
-                borderRadius: 999,
-                background: '#fce7f3',
-                marginTop: 16,
-                overflow: 'hidden',
+                height: 6, borderRadius: 999, background: '#fce7f3',
+                marginTop: 16, overflow: 'hidden',
               }}
             >
               <div
                 style={{
-                  height: '100%',
-                  background: '#ec4899',
-                  width: 0,
-                  animation: 'bar 1.2s linear forwards',
+                  height: '100%', background: '#ec4899',
+                  width: 0, animation: 'bar 1.2s linear forwards',
                 }}
               />
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ❌ Error overlay (cool + on-theme) */}
+      {errorBox.open && (
+        <div
+          onClick={() => setErrorBox({ open: false, message: '' })}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2100,
+            animation: 'fadeIn .2s ease-out',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: 'min(420px, 92%)',
+              background: 'linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%)',
+              borderRadius: 16,
+              padding: 24,
+              boxShadow: '0 20px 50px rgba(0,0,0,0.25)',
+              textAlign: 'center',
+              animation: 'popIn .25s ease-out, shake .4s ease-out',
+            }}
+          >
+            <div
+              style={{
+                width: 64, height: 64, borderRadius: '50%',
+                margin: '0 auto 12px',
+                background: '#ef4444',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#fff', fontSize: 28,
+                boxShadow: '0 10px 18px rgba(239, 68, 68, .35)'
+              }}
+            >
+              !
+            </div>
+            <h3 style={{ margin: '0 0 6px', color: '#991b1b', fontSize: 21 }}>
+              Login failed
+            </h3>
+            <p className="muted" style={{ margin: 0, color: '#7f1d1d' }}>
+              {errorBox.message || 'Username or password mismatch'}
+            </p>
+
+            {/* Error progress bar in red, just for flair */}
+            <div
+              style={{
+                height: 6, borderRadius: 999, background: '#fee2e2',
+                marginTop: 16, overflow: 'hidden',
+              }}
+            >
+              <div
+                style={{
+                  height: '100%', background: '#ef4444',
+                  width: 0, animation: 'bar .9s linear forwards',
+                }}
+              />
+            </div>
+
+            <button
+              type="button"
+              className="login-button"
+              style={{ width: 180, marginTop: 14, background: '#991b1b' }}
+              onClick={() => setErrorBox({ open: false, message: '' })}
+            >
+              Try again
+            </button>
           </div>
         </div>
       )}
