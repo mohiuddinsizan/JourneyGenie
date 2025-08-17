@@ -1,5 +1,6 @@
 // File: src/pages/TourGuideApp.jsx
 import React, { useEffect, useMemo, useState } from 'react';
+import ReactDOM from 'react-dom';
 import {
   MapPin, Calendar, DollarSign, Users, Star, Clock, CheckCircle, Plus, Image,
   RefreshCw, List, CheckSquare, Video, LogOut
@@ -52,6 +53,21 @@ function normalizeTours(rawTours = []) {
     days: (t.days || []).map((d) => ({ ...d, activities: d.activities || [], photos: d.photos || [] })),
   }));
 }
+
+/** ---------- Modal helpers ---------- */
+function ModalPortal({ children }) {
+  return ReactDOM.createPortal(children, document.body);
+}
+
+function useBodyScrollLock(active) {
+  useEffect(() => {
+    if (!active) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [active]);
+}
+/** ----------------------------------- */
 
 const TourGuideApp = () => {
   const navigate = useNavigate();
@@ -152,6 +168,7 @@ const TourGuideApp = () => {
     setCurrentView('profile');
     setSelectedTour(null);
   };
+  const handleHomeClick = () => navigate('/home');
   const handleProfileClick = () => navigate('/profile');
   const handlePlanClick = () => navigate('/plan');
   const handleLogout = async () => {
@@ -160,7 +177,7 @@ const TourGuideApp = () => {
     } catch (e) {
       console.warn('Server logout failed (continuing):', e);
     } finally {
-      try { localStorage.removeItem('user'); } catch {}
+      try { localStorage.removeItem('user'); } catch { }
       setUserData(null);
       setTours([]);
       setSelectedTour(null);
@@ -186,7 +203,6 @@ const TourGuideApp = () => {
 
       if (!res.ok) {
         const t = (await res.text()) || '';
-        // Map backend message to friendly UI copy
         if (t.toLowerCase().includes('no photos')) {
           setGenVideoError('You still have no photos for this tour. Add some to generate a video.');
         } else {
@@ -195,7 +211,6 @@ const TourGuideApp = () => {
         return;
       }
 
-      // Expect UPDATED USER back
       const updatedUser = await res.json();
       const { password, ...safeUser } = updatedUser || {};
       setUserData(safeUser);
@@ -209,7 +224,7 @@ const TourGuideApp = () => {
         else setSelectedTour(null);
       }
 
-      try { localStorage.setItem('user', JSON.stringify(safeUser)); } catch {}
+      try { localStorage.setItem('user', JSON.stringify(safeUser)); } catch { }
       window.dispatchEvent(new CustomEvent('tours:updated', { detail: { reason: 'video-generated', tourId } }));
     } catch (e) {
       console.error('generateVideo failed:', e);
@@ -347,7 +362,7 @@ const TourGuideApp = () => {
           const next = (safeUser.tours || []).find(t => t.id === prev.id);
           return next ? { ...next, thumbnail: getTourThumb(next, 0) } : prev;
         });
-        try { localStorage.setItem('user', JSON.stringify(safeUser)); } catch {}
+        try { localStorage.setItem('user', JSON.stringify(safeUser)); } catch { }
       } else {
         const photoId = payload?.photoId ?? payload?.id ?? Date.now();
         const photoUrl = payload?.photoUrl ?? payload?.url ?? payload?.link;
@@ -396,7 +411,7 @@ const TourGuideApp = () => {
               };
             })
           };
-          try { localStorage.setItem('user', JSON.stringify(nextUser)); } catch {}
+          try { localStorage.setItem('user', JSON.stringify(nextUser)); } catch { }
           return nextUser;
         });
       }
@@ -420,12 +435,45 @@ const TourGuideApp = () => {
   if (loading) {
     return (
       <div className="plan-page">
-        <div className="navbar">
-          <button onClick={handleProfileClick}>Profile</button>
-          <button onClick={handlePlanClick}>Plan</button>
-          <button onClick={handleLogout} title="Log out">
-            <span className="tg-inlinecenter-6"><LogOut size={16} /> Logout</span>
-          </button>
+        <div className="navbar flex items-center justify-between px-4 py-2 bg-white shadow">
+          {/* Brand section (logo + name) */}
+          <div
+            className="brand flex items-center gap-2 cursor-pointer"
+            onClick={() => (window.location.href = "/home")}
+            title="JourneyGenie Home"
+            aria-label="JourneyGenie Home"
+          >
+            <img
+              src="/world-tour.png"
+              alt="JourneyGenie logo"
+              className="h-8 w-8 object-contain"
+              style={{ height: '20px', width: '20px', marginRight: '20px' }}
+            />
+            <span className="font-semibold text-lg">JourneyGenie</span>
+          </div>
+
+          {/* Nav buttons */}
+          <div className="flex items-center gap-4">
+
+            <button onClick={handleHomeClick} style={{ marginRight: '10px' }}>
+              Home
+            </button>
+
+            <button onClick={handleProfileClick} style={{ marginRight: '10px' }}>
+              Profile
+            </button>
+            <button onClick={handlePlanClick} style={{ marginRight: '10px' }}>
+              Plan
+            </button>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1 text-red-600 "
+              title="Log out"
+
+            >
+              <LogOut size={16} /> Logout
+            </button>
+          </div>
         </div>
         <div className="plan-card">
           <p>Loading your profile…</p>
@@ -437,12 +485,44 @@ const TourGuideApp = () => {
   if (error) {
     return (
       <div className="plan-page">
-        <div className="navbar">
-          <button onClick={handleProfileClick}>Profile</button>
-          <button onClick={handlePlanClick}>Plan</button>
-          <button onClick={handleLogout} title="Log out">
-            <span className="tg-inlinecenter-6"><LogOut size={16} /> Logout</span>
-          </button>
+        <div className="navbar flex items-center justify-between px-4 py-2 bg-white shadow">
+          {/* Brand section (logo + name) */}
+          <div
+            className="brand flex items-center gap-2 cursor-pointer"
+            onClick={() => (window.location.href = "/home")}
+            title="JourneyGenie Home"
+            aria-label="JourneyGenie Home"
+          >
+            <img
+              src="/world-tour.png"
+              alt="JourneyGenie logo"
+              className="h-8 w-8 object-contain"
+              style={{ height: '20px', width: '20px', marginRight: '20px' }}
+            />
+            <span className="font-semibold text-lg">JourneyGenie</span>
+          </div>
+
+          {/* Nav buttons */}
+          <div className="flex items-center gap-4">
+
+            <button onClick={handleHomeClick} style={{ marginRight: '10px' }}>
+              Home
+            </button>
+
+            <button onClick={handleProfileClick} style={{ marginRight: '10px' }}>
+              Profile
+            </button>
+            <button onClick={handlePlanClick} style={{ marginRight: '10px' }}>
+              Plan
+            </button>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1 text-red-600 "
+              title="Log out"
+            >
+              <LogOut size={16} /> Logout
+            </button>
+          </div>
         </div>
         <div className="plan-card">
           <h2>We couldn't load your account</h2>
@@ -455,12 +535,44 @@ const TourGuideApp = () => {
 
   const ProfilePage = () => (
     <div className="plan-page">
-      <div className="navbar">
-        <button onClick={handleProfileClick}>Profile</button>
-        <button onClick={handlePlanClick}>Plan</button>
-        <button onClick={handleLogout} title="Log out">
-          <span className="tg-inlinecenter-6"><LogOut size={16} /> Logout</span>
-        </button>
+      <div className="navbar flex items-center justify-between px-4 py-2 bg-white shadow">
+        {/* Brand section (logo + name) */}
+        <div
+          className="brand flex items-center gap-2 cursor-pointer"
+          onClick={() => (window.location.href = "/home")}
+          title="JourneyGenie Home"
+          aria-label="JourneyGenie Home"
+        >
+          <img
+            src="/world-tour.png"
+            alt="JourneyGenie logo"
+            className="h-8 w-8 object-contain"
+            style={{ height: '20px', width: '20px', marginRight: '10px' }}
+          />
+          <span className="font-bold text-lg">JourneyGenie</span>
+        </div>
+
+        {/* Nav buttons */}
+        <div className="flex items-center gap-4">
+
+          <button onClick={handleHomeClick} style={{ marginRight: '10px' }}>
+            Home
+          </button>
+
+          <button onClick={handleProfileClick} style={{ marginRight: '10px' }}>
+            Profile
+          </button>
+          <button onClick={handlePlanClick} style={{ marginRight: '10px' }}>
+            Plan
+          </button>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-1 text-red-600 "
+            title="Log out"
+          >
+            <LogOut size={16} /> Logout
+          </button>
+        </div>
       </div>
 
       <div className="plan-card">
@@ -477,7 +589,7 @@ const TourGuideApp = () => {
               </div>
               <div className="kv">
                 <div className="k"><Star size={16} /> Rating</div>
-                <div className="v">{rating ? `${rating} ⭐` : '—'}</div>
+                <div className="v">{rating ? `${rating} ⭐` : '4.8'}</div>
               </div>
               <div className="kv">
                 <div className="k"><Calendar size={16} /> Joined</div>
@@ -579,14 +691,14 @@ const TourGuideApp = () => {
           setTours(updatedTours);
           const updatedSel = updatedTours.find(t => t.id === selectedTour.id) || { ...selectedTour, title };
           setSelectedTour({ ...updatedSel, thumbnail: getTourThumb(updatedSel, 0) });
-          try { localStorage.setItem('user', JSON.stringify(safeUser)); } catch {}
+          try { localStorage.setItem('user', JSON.stringify(safeUser)); } catch { }
         } else {
           setSelectedTour(prev => prev ? { ...prev, title } : prev);
           setTours(prev => (prev || []).map(t => t.id === selectedTour.id ? { ...t, title } : t));
           setUserData(prev => {
             if (!prev) return prev;
             const nextUser = { ...prev, tours: (prev.tours || []).map(t => t.id === selectedTour.id ? { ...t, title } : t) };
-            try { localStorage.setItem('user', JSON.stringify(nextUser)); } catch {}
+            try { localStorage.setItem('user', JSON.stringify(nextUser)); } catch { }
             return nextUser;
           });
         }
@@ -604,27 +716,45 @@ const TourGuideApp = () => {
 
     return (
       <div className="plan-page">
-        <div className="navbar">
-          <button onClick={handleBack}>← Back to Profile</button>
-          <button onClick={() => setEditOpen(true)}>Edit Tour</button>
 
-          {/* Generate Video */}
-          <button
-            className="btn success"
-            onClick={() => generateVideo(selectedTour.id)}
-            disabled={genVideoLoading || !hasAnyPhotos}
-            title={hasAnyPhotos ? 'Create a video from all tour photos' : 'Add photos to enable video'}
+        <div className="navbar flex items-center justify-between px-4 py-2 bg-white shadow">
+          <div
+            className="brand flex items-center gap-2 cursor-pointer"
+            onClick={() => (window.location.href = "/home")}
+            title="JourneyGenie Home"
+            aria-label="JourneyGenie Home"
           >
-            {genVideoLoading ? (
-              <span className="tg-inlinecenter-6">
-                <RefreshCw size={16} className="tg-spin" /> Generating…
-              </span>
-            ) : (
-              <span className="tg-inlinecenter-6">
-                <Video size={16} /> Generate Video
-              </span>
-            )}
-          </button>
+            <img
+              src="/world-tour.png"
+              alt="JourneyGenie logo"
+              className="h-8 w-8 object-contain"
+              style={{ height: '20px', width: '20px', marginRight: '10px' }}
+            />
+            <span className="font-bold text-lg">JourneyGenie</span>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <button onClick={handleBack} style={{marginRight:'10px'}}>← Back to Profile</button>
+            <button onClick={() => setEditOpen(true)} style={{marginRight:'10px'}}>Edit Tour</button>
+
+            <button
+              className="btn success"
+              onClick={() => generateVideo(selectedTour.id)}
+              disabled={genVideoLoading || !hasAnyPhotos}
+              title={hasAnyPhotos ? "Create a video from all tour photos" : "Add photos to enable video"}
+              style={{marginRight:'10px'}}
+            >
+              {genVideoLoading ? (
+                <span className="tg-inlinecenter-6">
+                  <RefreshCw size={16} className="tg-spin" /> Generating…
+                </span>
+              ) : (
+                <span className="tg-inlinecenter-6">
+                  <Video size={16} /> Generate Video
+                </span>
+              )}
+            </button>
+          </div>
         </div>
 
         <div className="plan-card">
@@ -840,62 +970,98 @@ const ConfirmModal = React.memo(function ConfirmModal({ title, message, onCancel
     return () => document.removeEventListener('keydown', onKey);
   }, [onCancel, onConfirm]);
 
+  // lock body scroll while open
+  useBodyScrollLock(true);
+
   return (
-    <div className="tg-backdrop">
-      <div className="plan-card tg-dialog-narrow" role="dialog" aria-modal="true">
-        <div className="preview-header tg-tight">
-          <div>
-            <h3 className="tg-h3-icons">
-              <CheckCircle size={20} /> {title}
-            </h3>
+    <ModalPortal>
+      {/* Full-viewport overlay */}
+      <div className="fixed inset-0 z-[1000] bg-black/40">
+        {/* Centered dialog */}
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="plan-card tg-dialog-narrow max-h-[80vh] overflow-auto"
+          style={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+          }}
+        >
+          <div className="preview-header tg-tight">
+            <div>
+              <h3 className="tg-h3-icons">
+                <CheckCircle size={20} /> {title}
+              </h3>
+            </div>
+          </div>
+          <div className="muted" style={{ marginBottom: 16 }}>{message}</div>
+          <div className="tg-flex-gap8" style={{ justifyContent: 'flex-end' }}>
+            <button type="button" className="btn" onClick={onCancel}>Cancel</button>
+            <button type="button" className="btn success" onClick={onConfirm}>
+              <span className="tg-inlinecenter-6">
+                <CheckCircle size={16} /> Mark done
+              </span>
+            </button>
           </div>
         </div>
-        <div className="muted" style={{ marginBottom: 16 }}>{message}</div>
-        <div className="tg-flex-gap8" style={{ justifyContent: 'flex-end' }}>
-          <button type="button" className="btn" onClick={onCancel}>Cancel</button>
-          <button type="button" className="btn success" onClick={onConfirm}>
-            <span className="tg-inlinecenter-6">
-              <CheckCircle size={16} /> Mark done
-            </span>
-          </button>
-        </div>
       </div>
-    </div>
+    </ModalPortal>
   );
 });
 
 const EditTitleModal = React.memo(function EditTitleModal({ open, titleValue, onChangeTitle, onCancel, onSave }) {
   useEffect(() => {
+    if (!open) return;
     const onKey = (e) => {
       if (e.key === 'Escape') onCancel();
       if (e.key === 'Enter') onSave();
     };
-    if (open) document.addEventListener('keydown', onKey);
+    document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [open, onCancel, onSave]);
 
   if (!open) return null;
+
+  // lock body scroll while open
+  useBodyScrollLock(true);
+
   return (
-    <div className="tg-backdrop">
-      <div className="plan-card tg-dialog-narrow" role="dialog" aria-modal="true">
-        <div className="preview-header tg-tight">
-          <div><h3 className="tg-h3-icons">Edit Tour Title</h3></div>
-        </div>
-        <div className="tg-flex-gap8" style={{ marginBottom: 12 }}>
-          <input
-            type="text"
-            placeholder="Enter tour title"
-            value={titleValue}
-            onChange={(e) => onChangeTitle(e.target.value)}
-            className="tg-input"
-          />
-        </div>
-        <div className="tg-flex-gap8" style={{ justifyContent: 'flex-end' }}>
-          <button type="button" className="btn" onClick={onCancel}>Cancel</button>
-          <button type="button" className="btn success" onClick={onSave}>Save</button>
+    <ModalPortal>
+      {/* Full-viewport overlay */}
+      <div className="fixed inset-0 z-[1000] bg-black/40">
+        {/* Centered dialog */}
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="plan-card tg-dialog-narrow max-h-[80vh] overflow-auto"
+          style={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+          }}
+        >
+          <div className="preview-header tg-tight">
+            <div><h3 className="tg-h3-icons">Edit Tour Title</h3></div>
+          </div>
+          <div className="tg-flex-gap8" style={{ marginBottom: 12 }}>
+            <input
+              type="text"
+              placeholder="Enter tour title"
+              value={titleValue}
+              onChange={(e) => onChangeTitle(e.target.value)}
+              className="tg-input"
+            />
+          </div>
+          <div className="tg-flex-gap8" style={{ justifyContent: 'flex-end' }}>
+            <button type="button" className="btn" onClick={onCancel}>Cancel</button>
+            <button type="button" className="btn success" onClick={onSave}>Save</button>
+          </div>
         </div>
       </div>
-    </div>
+    </ModalPortal>
   );
 });
 
