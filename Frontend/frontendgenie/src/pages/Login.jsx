@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import './Login.css';
 import './Background.css';
 
-const apiUrl = 'http://localhost:8080';
+const apiUrl = import.meta.env.REACT_APP_API_URL;
 const loginWithGoogle = apiUrl + "/oauth2/authorization/google";
 
 const styles = {

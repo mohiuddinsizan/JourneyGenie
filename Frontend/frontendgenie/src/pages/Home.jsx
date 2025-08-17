@@ -2,6 +2,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Home.css';
+import ChatBot from '../components/Chatbot';
 
 import nature1 from '../assets/nature-1.jpg';
 import nature2 from '../assets/nature-2.jpg';
@@ -43,6 +44,9 @@ const Home = () => {
           </div>
         </div>
       </div>
+        <div className="chatbot-wrapper">
+          <ChatBot />
+        </div>
     </div>
   );
 };
