@@ -43,6 +43,7 @@ public class Tour {
 
     private String video;
 
+    @Column(name = "blog", columnDefinition = "TEXT")   // ✅ TEXT in Postgres
     private String blog;
 
     @OneToMany(mappedBy = "tour", cascade = CascadeType.ALL, orphanRemoval = true)

@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import ReactDOM from 'react-dom';
 import {
   MapPin, Calendar, DollarSign, Users, Star, Clock, CheckCircle, Plus, Image,
-  RefreshCw, List, CheckSquare, Video, LogOut
+  RefreshCw, List, CheckSquare, Video, LogOut, BookOpen
 } from 'lucide-react';
 import './Profile.css';
 import { useNavigate } from 'react-router-dom';
@@ -85,6 +85,16 @@ const TourGuideApp = () => {
   const [genVideoLoading, setGenVideoLoading] = useState(false);
   const [genVideoError, setGenVideoError] = useState('');
 
+  // ▼▼ NEW: lift view state so it persists across re-renders
+  // modes: 'all' | 'selected' | 'blog' | 'vlog'
+  const [dayMode, setDayMode] = useState('all');
+  const [selectedDays, setSelectedDays] = useState(new Set());
+  // ▲▲
+
+  // ▼▼ NEW: blog creation loading state
+  const [blogLoading, setBlogLoading] = useState(false);
+  // ▲▲
+
   const loadUserFromLocalStorage = () => {
     try {
       const raw = localStorage.getItem('user');
@@ -163,6 +173,9 @@ const TourGuideApp = () => {
   const handleShowDetails = (tour) => {
     setSelectedTour(tour);
     setCurrentView('tourdetails');
+    // If you want to reset tab per-tour, uncomment:
+    // setDayMode('all');
+    // setSelectedDays(new Set());
   };
   const handleBack = () => {
     setCurrentView('profile');
@@ -645,9 +658,6 @@ const TourGuideApp = () => {
   const TourDetailsPage = () => {
     if (!selectedTour) return null;
 
-    const [dayMode, setDayMode] = useState('all');
-    const [selectedDays, setSelectedDays] = useState(new Set());
-
     // Title edit modal state
     const [editOpen, setEditOpen] = useState(false);
     const [newTitle, setNewTitle] = useState(selectedTour?.title || '');
@@ -656,6 +666,7 @@ const TourGuideApp = () => {
     const daysToRender = useMemo(() => {
       const list = selectedTour.days || [];
       if (dayMode === 'all') return list;
+      if (dayMode !== 'selected') return []; // blog/vlog -> nothing
       if (!selectedDays.size) return [];
       return list.filter((d) => selectedDays.has(d.id));
     }, [dayMode, selectedTour, selectedDays]);
@@ -709,10 +720,51 @@ const TourGuideApp = () => {
       }
     };
 
-    // has any photos? (used to show hint + disable video gen)
+    // photos presence (for Generate Video button state)
     const hasAnyPhotos = useMemo(() => {
       return !!(selectedTour?.days || []).some(d => (d.photos || []).length > 0);
     }, [selectedTour]);
+
+    // Blog helpers
+    const hasBlog = !!(selectedTour?.blog && String(selectedTour.blog).trim().length);
+    const onCreateBlog = async () => {
+      if (!selectedTour?.id || blogLoading) return;
+      setBlogLoading(true);
+      try {
+        const token = localStorage.getItem('token'); // optional bearer, cookies are already included
+        const res = await fetch(`${API_BASE}/api/blog/generate/${selectedTour.id}`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            Accept: 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
+
+        if (!res.ok) {
+          const t = await res.text();
+          alert(t || `Failed to generate blog (HTTP ${res.status})`);
+          return;
+        }
+
+        const updatedUser = await res.json();
+        const { password, ...safeUser } = updatedUser || {};
+        setUserData(safeUser);
+        const updatedTours = normalizeTours(safeUser.tours || []);
+        setTours(updatedTours);
+        const nt = updatedTours.find(t => String(t.id) === String(selectedTour.id));
+        if (nt) setSelectedTour({ ...nt, thumbnail: getTourThumb(nt, 0) });
+        try { localStorage.setItem('user', JSON.stringify(safeUser)); } catch {}
+        window.dispatchEvent(new CustomEvent('tours:updated', { detail: { reason: 'blog-generated', tourId: selectedTour.id } }));
+        // IMPORTANT: keep current tab
+        setDayMode('blog');
+      } catch (e) {
+        console.error('Error calling blog API', e);
+        alert(e?.message || 'Error calling blog API');
+      } finally {
+        setBlogLoading(false);
+      }
+    };
 
     return (
       <div className="plan-page">
@@ -772,12 +824,7 @@ const TourGuideApp = () => {
               </div>
             </div>
 
-            {!hasAnyPhotos && (
-              <div className="muted tg-pv-8">
-                You still have no photos for this tour. Add some to generate a video.
-              </div>
-            )}
-
+            {/* Filter bar with four modes */}
             <div className="filter-bar tg-filter-bar">
               <button
                 type="button"
@@ -799,11 +846,33 @@ const TourGuideApp = () => {
                   <CheckSquare size={16} /> Selected Days
                 </span>
               </button>
+              <button
+                type="button"
+                className={`btn ${dayMode === 'blog' ? 'success' : ''}`}
+                onClick={() => setDayMode('blog')}
+                title="Show blog"
+              >
+                <span className="tg-inlinecenter-6">
+                  <BookOpen size={16} /> Blog
+                </span>
+              </button>
+              <button
+                type="button"
+                className={`btn ${dayMode === 'vlog' ? 'success' : ''}`}
+                onClick={() => setDayMode('vlog')}
+                title="Show video only"
+              >
+                <span className="tg-inlinecenter-6">
+                  <Video size={16} /> Vlog
+                </span>
+              </button>
+
               {dayMode === 'selected' && (
                 <span className="muted tg-ml-4">Choose which days to display below</span>
               )}
             </div>
 
+            {/* Day selector (only when "Selected Days") */}
             {dayMode === 'selected' && (
               <div className="day-selector tg-day-selector">
                 {(selectedTour.days || []).map((d, i) => (
@@ -820,111 +889,151 @@ const TourGuideApp = () => {
               </div>
             )}
 
-            <div className="days">
-              {(daysToRender || []).length ? (
-                daysToRender.map((day) => (
-                  <div key={day.id} className="day-card">
-                    <div className="day-head">
-                      <h4>
-                        <span className="day-number">
-                          {(selectedTour.days || []).findIndex(d => d.id === day.id) + 1}
-                        </span>
-                        Day {(selectedTour.days || []).findIndex(d => d.id === day.id) + 1} - {new Date(day.date).toLocaleDateString()}
-                      </h4>
-                      <div className="chip">
-                        {day.activities?.filter((a) => a.status === 'done').length || 0} / {day.activities?.length || 0} completed
-                      </div>
-                    </div>
-
-                    <div className="day-content">
-                      <div className="activities">
-                        <h4 className="section-title">Activities</h4>
-                        {day.activities && day.activities.length > 0 ? (
-                          <ul>
-                            {day.activities.map((activity) => (
-                              <li key={activity.id}>
-                                <strong>{activity.description}</strong>
-                                <div className="tg-activity-actions">
-                                  {activity.status === 'done' ? (
-                                    <>
-                                      <CheckCircle size={18} />
-                                      <span className="pill">done</span>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Clock size={18} />
-                                      <span className="pill">pending</span>
-                                      <button
-                                        type="button"
-                                        className="btn success"
-                                        onClick={() => setConfirmDlg({ open: true, tourId: selectedTour.id, dayId: day.id, activityId: activity.id })}
-                                        title="Mark this activity as done"
-                                      >
-                                        <span className="tg-inlinecenter-6">
-                                          <CheckCircle size={16} /> Mark done
-                                        </span>
-                                      </button>
-                                    </>
-                                  )}
-                                </div>
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <p className="muted">No activities yet for this day.</p>
-                        )}
-
-                        <AddActivityRow onAdd={(desc) => addActivity(selectedTour.id, day.id, desc)} />
-                      </div>
-
-                      {day.photos && (
-                        <div className="photos">
-                          {day.photos.length > 0 && (
-                            <div className="photos-grid">
-                              {day.photos.map((photo) => (
-                                <img key={photo.id} src={photo.link} alt="Tour moment" />
-                              ))}
-                            </div>
-                          )}
-                          <AddPhotoRow onUpload={(file) => uploadPhotoFile(selectedTour.id, day.id, file)} />
+            {/* ACTIVITIES PAGE (All/Selected) */}
+            {(dayMode === 'all' || dayMode === 'selected') && (
+              <div className="days">
+                {(daysToRender || []).length ? (
+                  daysToRender.map((day) => (
+                    <div key={day.id} className="day-card">
+                      <div className="day-head">
+                        <h4>
+                          <span className="day-number">
+                            {(selectedTour.days || []).findIndex(d => d.id === day.id) + 1}
+                          </span>
+                          Day {(selectedTour.days || []).findIndex(d => d.id === day.id) + 1} - {new Date(day.date).toLocaleDateString()}
+                        </h4>
+                        <div className="chip">
+                          {day.activities?.filter((a) => a.status === 'done').length || 0} / {day.activities?.length || 0} completed
                         </div>
-                      )}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="muted tg-pv-8">
-                  {dayMode === 'selected' ? 'No days selected. Use the checkboxes above.' : 'No days to show.'}
-                </div>
-              )}
-            </div>
+                      </div>
 
-            {/* Video section: show Cloudinary video if present, else dummy YouTube */}
-            <div className="video-section tg-video">
-              <h4 className="section-title tg-inlinecenter-8">
-                <Video size={18} /> Trip Video
-              </h4>
-              <div className="tg-video-frame">
-                {selectedTour?.video ? (
-                  <video
-                    className="tg-video-iframe"
-                    src={selectedTour.video}
-                    controls
-                    playsInline
-                    preload="metadata"
-                  />
+                      <div className="day-content">
+                        <div className="activities">
+                          <h4 className="section-title">Activities</h4>
+                          {day.activities && day.activities.length > 0 ? (
+                            <ul>
+                              {day.activities.map((activity) => (
+                                <li key={activity.id}>
+                                  <strong>{activity.description}</strong>
+                                  <div className="tg-activity-actions">
+                                    {activity.status === 'done' ? (
+                                      <>
+                                        <CheckCircle size={18} />
+                                        <span className="pill">done</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Clock size={18} />
+                                        <span className="pill">pending</span>
+                                        <button
+                                          type="button"
+                                          className="btn success"
+                                          onClick={() => setConfirmDlg({ open: true, tourId: selectedTour.id, dayId: day.id, activityId: activity.id })}
+                                          title="Mark this activity as done"
+                                        >
+                                          <span className="tg-inlinecenter-6">
+                                            <CheckCircle size={16} /> Mark done
+                                          </span>
+                                        </button>
+                                      </>
+                                    )}
+                                  </div>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="muted">No activities yet for this day.</p>
+                          )}
+
+                          <AddActivityRow onAdd={(desc) => addActivity(selectedTour.id, day.id, desc)} />
+                        </div>
+
+                        {day.photos && (
+                          <div className="photos">
+                            {day.photos.length > 0 && (
+                              <div className="photos-grid">
+                                {day.photos.map((photo) => (
+                                  <img key={photo.id} src={photo.link} alt="Tour moment" />
+                                ))}
+                              </div>
+                            )}
+                            <AddPhotoRow onUpload={(file) => uploadPhotoFile(selectedTour.id, day.id, file)} />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))
                 ) : (
-                  <iframe
-                    src="https://www.youtube.com/embed/Scxs7L0vhZ4"
-                    title="Trip Video"
-                    className="tg-video-iframe"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                  />
+                  <div className="muted tg-pv-8">
+                    {dayMode === 'selected' ? 'No days selected. Use the checkboxes above.' : 'No days to show.'}
+                  </div>
                 )}
               </div>
-              {genVideoError && <p className="muted text-error" style={{ marginTop: 8 }}>{genVideoError}</p>}
-            </div>
+            )}
+
+            {/* BLOG PAGE */}
+            {dayMode === 'blog' && (
+              <div className="tg-mt-16">
+                <h4 className="section-title tg-inlinecenter-8">
+                  <BookOpen size={18} /> Blog
+                </h4>
+                {hasBlog ? (
+                  <div className="kv" style={{ whiteSpace: 'pre-wrap' }}>
+                    <div className="k">Memory</div>
+                    <div className="v">{selectedTour.blog}</div>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}>
+                    <button
+                      type="button"
+                      className={`btn success ${blogLoading ? 'tg-disabled' : ''}`}
+                      onClick={onCreateBlog}
+                      disabled={blogLoading}
+                      title={blogLoading ? 'Creating Blog…' : 'Create Blog'}
+                    >
+                      <span className="tg-inlinecenter-6">
+                        {blogLoading ? (
+                          <>
+                            <RefreshCw size={16} className="tg-spin" /> Creating Blog…
+                          </>
+                        ) : (
+                          <>Create Blog</>
+                        )}
+                      </span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* VLOG PAGE (video only) */}
+            {dayMode === 'vlog' && (
+              <div className="video-section tg-video">
+                <h4 className="section-title tg-inlinecenter-8">
+                  <Video size={18} /> Trip Vlog
+                </h4>
+                <div className="tg-video-frame">
+                  {selectedTour?.video ? (
+                    <video
+                      className="tg-video-iframe"
+                      src={selectedTour.video}
+                      controls
+                      playsInline
+                      preload="metadata"
+                    />
+                  ) : (
+                    <iframe
+                      src="https://www.youtube.com/embed/Scxs7L0vhZ4"
+                      title="Trip Vlog"
+                      className="tg-video-iframe"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                    />
+                  )}
+                </div>
+                {genVideoError && <p className="muted text-error" style={{ marginTop: 8 }}>{genVideoError}</p>}
+              </div>
+            )}
 
             {/* Edit Title Modal */}
             {typeof editOpen !== 'undefined' && editOpen && (
