@@ -85,15 +85,12 @@ const TourGuideApp = () => {
   const [genVideoLoading, setGenVideoLoading] = useState(false);
   const [genVideoError, setGenVideoError] = useState('');
 
-  // ▼▼ NEW: lift view state so it persists across re-renders
-  // modes: 'all' | 'selected' | 'blog' | 'vlog'
+  // view modes: 'all' | 'selected' | 'blog' | 'vlog'
   const [dayMode, setDayMode] = useState('all');
   const [selectedDays, setSelectedDays] = useState(new Set());
-  // ▲▲
 
-  // ▼▼ NEW: blog creation loading state
+  // blog creation loading state
   const [blogLoading, setBlogLoading] = useState(false);
-  // ▲▲
 
   const loadUserFromLocalStorage = () => {
     try {
@@ -173,9 +170,6 @@ const TourGuideApp = () => {
   const handleShowDetails = (tour) => {
     setSelectedTour(tour);
     setCurrentView('tourdetails');
-    // If you want to reset tab per-tour, uncomment:
-    // setDayMode('all');
-    // setSelectedDays(new Set());
   };
   const handleBack = () => {
     setCurrentView('profile');
@@ -238,6 +232,7 @@ const TourGuideApp = () => {
       }
 
       try { localStorage.setItem('user', JSON.stringify(safeUser)); } catch { }
+      // ✅ FIXED: closed both object braces before the parenthesis
       window.dispatchEvent(new CustomEvent('tours:updated', { detail: { reason: 'video-generated', tourId } }));
     } catch (e) {
       console.error('generateVideo failed:', e);
@@ -449,41 +444,20 @@ const TourGuideApp = () => {
     return (
       <div className="plan-page">
         <div className="navbar flex items-center justify-between px-4 py-2 bg-white shadow">
-          {/* Brand section (logo + name) */}
           <div
             className="brand flex items-center gap-2 cursor-pointer"
             onClick={() => (window.location.href = "/home")}
             title="JourneyGenie Home"
             aria-label="JourneyGenie Home"
           >
-            <img
-              src="/world-tour.png"
-              alt="JourneyGenie logo"
-              className="h-8 w-8 object-contain"
-              style={{ height: '20px', width: '20px', marginRight: '20px' }}
-            />
+            <img src="/world-tour.png" alt="JourneyGenie logo" className="h-8 w-8 object-contain" style={{ height: '20px', width: '20px', marginRight: '20px' }} />
             <span className="font-semibold text-lg">JourneyGenie</span>
           </div>
-
-          {/* Nav buttons */}
           <div className="flex items-center gap-4">
-
-            <button onClick={handleHomeClick} style={{ marginRight: '10px' }}>
-              Home
-            </button>
-
-            <button onClick={handleProfileClick} style={{ marginRight: '10px' }}>
-              Profile
-            </button>
-            <button onClick={handlePlanClick} style={{ marginRight: '10px' }}>
-              Plan
-            </button>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-1 text-red-600 "
-              title="Log out"
-
-            >
+            <button onClick={handleHomeClick} style={{ marginRight: '10px' }}>Home</button>
+            <button onClick={handleProfileClick} style={{ marginRight: '10px' }}>Profile</button>
+            <button onClick={handlePlanClick} style={{ marginRight: '10px' }}>Plan</button>
+            <button onClick={handleLogout} className="flex items-center gap-1 text-red-600 " title="Log out">
               <LogOut size={16} /> Logout
             </button>
           </div>
@@ -499,40 +473,20 @@ const TourGuideApp = () => {
     return (
       <div className="plan-page">
         <div className="navbar flex items-center justify-between px-4 py-2 bg-white shadow">
-          {/* Brand section (logo + name) */}
           <div
             className="brand flex items-center gap-2 cursor-pointer"
             onClick={() => (window.location.href = "/home")}
             title="JourneyGenie Home"
             aria-label="JourneyGenie Home"
           >
-            <img
-              src="/world-tour.png"
-              alt="JourneyGenie logo"
-              className="h-8 w-8 object-contain"
-              style={{ height: '20px', width: '20px', marginRight: '20px' }}
-            />
+            <img src="/world-tour.png" alt="JourneyGenie logo" className="h-8 w-8 object-contain" style={{ height: '20px', width: '20px', marginRight: '20px' }} />
             <span className="font-semibold text-lg">JourneyGenie</span>
           </div>
-
-          {/* Nav buttons */}
           <div className="flex items-center gap-4">
-
-            <button onClick={handleHomeClick} style={{ marginRight: '10px' }}>
-              Home
-            </button>
-
-            <button onClick={handleProfileClick} style={{ marginRight: '10px' }}>
-              Profile
-            </button>
-            <button onClick={handlePlanClick} style={{ marginRight: '10px' }}>
-              Plan
-            </button>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-1 text-red-600 "
-              title="Log out"
-            >
+            <button onClick={handleHomeClick} style={{ marginRight: '10px' }}>Home</button>
+            <button onClick={handleProfileClick} style={{ marginRight: '10px' }}>Profile</button>
+            <button onClick={handlePlanClick} style={{ marginRight: '10px' }}>Plan</button>
+            <button onClick={handleLogout} className="flex items-center gap-1 text-red-600 " title="Log out">
               <LogOut size={16} /> Logout
             </button>
           </div>
@@ -549,40 +503,20 @@ const TourGuideApp = () => {
   const ProfilePage = () => (
     <div className="plan-page">
       <div className="navbar flex items-center justify-between px-4 py-2 bg-white shadow">
-        {/* Brand section (logo + name) */}
         <div
           className="brand flex items-center gap-2 cursor-pointer"
           onClick={() => (window.location.href = "/home")}
           title="JourneyGenie Home"
           aria-label="JourneyGenie Home"
         >
-          <img
-            src="/world-tour.png"
-            alt="JourneyGenie logo"
-            className="h-8 w-8 object-contain"
-            style={{ height: '20px', width: '20px', marginRight: '10px' }}
-          />
+          <img src="/world-tour.png" alt="JourneyGenie logo" className="h-8 w-8 object-contain" style={{ height: '20px', width: '20px', marginRight: '10px' }} />
           <span className="font-bold text-lg">JourneyGenie</span>
         </div>
-
-        {/* Nav buttons */}
         <div className="flex items-center gap-4">
-
-          <button onClick={handleHomeClick} style={{ marginRight: '10px' }}>
-            Home
-          </button>
-
-          <button onClick={handleProfileClick} style={{ marginRight: '10px' }}>
-            Profile
-          </button>
-          <button onClick={handlePlanClick} style={{ marginRight: '10px' }}>
-            Plan
-          </button>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-1 text-red-600 "
-            title="Log out"
-          >
+          <button onClick={handleHomeClick} style={{ marginRight: '10px' }}>Home</button>
+          <button onClick={handleProfileClick} style={{ marginRight: '10px' }}>Profile</button>
+          <button onClick={handlePlanClick} style={{ marginRight: '10px' }}>Plan</button>
+          <button onClick={handleLogout} className="flex items-center gap-1 text-red-600 " title="Log out">
             <LogOut size={16} /> Logout
           </button>
         </div>
@@ -715,7 +649,7 @@ const TourGuideApp = () => {
         }
         setEditOpen(false);
       } catch (e) {
-        console.error('[update title] failed:', e);
+        console.error('[update title] failed]:', e);
         alert(e?.message || 'Failed to update title');
       }
     };
@@ -756,8 +690,7 @@ const TourGuideApp = () => {
         if (nt) setSelectedTour({ ...nt, thumbnail: getTourThumb(nt, 0) });
         try { localStorage.setItem('user', JSON.stringify(safeUser)); } catch {}
         window.dispatchEvent(new CustomEvent('tours:updated', { detail: { reason: 'blog-generated', tourId: selectedTour.id } }));
-        // IMPORTANT: keep current tab
-        setDayMode('blog');
+        setDayMode('blog'); // stay on Blog tab
       } catch (e) {
         console.error('Error calling blog API', e);
         alert(e?.message || 'Error calling blog API');
@@ -769,6 +702,7 @@ const TourGuideApp = () => {
     return (
       <div className="plan-page">
 
+        {/* NAVBAR: only Back + brand (moved Edit Title & Generate Video out of here) */}
         <div className="navbar flex items-center justify-between px-4 py-2 bg-white shadow">
           <div
             className="brand flex items-center gap-2 cursor-pointer"
@@ -776,42 +710,19 @@ const TourGuideApp = () => {
             title="JourneyGenie Home"
             aria-label="JourneyGenie Home"
           >
-            <img
-              src="/world-tour.png"
-              alt="JourneyGenie logo"
-              className="h-8 w-8 object-contain"
-              style={{ height: '20px', width: '20px', marginRight: '10px' }}
-            />
+            <img src="/world-tour.png" alt="JourneyGenie logo" className="h-8 w-8 object-contain" style={{ height: '20px', width: '20px', marginRight: '10px' }} />
             <span className="font-bold text-lg">JourneyGenie</span>
           </div>
 
           <div className="flex items-center gap-4">
-            <button onClick={handleBack} style={{marginRight:'10px'}}>← Back to Profile</button>
-            <button onClick={() => setEditOpen(true)} style={{marginRight:'10px'}}>Edit Tour</button>
-
-            <button
-              className="btn success"
-              onClick={() => generateVideo(selectedTour.id)}
-              disabled={genVideoLoading || !hasAnyPhotos}
-              title={hasAnyPhotos ? "Create a video from all tour photos" : "Add photos to enable video"}
-              style={{marginRight:'10px'}}
-            >
-              {genVideoLoading ? (
-                <span className="tg-inlinecenter-6">
-                  <RefreshCw size={16} className="tg-spin" /> Generating…
-                </span>
-              ) : (
-                <span className="tg-inlinecenter-6">
-                  <Video size={16} /> Generate Video
-                </span>
-              )}
-            </button>
+            <button onClick={handleBack} style={{ marginRight:'10px' }}>← Back to Profile</button>
           </div>
         </div>
 
         <div className="plan-card">
           <div className="preview">
-            <div className="preview-header">
+            {/* HEADER with Actions: Edit Title + Generate Video */}
+            <div className="preview-header" style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12 }}>
               <div>
                 <h3>
                   {(selectedTour.destination || '').toUpperCase()}
@@ -821,6 +732,29 @@ const TourGuideApp = () => {
                   {selectedTour.startDate} to {selectedTour.endDate} • Budget: {selectedTour.budget}
                 </div>
                 {selectedTour.title ? <div className="muted">Title: {selectedTour.title}</div> : null}
+              </div>
+
+              <div className="tg-flex-gap8" style={{ display:'flex', alignItems:'center', gap:8 }}>
+                <button onClick={() => setEditOpen(true)} className="btn" title="Edit Title">
+                  Edit Title
+                </button>
+
+                <button
+                  className="btn success"
+                  onClick={() => generateVideo(selectedTour.id)}
+                  disabled={genVideoLoading || !hasAnyPhotos}
+                  title={hasAnyPhotos ? "Create a video from all tour photos" : "Add photos to enable video"}
+                >
+                  {genVideoLoading ? (
+                    <span className="tg-inlinecenter-6">
+                      <RefreshCw size={16} className="tg-spin" /> Generating…
+                    </span>
+                  ) : (
+                    <span className="tg-inlinecenter-6">
+                      <Video size={16} /> Generate Video
+                    </span>
+                  )}
+                </button>
               </div>
             </div>
 
@@ -832,9 +766,7 @@ const TourGuideApp = () => {
                 onClick={() => setDayMode('all')}
                 title="Show all days"
               >
-                <span className="tg-inlinecenter-6">
-                  <List size={16} /> All Days
-                </span>
+                <span className="tg-inlinecenter-6"><List size={16} /> All Days</span>
               </button>
               <button
                 type="button"
@@ -842,9 +774,7 @@ const TourGuideApp = () => {
                 onClick={() => setDayMode('selected')}
                 title="Show only selected days"
               >
-                <span className="tg-inlinecenter-6">
-                  <CheckSquare size={16} /> Selected Days
-                </span>
+                <span className="tg-inlinecenter-6"><CheckSquare size={16} /> Selected Days</span>
               </button>
               <button
                 type="button"
@@ -852,9 +782,7 @@ const TourGuideApp = () => {
                 onClick={() => setDayMode('blog')}
                 title="Show blog"
               >
-                <span className="tg-inlinecenter-6">
-                  <BookOpen size={16} /> Blog
-                </span>
+                <span className="tg-inlinecenter-6"><BookOpen size={16} /> Blog</span>
               </button>
               <button
                 type="button"
@@ -862,9 +790,7 @@ const TourGuideApp = () => {
                 onClick={() => setDayMode('vlog')}
                 title="Show video only"
               >
-                <span className="tg-inlinecenter-6">
-                  <Video size={16} /> Vlog
-                </span>
+                <span className="tg-inlinecenter-6"><Video size={16} /> Vlog</span>
               </button>
 
               {dayMode === 'selected' && (
@@ -1014,13 +940,7 @@ const TourGuideApp = () => {
                 </h4>
                 <div className="tg-video-frame">
                   {selectedTour?.video ? (
-                    <video
-                      className="tg-video-iframe"
-                      src={selectedTour.video}
-                      controls
-                      playsInline
-                      preload="metadata"
-                    />
+                    <video className="tg-video-iframe" src={selectedTour.video} controls playsInline preload="metadata" />
                   ) : (
                     <iframe
                       src="https://www.youtube.com/embed/Scxs7L0vhZ4"
@@ -1091,12 +1011,7 @@ const ConfirmModal = React.memo(function ConfirmModal({ title, message, onCancel
           role="dialog"
           aria-modal="true"
           className="plan-card tg-dialog-narrow max-h-[80vh] overflow-auto"
-          style={{
-            position: 'fixed',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-          }}
+          style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
         >
           <div className="preview-header tg-tight">
             <div>
@@ -1145,12 +1060,7 @@ const EditTitleModal = React.memo(function EditTitleModal({ open, titleValue, on
           role="dialog"
           aria-modal="true"
           className="plan-card tg-dialog-narrow max-h-[80vh] overflow-auto"
-          style={{
-            position: 'fixed',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-          }}
+          style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
         >
           <div className="preview-header tg-tight">
             <div><h3 className="tg-h3-icons">Edit Tour Title</h3></div>
