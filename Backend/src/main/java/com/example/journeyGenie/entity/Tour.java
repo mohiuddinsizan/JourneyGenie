@@ -43,6 +43,8 @@ public class Tour {
 
     private String video;
 
+    private String blog;
+
     @OneToMany(mappedBy = "tour", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<Day> days;
