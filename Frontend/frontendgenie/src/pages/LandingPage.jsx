@@ -230,6 +230,9 @@ const LandingPage = () => {
             <li>✔ Explore curated itineraries from travel creators</li>
             <li>✔ Discover stays, hotspots, and unique picks</li>
             <li>✔ Ask anything — from weather to what to pack</li>
+            <li>✔ Get the full plan from A to Z</li>
+            <li>✔ See the routes of your journey</li>
+            <li>✔ Also checkout the weather there . All in one</li>
           </ul>
 
           <div className="feature-cta">
