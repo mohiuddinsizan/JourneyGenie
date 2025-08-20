@@ -1,0 +1,84 @@
+.navbar {
+    position: fixed;
+    top: 20px;                 /* move it a little down from roof */
+    left: 0;                   /* stay attached to left */
+    right: 0;                  /* stretch across */
+    margin: 0 auto;            /* keep it centered */
+    width: 85%;                /* 85% of screen */
+    height: 80px;
+    background: rgba(17, 24, 39, 0.9);
+    backdrop-filter: blur(12px);
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    border-radius: 12px;        /* nice floating look */
+  }
+  
+  
+  .navbar-container {
+    width: 100%;
+    padding: 0 2rem;
+    display: flex;
+    justify-content: space-between; /* logo left, links right */
+    align-items: center;
+  }
+  
+  /* Logo */
+  .navbar-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+  }
+  
+  .navbar-logo-img {
+    height: 45px;
+    width: 45px;
+    object-fit: contain;
+  }
+  
+  .navbar-logo-text {
+    font-size: 1.6rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #ec4899, #db2777, #be185d);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  /* Links row */
+  .navbar-links {
+    display: flex;       /* <-- FIX: row layout */
+    align-items: center;
+    gap: 1rem;           /* spacing between buttons */
+  }
+  
+  /* Buttons (all links look like buttons) */
+  .nav-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, #ec4899, #db2777, #be185d);
+    color: #fff;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .nav-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(236, 72, 153, 0.4);
+    color:black
+  }
+  
+  /* Active link highlight */
+  .nav-btn.active {
+    outline: 2px solid white;
+    outline-offset: 2px;
+  }
+  

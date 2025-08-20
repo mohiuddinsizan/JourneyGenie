@@ -1,23 +1,22 @@
 /* Force scrolling at multiple levels */
 html {
-  overflow-y: auto !important;
-  height: auto !important;
+  overflow-y: auto ;
+  height: auto ;
 }
 
 body {
-  overflow-y: auto !important;
-  height: auto !important;
+  overflow-y: auto ;
+  height: auto ;
   min-height: 100vh;
 
   /* remove the dark linear-gradient — show only the image */
-  background: url('../assets/mainbg.jpg') center center / cover no-repeat fixed;
   /* if mobile jank with fixed, you can switch to: background-attachment: scroll; */
 }
 
 
 #root {
-  overflow-y: auto !important;
-  height: auto !important;
+  overflow-y: auto ;
+  height: auto ;
   min-height: 100vh;
   /* background: wheat; */
 }
@@ -27,7 +26,6 @@ body {
 .plan-scrollfix  {
 
   background: transparent;
-  /* Original styles unchanged */
   color: #fff;
   min-height: 100vh;
   height: auto !important;
@@ -1035,14 +1033,14 @@ body {
 
 /* Ensure the photo sits on <body> */
 html, body {
-  background-color: transparent !important;
+  background-color: transparent ;
 }
 body {
   background: url('../assets/mainbg.jpg') center center / cover no-repeat fixed !important;
 }
 
 /* Make every page wrapper transparent */
-#root,
+
 .plan-page-wrapper,
 .plan-page,
 .plan-scrollfix {
@@ -1082,4 +1080,32 @@ main, .container, .app, .page, .content, .wrapper {
 /* If Leaflet map is visible near the top, make its container transparent too */
 .leaflet-container {
   background: transparent !important;
+}
+
+
+/* Modal overlay for login-required */
+.alert-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999; /* above map & everything */
+}
+
+.alert-modal {
+  background: black;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 420px;
+  width: 92%;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  animation: alertFadeInUp 0.25s ease;
+}
+
+@keyframes alertFadeInUp {
+  from { transform: translateY(12px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
 }

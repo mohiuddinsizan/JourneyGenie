@@ -155,7 +155,7 @@ const handleSubmit = async (e) => {
 
             <button type="submit" className="register-button">Create Account</button>
             <div className="login-link">
-              Already have an account? <a href="/" className="switch-link">Login here</a>
+              Already have an account? <a href="/login" className="switch-link">Login here</a>
             </div>
           </form>
         </div>
