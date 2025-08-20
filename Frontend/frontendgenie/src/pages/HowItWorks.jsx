@@ -4,7 +4,7 @@ export default function HowItWorks() {
   return (
     <div className="fancy-page">
       <div className="glass-card">
-        <h1>🚀 How It Works</h1>
+        <h2>🚀 How It Works</h2>
 
         <p>
           JourneyGenie is designed to make your travels effortless and magical.  

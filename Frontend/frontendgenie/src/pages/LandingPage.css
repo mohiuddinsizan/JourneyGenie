@@ -66,7 +66,7 @@
   transform: scale(0.96);
 }
 h1, h2 {
-  font-weight: 700;
+  font-weight: 1700;
   text-align: center;
   margin: 0;
 }
@@ -74,7 +74,8 @@ h1, h2 {
 /* Headline with gradient accent */
 h1 {
   font-size: 2.5rem;
-  background: linear-gradient(135deg, #ec4899, #db2777, #be185d);
+  background: linear-gradient(135deg, #f9f4f7, #f0eaed, #e9e6e8);
+  color: white;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -121,4 +122,361 @@ h2 {
 @keyframes popIn {
   from { transform: scale(0.8); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
+}
+
+
+
+
+.scroll-container {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  margin-top: 20px;
+}
+
+.scroll-track {
+  display: flex;
+  gap: 20px;
+  width: max-content;
+  animation: marquee 50s linear infinite;
+}
+
+.card {
+  flex: 0 0 auto;
+  width: 280px;
+  height: 320px;
+  background: #1a1a1a;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  transition: transform 0.3s ease;
+}
+
+.card img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+
+.card-content {
+  padding: 16px;
+  text-align: center;
+  color: #fff;
+}
+
+.card-content h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #ffcc00;
+}
+
+.card-content p {
+  margin-top: 8px;
+  font-size: 0.9rem;
+  color: #ccc;
+  line-height: 1.4;
+}
+
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+}
+
+/* Infinite horizontal scroll */
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* --- Ideas section (like the screenshot) --- */
+.ideas-header {
+  text-align: left;
+  max-width: 960px;
+  margin: 0 auto 18px;
+}
+.ideas-header h2{
+  font-size: 2.4rem;
+  color:#fff;
+  margin:0 0 6px;
+}
+.ideas-header p{
+  color:#cbd5e1;
+  margin:0;
+}
+
+/* 3 cards in a row, centered inside the box */
+.ideas-grid{
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+  max-width: 960px;
+  margin: 20px auto 10px;
+}
+
+/* Card */
+/* Hover effect for idea-card */
+.idea-card {
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 18px;
+  padding: 20px 18px 22px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .35);
+  color: #e8e8e8;
+  transition: transform .25s ease, box-shadow .25s ease;
+  cursor: pointer;
+}
+
+.idea-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 14px 28px rgba(0,0,0,.5);
+  border-color: #ffd400; /* yellow accent on hover */
+}
+
+/* make the image zoom slightly on hover */
+.idea-card .thumb img {
+  transition: transform .4s ease;
+}
+
+.idea-card:hover .thumb img {
+  transform: scale(1.08);
+}
+
+.idea-card h3{
+  margin:14px 0 6px;
+  font-size:1.06rem;
+  font-weight:700;
+  color:#e9e9e9;
+}
+.idea-card p{
+  margin:0;
+  font-size:.95rem;
+  color:#bdbdbd;
+  line-height:1.45;
+}
+
+/* Rounded image inside card */
+.thumb{
+  border-radius:12px;
+  overflow:hidden;
+  height:240px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+}
+.thumb img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+/* CTA + arrows line */
+.ideas-footer{
+  max-width:960px;
+  margin: 24px auto 0;
+  display:flex;
+  align-items:center;
+  gap:24px;
+}
+.cta-primary{
+  margin-top: 25px;
+  padding:14px 26px;
+  border-radius:999px;
+  border:none;
+  font-weight:800;
+  font-size:1rem;
+  color:#000;
+  background:#ffd400;
+  cursor:pointer;
+  box-shadow: 0 10px 24px rgba(0,0,0,.35);
+  transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+}
+.cta-primary:hover{
+  background:#ffdf4d;
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px rgba(0,0,0,.45);
+}
+.nav-buttons{
+  margin-left:auto;
+  display:flex;
+  gap:14px;
+}
+.nav-circle{
+  width:46px;
+  height:46px;
+  border-radius:999px;
+  border:none;
+  background:#1a1a1a;
+  color:#eee;
+  box-shadow: inset 0 0 0 1px #2a2a2a, 0 6px 16px rgba(0,0,0,.35);
+  cursor:pointer;
+  font-size:1.2rem;
+  line-height:1;
+  transition: transform .15s ease, background .2s ease;
+}
+.nav-circle:hover{
+  background:#222;
+  transform: translateY(-1px);
+}
+
+/* Make the section breathe inside your .box constraints */
+.box .ideas-header,
+.box .ideas-grid,
+.box .ideas-footer{
+  width: 100%;
+}
+
+/* Responsive: 2 columns on medium, 1 on mobile */
+@media (max-width: 1050px){
+  .ideas-grid{ grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 700px){
+  .ideas-grid{ grid-template-columns: 1fr; }
+  .ideas-footer{ justify-content: space-between; }
+}
+
+/* --- Disable the old marquee styles --- */
+.scroll-container,
+.scroll-track,
+.card,
+.card img,
+.card-content { /* keep your hero cards unaffected elsewhere */
+}
+.scroll-container { overflow: visible; }
+.scroll-track { animation: none; }
+
+
+/* Feature box layout */
+.feature-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+  padding: 40px;
+}
+
+/* Left column */
+.feature-left {
+  flex: 1;
+}
+.feature-left h2 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 20px;
+}
+.feature-left h2 em {
+  font-style: italic;
+  color: #ffd400;
+}
+.feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 28px;
+}
+.feature-list li {
+  margin: 10px 0;
+  font-size: 1.05rem;
+  color: #d1d5db;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.feature-list li::before {
+  content: "✔";
+  color: #22c55e;
+  font-weight: bold;
+}
+
+/* Buttons under the list */
+.feature-cta {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.cta-link {
+  background: none;
+  border: none;
+  color: #ffd400;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: color .2s ease;
+}
+.cta-link:hover {
+  color: #ffdf4d;
+}
+
+/* Right column with image */
+.feature-right {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+.feature-right img {
+  max-width: 100%;
+  border-radius: 16px;
+  box-shadow: 0 8px 22px rgba(0,0,0,.4);
+}
+
+/* Responsive */
+@media (max-width: 950px) {
+  .feature-box {
+    flex-direction: column;
+    text-align: center;
+  }
+  .feature-cta {
+    justify-content: center;
+  }
+  .feature-right {
+    margin-top: 20px;
+  }
+}
+
+
+/* Nature discovery box layout */
+.discover-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+  padding: 40px;
+  margin-top: 40px;
+}
+
+/* Left image */
+.discover-left {
+  flex: 1;
+}
+.discover-left img {
+  max-width: 100%;
+  border-radius: 16px;
+  box-shadow: 0 8px 22px rgba(0,0,0,.4);
+}
+
+/* Right text */
+.discover-right {
+  flex: 1;
+  color: #fff;
+}
+.discover-right h2 {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 16px;
+}
+.discover-right p {
+  font-size: 1.05rem;
+  color: #d1d5db;
+  line-height: 1.6;
+  margin-bottom: 26px;
+}
+
+/* Responsive stack on mobile */
+@media (max-width: 950px) {
+  .discover-box {
+    flex-direction: column;
+    text-align: center;
+  }
+  .discover-right {
+    margin-top: 20px;
+  }
 }

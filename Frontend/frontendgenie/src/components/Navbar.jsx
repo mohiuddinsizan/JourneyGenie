@@ -113,6 +113,7 @@ const Navbar = () => {
         {/* Logo + Name */}
         <div className="navbar-logo" onClick={() => navigate("/idle")}>
           <img src={logo} alt="logo" className="navbar-logo-img" />
+          <h2>JourneyGenie</h2>
         </div>
 
         {/* Links */}

@@ -4,7 +4,9 @@ export default function AboutUs() {
   return (
     <div className="fancy-page">
       <div className="glass-card">
-        <h1>✨ About Us</h1>
+      <h2 className="about-title">✨ About Us</h2>
+
+
 
         {/* Mission */}
         <section className="section">

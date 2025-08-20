@@ -3,6 +3,13 @@ import { useNavigate } from "react-router-dom";
 import "./LandingPage.css";
 import image from '../assets/genie.png';
 import ChatBot from "../components/Chatbot";
+import image1 from "../assets/tour-thumbnail-10.jpg"
+import image2 from "../assets/tour-thumbnail-9.jpg";
+import image3 from "../assets/tour-thumbnail-7.jpg";
+import imagehero from "../assets/imagehero.jpg";
+import naturelover from "../assets/naturelover.jpg";
+import image6 from "../assets/tour-thumbnail-1.jpg";
+
 
 const loadUserFromLocalStorage = () => {
   try {
@@ -163,9 +170,110 @@ const LandingPage = () => {
         </div>
       )}
 
-      <div className="box"></div>
-      <div className="box"></div>
-      <div className="box"></div>
+      <div className="box" style={{ marginTop: "100px" }}>
+        <div className="ideas-header">
+          <h1>Drop the Vibe or ask a Question</h1>
+          <h3 style={{ marginLeft: '100px' }}> Try one below to spark instant travel ideas.</h3>
+        </div>
+
+        {/* three horizontally aligned cards */}
+        <div className="ideas-grid">
+          <article className="idea-card">
+            <div className="thumb">
+              <img src={image1} alt="Discover Places" />
+            </div>
+            <h3>Discover Places</h3>
+            <p>Best monsoon getaways and hill stations in India for a family trip</p>
+          </article>
+
+          <article className="idea-card">
+            <div className="thumb">
+              <img src={image2} alt="Weekend Getaway" />
+            </div>
+            <h3>Weekend Getaway</h3>
+            <p>Weekend getaways near Mumbai with friends—road trips, hikes, or amusement parks</p>
+          </article>
+
+          <article className="idea-card">
+            <div className="thumb">
+              <img src={image3} alt="Best Time to Visit" />
+            </div>
+            <h3>Best Time to Visit</h3>
+            <p>Best time to visit Nagaland for the Hornbill Festival, and how many days to plan</p>
+          </article>
+        </div>
+
+        <div className="ideas-footer">
+          <button
+            className="cta-primary"
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          >
+            Start Chatting →
+          </button>
+        </div>
+      </div>
+
+
+
+
+
+      <div className="box feature-box" style={{ marginTop: "100px" }}>
+        <div className="feature-left">
+          <h2>
+            Why Our Tour Guide App <em>Works?</em>
+          </h2>
+          <ul className="feature-list">
+            <li>✔ Plan trips, hangouts, or date nights in one chat</li>
+            <li>✔ Get recommendations tailored to your mood and crew</li>
+            <li>✔ Find hidden gems — cafés, bars, and local spots</li>
+            <li>✔ Turn any idea into a real plan</li>
+            <li>✔ Explore curated itineraries from travel creators</li>
+            <li>✔ Discover stays, hotspots, and unique picks</li>
+            <li>✔ Ask anything — from weather to what to pack</li>
+          </ul>
+
+          <div className="feature-cta">
+            <button
+              className="cta-primary"
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            >
+              Start Chatting →
+            </button>
+          </div>
+        </div>
+
+        <div className="feature-right">
+          <img src={imagehero} alt="Travel hero" />
+        </div>
+      </div>
+
+      <div className="box discover-box" style={{ marginTop: "100px" }}>
+        {/* Left side image */}
+        <div className="discover-left">
+          <img src={naturelover} alt="Nature Explorer" />
+        </div>
+
+        {/* Right side text */}
+        <div className="discover-right">
+          <h2>
+            For Nature Lovers who <br />
+            seek to Discover More 🌲
+          </h2>
+          <p>
+            Escape the noise and reconnect with the outdoors. From hidden waterfalls
+            and serene hiking trails to breathtaking landscapes, our app helps you
+            find the best nature getaways — tailored just for you.
+          </p>
+
+          <button
+            className="cta-primary"
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          >
+            Discover Nature →
+          </button>
+        </div>
+      </div>
+
     </div>
   );
 };
