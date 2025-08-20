@@ -3,12 +3,20 @@ name: Build Spring Boot Backend
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'Backend/**'
   pull_request:
     branches: [ main ]
+    paths:
+      - 'Backend/**'
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: Backend
 
     steps:
       - name: Checkout code
@@ -37,3 +45,4 @@ jobs:
 
       - name: Push Docker image
         run: docker push shaidurpranto/journeygenie-backend:${{ github.sha }}
+
