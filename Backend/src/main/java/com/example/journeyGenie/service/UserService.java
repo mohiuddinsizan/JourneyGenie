@@ -4,6 +4,7 @@ import com.example.journeyGenie.authJWT.JWTService;
 import com.example.journeyGenie.entity.Tour;
 import com.example.journeyGenie.entity.User;
 import com.example.journeyGenie.repository.UserRepository;
+import com.example.journeyGenie.util.AppEnv;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -63,9 +64,9 @@ public class UserService {
 
             Cookie cookie = new Cookie("jwt", token);
             cookie.setHttpOnly(true);
-            cookie.setSecure(true); // set ture in production , must be set for same-site = None to work
+            cookie.setSecure(true);
             cookie.setPath("/");
-            cookie.setMaxAge(60*30); // 30 minute
+            cookie.setMaxAge(60* AppEnv.getTokenValidityMinutes());
             cookie.setAttribute("SameSite","None"); // set true in production , Set SameSite attribute to None
             response.addCookie(cookie);
 
@@ -82,10 +83,10 @@ public class UserService {
         if (email != null) {
             Cookie cookie = new Cookie("jwt", "jwt-token-invalidated");
             cookie.setHttpOnly(true);
-            cookie.setSecure(true); // set true in production , must be set for same-site = None to work
+            cookie.setSecure(true);
             cookie.setPath("/");
-            cookie.setMaxAge(0); // expire the cookie
-            cookie.setAttribute("SameSite","None"); // set true in production , Set SameSite attribute to None
+            cookie.setMaxAge(0);
+            cookie.setAttribute("SameSite","None");
             response.addCookie(cookie);
 
             return ResponseEntity.ok().header("Set-Cookie", cookie.toString()).body("User logged out successfully 2");

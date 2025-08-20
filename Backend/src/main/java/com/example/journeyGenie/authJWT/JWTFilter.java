@@ -1,6 +1,7 @@
 package com.example.journeyGenie.authJWT;
 
 import com.example.journeyGenie.authUsernamePassword.MyUserDetailsService;
+import com.example.journeyGenie.util.AppEnv;
 import com.example.journeyGenie.util.Debug;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -66,10 +67,10 @@ public class JWTFilter extends OncePerRequestFilter {
                     String newToken = jwtService.generateToken(username);
                     Cookie newCookie = new Cookie("jwt", newToken);
                     newCookie.setHttpOnly(true);
-                    newCookie.setSecure(true); // Set to true in production
+                    newCookie.setSecure(true);
                     newCookie.setPath("/");
-                    newCookie.setMaxAge(60 * 30); // 30 minutes
-                    newCookie.setAttribute("SameSite","None"); // set true in production
+                    newCookie.setMaxAge(60 * AppEnv.getTokenValidityMinutes());
+                    newCookie.setAttribute("SameSite","None"); // Set to "None" for cross-site requests, adjust as needed
                     response.addCookie(newCookie);
 
                     Debug.log("JWT token validated and new token set in cookie: " + newToken);

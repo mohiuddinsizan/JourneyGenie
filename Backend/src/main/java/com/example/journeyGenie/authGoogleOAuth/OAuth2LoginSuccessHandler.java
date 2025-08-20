@@ -26,8 +26,6 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     @Autowired
     private UserRepository userRepository;
 
-    private String defaultPassword = "googleNoPass";
-
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException, ServletException {
@@ -44,6 +42,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         if (userRepository.findByEmail(email) == null) {
             Debug.log("New user detected, saving to database.");
             Debug.log("Saving user with email: " + email + " and name: " + name);
+            String defaultPassword = "googleNoPass";
             Debug.log("Saving user to database with default password " + defaultPassword);
             User user = new User();
             user.setEmail(email);
@@ -65,7 +64,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         cookie.setAttribute("SameSite", "None"); // set true in production
 
         response.addCookie(cookie);
-        Debug.log("redirecting to "+ AppEnv.getFrontendUrl()+"/home");
-        response.sendRedirect(AppEnv.getFrontendUrl()+"/home");
+        Debug.log("redirecting to "+ AppEnv.getFrontendUrl()+AppEnv.getOauthRedirectPage());
+        response.sendRedirect(AppEnv.getFrontendUrl()+ AppEnv.getOauthRedirectPage());
     }
 }

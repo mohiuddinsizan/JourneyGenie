@@ -1,5 +1,6 @@
 package com.example.journeyGenie.authJWT;
 
+import com.example.journeyGenie.util.AppEnv;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -24,7 +25,7 @@ public class JWTService {
     private String secretkey = "";
 
     public JWTService() {
-        secretkey = "c2VjcmV0a2V5Zm9yYXV0aGVudGljYXRpb24xMjM0NTY3ODkwMTIzNDU2Nzg5MA=="; // Example base64 encoded key
+        secretkey = AppEnv.getTokenSecret();
     }
 
     /// /////////////////////// generating token //////////////////////////// ///
@@ -43,7 +44,7 @@ public class JWTService {
                 .add(claims)
                 .subject(email)
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 25)) // 25 minutes
+                .expiration(new Date(System.currentTimeMillis() + 1000L * 60 * AppEnv.getTokenValidityMinutes()))
                 .and()
                 .signWith(getKey())
                 .compact();
