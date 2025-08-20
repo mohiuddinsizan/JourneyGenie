@@ -1,0 +1,128 @@
+.fancy-page {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 60px 20px;
+    background: transparent;
+  }
+  
+  .glass-card {
+    max-width: 800px;
+    width: 100%;
+    background: rgba(16, 18, 22, 0.6);
+    border-radius: 20px;
+    padding: 40px;
+    border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(14px) saturate(120%);
+    -webkit-backdrop-filter: blur(14px) saturate(120%);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    animation: fadeInUp 0.8s ease;
+    color: #e5e7eb;
+  }
+  
+  .glass-card h1 {
+    background: linear-gradient(135deg, #ec4899, #db2777);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 2.2rem;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  
+  .glass-card p {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: #cbd5e1;
+  }
+  
+  .highlight {
+    color: #ec4899;
+    font-weight: 600;
+  }
+  
+  .steps {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .steps li {
+    margin: 15px 0;
+    padding: 16px 20px;
+    border-left: 4px solid #ec4899;
+    background: rgba(26, 31, 39, 0.5);
+    border-radius: 12px;
+    transition: transform 0.3s ease;
+  }
+  
+  .steps li:hover {
+    transform: translateX(6px);
+    background: rgba(26, 31, 39, 0.8);
+  }
+  
+
+  .section {
+    margin: 30px 0;
+  }
+  
+  .section-title {
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    text-align: center;
+    color: #ec4899;
+  }
+  
+  /* Features */
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+  }
+  
+  .feature-card {
+    background: rgba(26, 31, 39, 0.5);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    transition: transform 0.3s ease, background 0.3s ease;
+  }
+  .feature-card:hover {
+    transform: translateY(-5px);
+    background: rgba(26, 31, 39, 0.8);
+  }
+  
+  /* Contact */
+  .contact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .contact-card {
+    background: rgba(26, 31, 39, 0.5);
+    border-radius: 12px;
+    padding: 18px;
+    text-align: center;
+    font-size: 1rem;
+    transition: transform 0.3s ease, background 0.3s ease;
+  }
+  .contact-card:hover {
+    transform: translateY(-4px);
+    background: rgba(26, 31, 39, 0.8);
+  }
+  
+  .contact-card a {
+    color: #ec4899;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  
+  /* Closing */
+  .closing {
+    margin-top: 40px;
+    text-align: center;
+    font-size: 1.2rem;
+    color: #f3f4f6;
+  }
+  

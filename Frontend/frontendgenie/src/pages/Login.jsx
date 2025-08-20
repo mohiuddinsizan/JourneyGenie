@@ -57,7 +57,7 @@ const Login = () => {
 
         setWelcome({ open: true, name: user?.name || 'Traveler' });
         setTimeout(() => {
-          window.location.replace('/home');
+          window.location.replace('/');
         }, 1400);
       } else {
         let msg = 'Username or password mismatch';

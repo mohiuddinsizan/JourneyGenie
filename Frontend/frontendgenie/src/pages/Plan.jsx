@@ -60,6 +60,22 @@ const TravelLoaderDots = () => (
   </div>
 );
 
+// --- Login alert modal (overlay only) ---
+const AlertModal = ({ message, onClose }) => {
+  if (!message) return null;
+  return (
+    <div className="alert-backdrop">
+      <div className="alert-modal">
+        <h3>Login Required</h3>
+        <p>{message}</p>
+        <button className="btn primary" onClick={onClose}>
+          OK, Take me to Login
+        </button>
+      </div>
+    </div>
+  );
+};
+
 export default function Plan() {
   const navigate = useNavigate();
 
@@ -82,6 +98,9 @@ export default function Plan() {
   const [weather, setWeather] = useState(null);
   const [weatherErr, setWeatherErr] = useState('');
   const [weatherLoading, setWeatherLoading] = useState(false);
+
+  // Modal state
+  const [showLoginAlert, setShowLoginAlert] = useState(false);
 
   useEffect(() => {
     // ensure the page can scroll naturally everywhere
@@ -178,6 +197,14 @@ export default function Plan() {
         credentials: 'include',
         body: JSON.stringify(form),
       });
+
+      // Show modal on 401 only. No other logic touched.
+      if (res.status === 401) {
+        setShowLoginAlert(true);
+        setLoading(false);
+        return;
+      }
+
       if (!res.ok) throw new Error((await res.text()) || `Server error: ${res.status}`);
       const data = await res.json();
       setPreview(data);
@@ -205,6 +232,14 @@ export default function Plan() {
         credentials: 'include',
         body: JSON.stringify(preview),
       });
+
+      // Show modal on 401 only. No other logic touched.
+      if (res.status === 401) {
+        setShowLoginAlert(true);
+        setCommitting(false);
+        return;
+      }
+
       if (!res.ok) throw new Error((await res.text()) || `Server error: ${res.status}`);
       const updatedUser = await res.json();
       const { password, ...safeUser } = updatedUser;
@@ -221,39 +256,6 @@ export default function Plan() {
 
   return (
     <div className="plan-page plan-scrollfix">
-      {/* FULL-WIDTH, STICKY NAVBAR */}
-      <nav className="navbar bg-white shadow py-2 pl-0 pr-4"> {/* ← no left padding */}
-    <div className="nav-inner w-full flex items-center justify-between">
-    {/* Brand (logo + name) */}
-    <div
-      className="brand cursor-pointer flex items-center gap-2 !ml-0"
-      onClick={() => navigate("/home")}
-      aria-label="JourneyGenie Home"
-      title="JourneyGenie"
-    >
-      <img
-        src="/world-tour.png"
-        alt="JourneyGenie logo"
-        className="h-5 w-5 object-contain"
-        style={{ height: '20px', width: '20px', marginRight: '10px' }} // inline styles for consistency
-      />
-      <span className="font-bold text-lg">JourneyGenie</span>
-    </div>
-
-    {/* Actions */}
-    <div className="nav-actions flex items-center gap-4">
-      <button onClick={() => navigate("/profile")}  style={{marginRight: '10px' }} > 
-        Profile
-      </button>
-      <button onClick={() => navigate("/plan")} >
-        Plan
-      </button>
-    </div>
-  </div>
-</nav>
-
-
-
       <div className="plan-card plan-card-fluid">
         <h2>Plan Your Adventure</h2>
 
@@ -346,8 +348,8 @@ export default function Plan() {
                   <div className="map-card">
                     <MapContainer
                       className="map-viewport"
-                      bounds={route.bounds ? [[route.bounds[0][0], route.bounds[0][1]],[route.bounds[1][0], route.bounds[1][1]]] : undefined}
-                      center={route.latlngs?.length ? route.latlngs[Math.floor(route.latlngs.length / 2)] : [0,0]}
+                      bounds={route.bounds ? [[route.bounds[0][0], route.bounds[0][1]], [route.bounds[1][0], route.bounds[1][1]]] : undefined}
+                      center={route.latlngs?.length ? route.latlngs[Math.floor(route.latlngs.length / 2)] : [0, 0]}
                       zoom={13}
                       scrollWheelZoom={false}
                     >
@@ -488,6 +490,15 @@ export default function Plan() {
           </div>
         )}
       </div>
+
+      {/* Modal overlay at the very end so it never interferes with map/weather */}
+      <AlertModal
+        message={showLoginAlert ? "You must login first before creating a tour plan." : ""}
+        onClose={() => {
+          setShowLoginAlert(false);
+          navigate("/login");
+        }}
+      />
     </div>
   );
 }

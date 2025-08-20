@@ -175,24 +175,6 @@ const TourGuideApp = () => {
     setCurrentView('profile');
     setSelectedTour(null);
   };
-  const handleHomeClick = () => navigate('/home');
-  const handleProfileClick = () => navigate('/profile');
-  const handlePlanClick = () => navigate('/plan');
-  const handleLogout = async () => {
-    try {
-      await serverLogout();
-    } catch (e) {
-      console.warn('Server logout failed (continuing):', e);
-    } finally {
-      try { localStorage.removeItem('user'); } catch { }
-      setUserData(null);
-      setTours([]);
-      setSelectedTour(null);
-      setCurrentView('profile');
-      window.dispatchEvent(new CustomEvent('tours:updated', { detail: { reason: 'logout' } }));
-      window.location.replace('/');
-    }
-  };
 
   // ====== Generate Video action ======
   async function generateVideo(tourId) {
@@ -307,39 +289,6 @@ const TourGuideApp = () => {
     }
   };
 
-  const addPhoto = async (tourId, dayId, urlOverride) => {
-    const link = (urlOverride ?? '').trim();
-    if (!link) {
-      alert('Please paste a photo URL.');
-      return;
-    }
-    try {
-      const res = await fetch(`${API_BASE}/photo/add`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ link, dayid: dayId }),
-      });
-      if (!res.ok) {
-        const err = await res.text();
-        throw new Error(err || `HTTP ${res.status}`);
-      }
-      const updatedUser = await res.json();
-      const { password, ...safeUser } = updatedUser || {};
-      setUserData(safeUser);
-      setTours(normalizeTours(safeUser.tours || []));
-      setSelectedTour(prev => {
-        if (!prev) return prev;
-        const next = (safeUser.tours || []).find(t => t.id === prev.id);
-        return next ? { ...next, thumbnail: getTourThumb(next, 0) } : prev;
-      });
-      localStorage.setItem('user', JSON.stringify(safeUser));
-      window.dispatchEvent(new CustomEvent('tours:updated', { detail: { reason: 'photo-added', dayId } }));
-    } catch (e) {
-      console.error('[addPhoto] failed:', e);
-      alert(e?.message || 'Failed to add photo');
-    }
-  };
 
   const uploadPhotoFile = async (tourId, dayId, file) => {
     if (!file) {
@@ -443,25 +392,6 @@ const TourGuideApp = () => {
   if (loading) {
     return (
       <div className="plan-page">
-        <div className="navbar flex items-center justify-between px-4 py-2 bg-white shadow">
-          <div
-            className="brand flex items-center gap-2 cursor-pointer"
-            onClick={() => (window.location.href = "/home")}
-            title="JourneyGenie Home"
-            aria-label="JourneyGenie Home"
-          >
-            <img src="/world-tour.png" alt="JourneyGenie logo" className="h-8 w-8 object-contain" style={{ height: '20px', width: '20px', marginRight: '20px' }} />
-            <span className="font-semibold text-lg">JourneyGenie</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <button onClick={handleHomeClick} style={{ marginRight: '10px' }}>Home</button>
-            <button onClick={handleProfileClick} style={{ marginRight: '10px' }}>Profile</button>
-            <button onClick={handlePlanClick} style={{ marginRight: '10px' }}>Plan</button>
-            <button onClick={handleLogout} className="flex items-center gap-1 text-red-600 " title="Log out">
-              <LogOut size={16} /> Logout
-            </button>
-          </div>
-        </div>
         <div className="plan-card">
           <p>Loading your profile…</p>
         </div>
@@ -472,56 +402,23 @@ const TourGuideApp = () => {
   if (error) {
     return (
       <div className="plan-page">
-        <div className="navbar flex items-center justify-between px-4 py-2 bg-white shadow">
-          <div
-            className="brand flex items-center gap-2 cursor-pointer"
-            onClick={() => (window.location.href = "/home")}
-            title="JourneyGenie Home"
-            aria-label="JourneyGenie Home"
-          >
-            <img src="/world-tour.png" alt="JourneyGenie logo" className="h-8 w-8 object-contain" style={{ height: '20px', width: '20px', marginRight: '20px' }} />
-            <span className="font-semibold text-lg">JourneyGenie</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <button onClick={handleHomeClick} style={{ marginRight: '10px' }}>Home</button>
-            <button onClick={handleProfileClick} style={{ marginRight: '10px' }}>Profile</button>
-            <button onClick={handlePlanClick} style={{ marginRight: '10px' }}>Plan</button>
-            <button onClick={handleLogout} className="flex items-center gap-1 text-red-600 " title="Log out">
-              <LogOut size={16} /> Logout
-            </button>
-          </div>
-        </div>
         <div className="plan-card">
-          <h2>We couldn't load your account</h2>
-          <p className="muted">{error}</p>
-          <button className="btn success" onClick={() => navigate('/login')}>Go to Login</button>
+          <h2>🔒 Login Required</h2>
+          <p className="muted">You need to log in to see your tours and profile.</p>
+          <button
+            className="btn success"
+            onClick={() => navigate('/login')}
+          >
+            Go to Login
+          </button>
         </div>
       </div>
     );
   }
 
+
   const ProfilePage = () => (
     <div className="plan-page">
-      <div className="navbar flex items-center justify-between px-4 py-2 bg-white shadow">
-        <div
-          className="brand flex items-center gap-2 cursor-pointer"
-          onClick={() => (window.location.href = "/home")}
-          title="JourneyGenie Home"
-          aria-label="JourneyGenie Home"
-        >
-          <img src="/world-tour.png" alt="JourneyGenie logo" className="h-8 w-8 object-contain" style={{ height: '20px', width: '20px', marginRight: '10px' }} />
-          <span className="font-bold text-lg">JourneyGenie</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <button onClick={handleHomeClick} style={{ marginRight: '10px' }}>Home</button>
-          <button onClick={handleProfileClick} style={{ marginRight: '10px' }}>Profile</button>
-          <button onClick={handlePlanClick} style={{ marginRight: '10px' }}>Plan</button>
-          <button onClick={handleLogout} className="flex items-center gap-1 text-red-600 " title="Log out">
-            <LogOut size={16} /> Logout
-          </button>
-        </div>
-      </div>
-
       <div className="plan-card">
         <div className="profile-header">
           <div className="profile-avatar">{initials || '?'}</div>
@@ -688,7 +585,7 @@ const TourGuideApp = () => {
         setTours(updatedTours);
         const nt = updatedTours.find(t => String(t.id) === String(selectedTour.id));
         if (nt) setSelectedTour({ ...nt, thumbnail: getTourThumb(nt, 0) });
-        try { localStorage.setItem('user', JSON.stringify(safeUser)); } catch {}
+        try { localStorage.setItem('user', JSON.stringify(safeUser)); } catch { }
         window.dispatchEvent(new CustomEvent('tours:updated', { detail: { reason: 'blog-generated', tourId: selectedTour.id } }));
         setDayMode('blog'); // stay on Blog tab
       } catch (e) {
@@ -702,27 +599,11 @@ const TourGuideApp = () => {
     return (
       <div className="plan-page">
 
-        {/* NAVBAR: only Back + brand (moved Edit Title & Generate Video out of here) */}
-        <div className="navbar flex items-center justify-between px-4 py-2 bg-white shadow">
-          <div
-            className="brand flex items-center gap-2 cursor-pointer"
-            onClick={() => (window.location.href = "/home")}
-            title="JourneyGenie Home"
-            aria-label="JourneyGenie Home"
-          >
-            <img src="/world-tour.png" alt="JourneyGenie logo" className="h-8 w-8 object-contain" style={{ height: '20px', width: '20px', marginRight: '10px' }} />
-            <span className="font-bold text-lg">JourneyGenie</span>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <button onClick={handleBack} style={{ marginRight:'10px' }}>← Back to Profile</button>
-          </div>
-        </div>
 
         <div className="plan-card">
           <div className="preview">
             {/* HEADER with Actions: Edit Title + Generate Video */}
-            <div className="preview-header" style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12 }}>
+            <div className="preview-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
               <div>
                 <h3>
                   {(selectedTour.destination || '').toUpperCase()}
@@ -734,7 +615,7 @@ const TourGuideApp = () => {
                 {selectedTour.title ? <div className="muted">Title: {selectedTour.title}</div> : null}
               </div>
 
-              <div className="tg-flex-gap8" style={{ display:'flex', alignItems:'center', gap:8 }}>
+              <div className="tg-flex-gap8" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <button onClick={() => setEditOpen(true)} className="btn" title="Edit Title">
                   Edit Title
                 </button>
@@ -791,10 +672,16 @@ const TourGuideApp = () => {
                 title="Show video only"
               >
                 <span className="tg-inlinecenter-6"><Video size={16} /> Vlog</span>
+              </button>              
+              <button
+                type="button"
+                className={`btn`}
+                onClick={handleBack}
+              >
+                <span className="tg-inlinecenter-6"> ← Back to Profile</span>
               </button>
-
               {dayMode === 'selected' && (
-                <span className="muted tg-ml-4">Choose which days to display below</span>
+                <span className="muted tg-ml-4">Choose day to display activities .</span>
               )}
             </div>
 
@@ -1108,17 +995,29 @@ const AddActivityRow = React.memo(function AddActivityRow({ onAdd }) {
 const AddPhotoRow = React.memo(function AddPhotoRow({ onUpload }) {
   const [fileName, setFileName] = useState('');
   const [fileObj, setFileObj] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [uploading, setUploading] = useState(false);
   const inputRef = React.useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
+  const resetSelection = () => {
+    setFileObj(null);
+    setFileName('');
+    setPreviewUrl(null);
+    if (inputRef.current) inputRef.current.value = '';
+  };
 
   const submitFile = async () => {
     if (!fileObj || uploading) return alert('Choose a file');
     try {
       setUploading(true);
-      await onUpload(fileObj);   // await to control spinner
-      setFileObj(null);
-      setFileName('');
-      if (inputRef.current) inputRef.current.value = '';
+      await onUpload(fileObj);
+      resetSelection();
     } catch (e) {
       console.error('upload error:', e);
     } finally {
@@ -1127,46 +1026,88 @@ const AddPhotoRow = React.memo(function AddPhotoRow({ onUpload }) {
   };
 
   return (
-    <div className="add-activity tg-row tg-mt-12">
-      <label className={`btn tg-pointer ${uploading ? 'tg-disabled' : ''}`}>
-        <span className="tg-inlinecenter-6">
-          <Image size={16} /> {fileName || 'Choose image'}
-        </span>
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          style={{ display: 'none' }}
-          disabled={uploading}
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            setFileObj(f || null);
-            setFileName(f ? f.name : '');
-          }}
-        />
-      </label>
+    <div className="add-activity tg-row tg-mt-12" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+      {/* 🔹 Buttons Row */}
+      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+        {/* Choose file */}
+        <label className={`btn tg-pointer ${uploading ? 'tg-disabled' : ''}`}>
+          <span className="tg-inlinecenter-6">
+            <Image size={16} /> {fileName || 'Choose image'}
+          </span>
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            style={{ display: 'none' }}
+            disabled={uploading}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) {
+                setFileObj(f);
+                setFileName(f.name);
+                setPreviewUrl(URL.createObjectURL(f));
+              } else {
+                resetSelection();
+              }
+            }}
+          />
+        </label>
 
-      <button
-        type="button"
-        className="btn success"
-        onClick={submitFile}
-        title="Upload Photo"
-        style={{ width: 160 }}
-        disabled={uploading || !fileObj}
-      >
-        {uploading ? (
-          <span className="tg-inlinecenter-6">
-            <RefreshCw size={16} className="tg-spin" /> Uploading…
-          </span>
-        ) : (
-          <span className="tg-inlinecenter-6">
-            <Image size={16} /> Upload
-          </span>
-        )}
-      </button>
+        {/* Upload button */}
+        <div style={{display:'flex'}} >
+          <button
+            type="button"
+            className="btn success cancel-btn"
+            onClick={submitFile}
+            style={{ width: 160 }}
+            disabled={uploading || !fileObj}
+          >
+            {uploading ? (
+              <span className="tg-inlinecenter-6">
+                <RefreshCw size={16} className="tg-spin" /> Uploading…
+              </span>
+            ) : (
+              <span className="tg-inlinecenter-6">
+                <Image size={16} /> Upload
+              </span>
+            )}
+          </button>
+
+          {/* Cancel button (only when file selected) */}
+          {fileObj && !uploading && (
+            <button
+              type="button"
+              className="btn success cancel-btn"
+              onClick={resetSelection}
+              style={{ width: 120, marginLeft: '12px' }}
+            >
+              Cancel
+            </button>
+          )}
+
+        </div>
+      </div>
+
+      {/* 🔹 Preview below */}
+      {previewUrl && (
+        <div style={{ marginTop: '12px' }}>
+          <img
+            src={previewUrl}
+            alt="Preview"
+            style={{
+              maxHeight: '120px',
+              borderRadius: '8px',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 });
+
+
+
 
 export default TourGuideApp;
