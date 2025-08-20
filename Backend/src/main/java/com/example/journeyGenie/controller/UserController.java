@@ -31,6 +31,13 @@ public class UserController {
         return userService.loginUser(user,response);
     }
 
+    // endpoint to logout user
+    @PostMapping("/logout")
+    public ResponseEntity<?> logoutUser(HttpServletRequest request, HttpServletResponse response) {
+        Debug.log("User logout request");
+        return userService.logoutUser(request,response);
+    }
+
     // endpoint to get user from JWT token
     @GetMapping("/me")
     public ResponseEntity<?> getUser(HttpServletRequest request) {

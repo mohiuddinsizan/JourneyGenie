@@ -54,7 +54,6 @@ public class UserService {
         }
     }
 
-    @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody User user, HttpServletResponse response) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPassword()));
@@ -75,6 +74,23 @@ public class UserService {
             return ResponseEntity.ok(existingUser);
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login failed");
+        }
+    }
+
+    public ResponseEntity<?> logoutUser(HttpServletRequest request, HttpServletResponse response) {
+        String email = jwtService.getEmailFromRequest(request);
+        if (email != null) {
+            Cookie cookie = new Cookie("jwt", "jwt-token-invalidated");
+            cookie.setHttpOnly(true);
+            cookie.setSecure(true); // set true in production , must be set for same-site = None to work
+            cookie.setPath("/");
+            cookie.setMaxAge(0); // expire the cookie
+            cookie.setAttribute("SameSite","None"); // set true in production , Set SameSite attribute to None
+            response.addCookie(cookie);
+
+            return ResponseEntity.ok().header("Set-Cookie", cookie.toString()).body("User logged out successfully 2");
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
         }
     }
 
@@ -105,4 +121,5 @@ public class UserService {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
         }
     }
+
 }
