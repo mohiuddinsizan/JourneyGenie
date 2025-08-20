@@ -15,11 +15,15 @@ const loadUserFromLocalStorage = () => {
   }
 };
 
-const saveUserToLocalStorage = (user) => {
+const saveUserToLocalStorage = (userLike) => {
   try {
-    if (!user) return;
-    const { password, ...safeUser } = user;
-    localStorage.setItem("user", JSON.stringify(safeUser));
+    if (!userLike) return;
+    // be defensive: /user/me might return {user: {...}} or just {...}
+    const user = userLike.user ?? userLike;
+    const { password, ...safeUser } = user || {};
+    if (Object.keys(safeUser || {}).length > 0) {
+      localStorage.setItem("user", JSON.stringify(safeUser));
+    }
   } catch (e) {
     console.error("Failed to save user to localStorage", e);
   }
@@ -33,6 +37,18 @@ const LandingPage = () => {
 
   // Prevent double-run in React Strict Mode (dev)
   const didBootstrapRef = useRef(false);
+
+  // Keep isLoggedIn in sync with localStorage across tabs/refreshes
+  useEffect(() => {
+    const sync = () => setIsLoggedIn(!!loadUserFromLocalStorage());
+    sync(); // initial
+    window.addEventListener("storage", sync);
+    document.addEventListener("visibilitychange", sync);
+    return () => {
+      window.removeEventListener("storage", sync);
+      document.removeEventListener("visibilitychange", sync);
+    };
+  }, []);
 
   // 🔑 One-time bootstrap: try backend /user/me, else fall back to localStorage
   useEffect(() => {
@@ -48,49 +64,46 @@ const LandingPage = () => {
         });
 
         if (res.ok) {
-          const user = await res.json();
-          if (user) {
-            saveUserToLocalStorage(user);
+          const payload = await res.json();
+          // Accept { user: {...} } or {...}
+          const foundUser = payload?.user ?? payload;
+          if (foundUser) {
+            saveUserToLocalStorage(foundUser);
             setIsLoggedIn(true);
-            return; // done
+            return;
           }
+        } else if (res.status === 401) {
+          // session expired: ensure we look logged out
+          localStorage.removeItem("user");
         }
-        // If /user/me failed or returned no user, fall back to localStorage
-        const existing = loadUserFromLocalStorage();
-        if (existing) setIsLoggedIn(true);
+        // Fall back to whatever is in localStorage
+        setIsLoggedIn(!!loadUserFromLocalStorage());
       } catch (err) {
         console.error("Failed to fetch user:", err);
-        const existing = loadUserFromLocalStorage();
-        if (existing) setIsLoggedIn(true);
+        setIsLoggedIn(!!loadUserFromLocalStorage());
       }
     };
 
     bootstrap();
   }, []);
 
-  const handlePlanTrip = () => {
-    if (!isLoggedIn) {
+  // Helper: robust auth check (uses state OR fresh localStorage)
+  const isAuthed = () => isLoggedIn || !!loadUserFromLocalStorage();
+
+  const requireLoginOr = (go) => {
+    if (!isAuthed()) {
       setShowAlert(true);
       setTimeout(() => {
         setShowAlert(false);
         navigate("/login");
       }, 2000);
     } else {
-      navigate("/plan");
+      go();
     }
   };
 
-  const handleProfile = () => {
-    if (!isLoggedIn) {
-      setShowAlert(true);
-      setTimeout(() => {
-        setShowAlert(false);
-        navigate("/login");
-      }, 2000);
-    } else {
-      navigate("/profile");
-    }
-  };
+  const handlePlanTrip = () => requireLoginOr(() => navigate("/plan"));
+  const handleProfile = () => requireLoginOr(() => navigate("/profile"));
 
   return (
     <div className="container">
