@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import './Login.css';
 import './Background.css';
+import { NavLink, useNavigate } from "react-router-dom";
+
 
 const apiUrl = import.meta.env.REACT_APP_API_URL;
 const loginWithGoogle = apiUrl + "/oauth2/authorization/google";
@@ -28,6 +30,7 @@ const styles = {
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
+  const navigate = useNavigate();
 
   // Overlays
   const [welcome, setWelcome] = useState({ open: false, name: '' });
