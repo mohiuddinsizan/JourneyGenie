@@ -5,10 +5,10 @@ import 'leaflet/dist/leaflet.css';
 import { MapContainer, TileLayer, Polyline } from 'react-leaflet';
 import './Plan.css';
 
-const BASE_URL =
-  import.meta.env.VITE_BACKEND_URL
-    ? import.meta.env.VITE_BACKEND_URL.replace(/\/$/, '')
-    : 'http://localhost:8080';
+
+
+const API_BASE = import.meta.env.REACT_APP_API_URL || 'http://localhost:8080';
+
 
 // --- helpers (display-only) ---
 const numOrNull = (v) => {
@@ -132,7 +132,7 @@ export default function Plan() {
   const fetchWeather = async (place, startDate, endDate) => {
     try {
       setWeather(null); setWeatherErr(''); setWeatherLoading(true);
-      const url = `${BASE_URL}/api/weather?place=${encodeURIComponent(place || '')}&start=${encodeURIComponent(startDate)}&end=${encodeURIComponent(endDate)}`;
+      const url = `${API_BASE}/api/weather?place=${encodeURIComponent(place || '')}&start=${encodeURIComponent(startDate)}&end=${encodeURIComponent(endDate)}`;
       const res = await fetch(url, { credentials: 'include' });
       if (!res.ok) throw new Error(await res.text() || `HTTP ${res.status}`);
       const payload = await res.json();
@@ -148,7 +148,7 @@ export default function Plan() {
   const fetchRoute = async (startPlace, endPlace, mode = 'driving') => {
     try {
       setRoute(null); setRouteErr(''); setRouteLoading(true);
-      const url = `${BASE_URL}/api/route?start=${encodeURIComponent(startPlace || '')}&end=${encodeURIComponent(endPlace || '')}&mode=${encodeURIComponent(mode)}`;
+      const url = `${API_BASE}/api/route?start=${encodeURIComponent(startPlace || '')}&end=${encodeURIComponent(endPlace || '')}&mode=${encodeURIComponent(mode)}`;
       const res = await fetch(url, { method: 'GET', credentials: 'include' });
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
@@ -191,7 +191,7 @@ export default function Plan() {
       return;
     }
     try {
-      const res = await fetch(`${BASE_URL}/api/plan/preview`, {
+      const res = await fetch(`${API_BASE}/api/plan/preview`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -226,7 +226,7 @@ export default function Plan() {
     if (!preview) return;
     setError(''); setCommitMsg(''); setCommitting(true);
     try {
-      const res = await fetch(`${BASE_URL}/api/plan/commit`, {
+      const res = await fetch(`${API_BASE}/api/plan/commit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

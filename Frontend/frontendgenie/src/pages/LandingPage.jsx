@@ -9,6 +9,7 @@ import image3 from "../assets/tour-thumbnail-7.jpg";
 import imagehero from "../assets/imagehero.jpg";
 import naturelover from "../assets/naturelover.jpg";
 import image6 from "../assets/tour-thumbnail-1.jpg";
+const API_BASE = import.meta.env.REACT_APP_API_URL || 'http://localhost:8080';
 
 
 const loadUserFromLocalStorage = () => {
@@ -64,7 +65,7 @@ const LandingPage = () => {
 
     const bootstrap = async () => {
       try {
-        const res = await fetch("http://localhost:8080/user/me", {
+        const res = await fetch(`${API_BASE}/user/me`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
           credentials: "include",

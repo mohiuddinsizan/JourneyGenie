@@ -62,7 +62,7 @@ export default function AboutUs() {
         <section className="closing">
           <p>
             💖 Thank you for choosing <strong>JourneyGenie</strong>.  
-            Let’s make your next trip truly magical ✨
+            Let’s make your next trip truly magical ✨  
           </p>
         </section>
       </div>
