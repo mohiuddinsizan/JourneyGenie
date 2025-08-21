@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Register.css';
 import './Background.css';
+const API_BASE = import.meta.env.REACT_APP_API_URL || 'http://localhost:8080';
+
 
 const Register = () => {
   const navigate = useNavigate();
@@ -50,7 +52,7 @@ const handleSubmit = async (e) => {
     try {
       console.log('Submitting:', { name, email, password });
 
-      const res = await fetch('http://localhost:8080/user/signup', {
+      const res = await fetch(`${API_BASE}/user/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password }),
@@ -155,7 +157,7 @@ const handleSubmit = async (e) => {
 
             <button type="submit" className="register-button">Create Account</button>
             <div className="login-link">
-              Already have an account? <a href="/login" className="switch-link">Login here</a>
+              Already have an account? <button type="button" className="register-button" onClick={() => navigate("/login")}>Login Here</button>
             </div>
           </form>
         </div>
