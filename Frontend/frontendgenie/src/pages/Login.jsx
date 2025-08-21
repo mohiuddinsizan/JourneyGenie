@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import './Login.css';
 import './Background.css';
-import { NavLink, useNavigate } from "react-router-dom";
+import {useNavigate } from "react-router-dom";
 
 
 const apiUrl = import.meta.env.REACT_APP_API_URL;
@@ -29,8 +29,9 @@ const styles = {
 };
 
 const Login = () => {
-  const [formData, setFormData] = useState({ email: '', password: '' });
   const navigate = useNavigate();
+  const [formData, setFormData] = useState({ email: '', password: '' });
+  
 
   // Overlays
   const [welcome, setWelcome] = useState({ open: false, name: '' });
