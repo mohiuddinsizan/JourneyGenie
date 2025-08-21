@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import logo from "../assets/world-tour.png";
 import "./Navbar.css";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8080";
+const API_BASE = import.meta.env.REACT_APP_API_URL || "http://localhost:8080";
 
 /* Helpers (inline) */
 const loadUser = () => {
@@ -22,9 +22,31 @@ const saveUser = (payload) => {
     localStorage.setItem("user", JSON.stringify(safe));
   } catch {}
 };
+
+
 const clearUser = () => {
   localStorage.removeItem("user");
 };
+
+const handleLogout = async () => {
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_BASE || "http://localhost:8080"}/user/logout`, {
+      method: "POST",
+      credentials: "include", // ✅ ensures cookies/sessions are cleared
+    });
+
+    if (!res.ok) {
+      console.warn("Server logout failed:", res.status);
+    }
+  } catch (err) {
+    console.error("Logout request failed:", err);
+  } finally {
+    // ✅ Always clear frontend state
+    localStorage.removeItem("user");
+    navigate("/");
+  }
+};
+
 const broadcastAuthChange = () => {
   window.dispatchEvent(new Event("auth-changed"));
 };
