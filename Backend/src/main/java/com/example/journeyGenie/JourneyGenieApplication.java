@@ -24,7 +24,7 @@ public class JourneyGenieApplication {
 		System.out.println("BACKEND_URL: " + AppEnv.getBackendUrl());
 		System.out.println("GEMINI_API: "+ AppEnv.getGEMINI_API());
 
-        
+
         System.out.println("Pranto magi onk boro magi");
 	}
 

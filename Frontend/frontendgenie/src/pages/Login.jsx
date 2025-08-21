@@ -153,7 +153,7 @@ const Login = () => {
             <button
               type="button"
               className="register-nav-button"
-              onClick={() => window.location.href = '/register'}
+              onClick={() => navigate("/login")}
             >
               Create New Account
             </button>
