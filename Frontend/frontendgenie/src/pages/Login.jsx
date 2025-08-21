@@ -153,7 +153,7 @@ const Login = () => {
             <button
               type="button"
               className="register-nav-button"
-              onClick={() => navigate("/login")}
+              onClick={() => navigate("/register")}
             >
               Create New Account
             </button>
