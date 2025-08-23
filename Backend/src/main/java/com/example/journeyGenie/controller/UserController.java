@@ -1,6 +1,7 @@
 package com.example.journeyGenie.controller;
 
 import com.example.journeyGenie.entity.User;
+import com.example.journeyGenie.service.TokenService;
 import com.example.journeyGenie.service.UserService;
 import com.example.journeyGenie.util.Debug;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,6 +15,8 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
     @Autowired
     private UserService userService;
+    @Autowired
+    private TokenService tokenService;
 
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@RequestBody User user) {
@@ -49,6 +52,13 @@ public class UserController {
     @GetMapping("/getName")
     public ResponseEntity<?> getUserName(HttpServletRequest request) {
         return userService.getUserName(request);
+    }
+
+    // endpoint to get user token
+    @GetMapping("/token")
+    public ResponseEntity<?> getUserToken(HttpServletRequest request, HttpServletResponse response) {
+        Debug.log("Fetching user token from JWT token");
+        return tokenService.getUserToken(request, response);
     }
 
 }

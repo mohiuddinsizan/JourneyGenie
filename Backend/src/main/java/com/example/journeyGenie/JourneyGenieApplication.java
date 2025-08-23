@@ -3,10 +3,12 @@ package com.example.journeyGenie;
 import com.example.journeyGenie.util.AppEnv;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @SpringBootApplication
+@EntityScan(basePackages = "com.example.journeyGenie.entity")
 @RestController
 public class JourneyGenieApplication {
 
@@ -23,9 +25,6 @@ public class JourneyGenieApplication {
 		System.out.println("FRONTEND_URL: " + AppEnv.getFrontendUrl());
 		System.out.println("BACKEND_URL: " + AppEnv.getBackendUrl());
 		System.out.println("GEMINI_API: "+ AppEnv.getGEMINI_API());
-
-
-        System.out.println("Pranto magi onk boro magi");
 	}
 
 	// api for demonstration purpose (no usage)
