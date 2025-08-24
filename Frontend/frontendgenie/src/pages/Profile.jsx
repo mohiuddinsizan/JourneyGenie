@@ -177,54 +177,6 @@ const TourGuideApp = () => {
   };
 
   // ====== Generate Video action ======
-  // async function generateVideo(tourId) {
-  //   if (!tourId) return;
-
-  //   setGenVideoLoading(true);
-  //   setGenVideoError('');
-
-  //   try {
-  //     const res = await fetch(`${API_BASE}/tour/${tourId}/video/generate`, {
-  //       method: 'POST',
-  //       credentials: 'include',
-  //       headers: { Accept: 'application/json' },
-  //     });
-
-  //     if (!res.ok) {
-  //       const t = (await res.text()) || '';
-  //       if (t.toLowerCase().includes('no photos')) {
-  //         setGenVideoError('You still have no photos for this tour. Add some to generate a video.');
-  //       } else {
-  //         setGenVideoError(t || `HTTP ${res.status}`);
-  //       }
-  //       return;
-  //     }
-
-  //     const updatedUser = await res.json();
-  //     const { password, ...safeUser } = updatedUser || {};
-  //     setUserData(safeUser);
-
-  //     const updatedTours = normalizeTours(safeUser.tours || []);
-  //     setTours(updatedTours);
-
-  //     if (selectedTour) {
-  //       const nt = updatedTours.find(t => String(t.id) === String(selectedTour.id));
-  //       if (nt) setSelectedTour({ ...nt, thumbnail: getTourThumb(nt, 0) });
-  //       else setSelectedTour(null);
-  //     }
-
-  //     try { localStorage.setItem('user', JSON.stringify(safeUser)); } catch { }
-  //     // ✅ FIXED: closed both object braces before the parenthesis
-  //     window.dispatchEvent(new CustomEvent('tours:updated', { detail: { reason: 'video-generated', tourId } }));
-  //   } catch (e) {
-  //     console.error('generateVideo failed:', e);
-  //     setGenVideoError(e?.message || 'Failed to generate video');
-  //     alert(e?.message || 'Failed to generate video');
-  //   } finally {
-  //     setGenVideoLoading(false);
-  //   }
-  // }
-
   async function generateVideo(tourId) {
     if (!tourId) return;
 
@@ -262,6 +214,7 @@ const TourGuideApp = () => {
       }
 
       try { localStorage.setItem('user', JSON.stringify(safeUser)); } catch { }
+      // ✅ FIXED: closed both object braces before the parenthesis
       window.dispatchEvent(new CustomEvent('tours:updated', { detail: { reason: 'video-generated', tourId } }));
     } catch (e) {
       console.error('generateVideo failed:', e);
@@ -270,10 +223,7 @@ const TourGuideApp = () => {
     } finally {
       setGenVideoLoading(false);
     }
-}
-
-
-
+  }
   // ===================================
 
   const markActivityDone = async (tourId, dayId, activityId) => {
