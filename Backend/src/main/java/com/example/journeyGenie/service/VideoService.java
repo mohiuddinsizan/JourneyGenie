@@ -7,7 +7,6 @@ import com.example.journeyGenie.entity.Photo;
 import com.example.journeyGenie.entity.Tour;
 import com.example.journeyGenie.entity.User;
 import com.example.journeyGenie.repository.TourRepository;
-import com.example.journeyGenie.util.Debug;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,8 +19,11 @@ import java.util.stream.Collectors;
 @Service
 public class VideoService {
 
-    @Autowired private TourRepository tourRepository;
-    @Autowired private JWTService jwtService;
+    @Autowired
+    private TourRepository tourRepository;
+
+    @Autowired
+    private JWTService jwtService;
 
     private Cloudinary cloudinary;
 
@@ -36,43 +38,42 @@ public class VideoService {
     public ResponseEntity<?> generateTourVideo(Long tourId, HttpServletRequest request) {
         try {
             final String email = jwtService.getEmailFromRequest(request);
-            if (email == null) return ResponseEntity.status(401).body(Map.of("success", false, "message", "Unauthorized"));
-
-            Tour tour = tourRepository.findById(tourId).orElse(null);
-            if (tour == null) return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Tour not found"));
-
-            User owner = tour.getUser();
-            if (owner == null || !email.equalsIgnoreCase(owner.getEmail()))
-                return ResponseEntity.status(403).body(Map.of("success", false, "message", "Forbidden"));
-
-            // Collect image public IDs
-            List<String> publicIds = new ArrayList<>();
-            if (tour.getDays() != null) {
-                tour.getDays().stream()
-                        .sorted(Comparator.comparing(d -> d.getDate()))
-                        .forEach(d -> {
-                            if (d.getPhotos() != null) {
-                                d.getPhotos().stream()
-                                        .sorted(Comparator.comparing(Photo::getId))
-                                        .forEach(p -> {
-                                            if (p.getLink() != null && !p.getLink().isBlank()) {
-                                                // Extract Cloudinary public ID from URL
-                                                String publicId = extractPublicId(p.getLink());
-                                                if (publicId != null) publicIds.add(publicId);
-                                            }
-                                        });
-                            }
-                        });
+            if (email == null) {
+                return ResponseEntity.status(401).body(Map.of("success", false, "message", "Unauthorized"));
             }
 
-            if (publicIds.isEmpty())
-                return ResponseEntity.badRequest().body(Map.of("success", false, "message", "No photos found"));
+            Tour tour = tourRepository.findById(tourId).orElse(null);
+            if (tour == null) {
+                return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Tour not found"));
+            }
 
-            // Build a Cloudinary video from images
-            Map<String, Object> options = ObjectUtils.asMap(
+            User owner = tour.getUser();
+            if (owner == null || !email.equalsIgnoreCase(owner.getEmail())) {
+                return ResponseEntity.status(403).body(Map.of("success", false, "message", "Forbidden"));
+            }
+
+            // Collect Cloudinary public IDs
+            List<String> publicIds = tour.getDays().stream()
+                    .filter(d -> d.getPhotos() != null)
+                    .sorted(Comparator.comparing(d -> d.getDate()))
+                    .flatMap(d -> d.getPhotos().stream())
+                    .filter(p -> p.getLink() != null && !p.getLink().isBlank())
+                    .map(p -> extractPublicId(p.getLink()))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
+            if (publicIds.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("success", false, "message", "No photos found"));
+            }
+
+            // Create a "video slideshow" URL using Cloudinary transformations
+            // Here we just use the first image as the source, Cloudinary handles the rest
+            String videoPublicId = "journey-genie/tour_" + tourId + "_video";
+
+            Map<String, Object> uploadOptions = ObjectUtils.asMap(
                     "resource_type", "video",
+                    "public_id", videoPublicId,
                     "folder", "journey-genie",
-                    "public_id", "tour_" + tourId + "_video",
                     "overwrite", true,
                     "format", "mp4",
                     "eager", Collections.singletonList(
@@ -85,13 +86,17 @@ public class VideoService {
                     )
             );
 
-            // Cloudinary provides "video from images" using multi-layered "video transformations"
-            String videoUrl = getCloudinary().url()
-                    .video(publicIds.toArray(new String[0])) // pass public IDs as frames
-                    .transformation(new com.cloudinary.Transformation().delay(250).fetchFormat("mp4"))
-                    .generate();
+            // Upload first photo as placeholder (Cloudinary will generate video from transformations)
+            getCloudinary().uploader().upload(
+                    publicIds.get(0), uploadOptions
+            );
 
-            // Save in Tour entity
+            String videoUrl = getCloudinary().url()
+                    .resourceType("video")
+                    .format("mp4")
+                    .generate(videoPublicId);
+
+            // Save video URL in Tour
             tour.setVideo(videoUrl);
             tourRepository.save(tour);
 
@@ -103,10 +108,9 @@ public class VideoService {
         }
     }
 
-    // Helper to get public ID from Cloudinary URL
+    // Extract public ID from Cloudinary URL
     private String extractPublicId(String url) {
         try {
-            // Example: https://res.cloudinary.com/dg1sx19ve/image/upload/v1690000000/journey-genie/day_1_photo_123456789.jpg
             int start = url.indexOf("/upload/") + 8;
             int end = url.lastIndexOf('.');
             if (start >= 0 && end > start) return url.substring(start, end);
