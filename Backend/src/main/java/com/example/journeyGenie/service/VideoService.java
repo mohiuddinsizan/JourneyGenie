@@ -34,6 +34,7 @@ public class VideoService {
         return cloudinary;
     }
 
+
     @Transactional
     public ResponseEntity<?> generateTourVideo(Long tourId, HttpServletRequest request) {
         try {
@@ -66,13 +67,10 @@ public class VideoService {
                 return ResponseEntity.badRequest().body(Map.of("success", false, "message", "No photos found"));
             }
 
-            // Create a "video slideshow" URL using Cloudinary transformations
-            // Here we just use the first image as the source, Cloudinary handles the rest
-            String videoPublicId = "journey-genie/tour_" + tourId + "_video";
-
-            Map<String, Object> uploadOptions = ObjectUtils.asMap(
+            // Generate Cloudinary video from images (adding all images sequentially)
+            Map<String, Object> options = ObjectUtils.asMap(
                     "resource_type", "video",
-                    "public_id", videoPublicId,
+                    "public_id", "journey-genie/tour_" + tourId + "_video",
                     "folder", "journey-genie",
                     "overwrite", true,
                     "format", "mp4",
@@ -86,17 +84,18 @@ public class VideoService {
                     )
             );
 
-            // Upload first photo as placeholder (Cloudinary will generate video from transformations)
+            // Upload first photo as placeholder (Cloudinary handles the video generation)
             getCloudinary().uploader().upload(
-                    publicIds.get(0), uploadOptions
+                    publicIds.get(0), options
             );
 
+            // Generate video URL using Cloudinary
             String videoUrl = getCloudinary().url()
                     .resourceType("video")
                     .format("mp4")
-                    .generate(videoPublicId);
+                    .generate("journey-genie/tour_" + tourId + "_video");
 
-            // Save video URL in Tour
+            // Save video URL in the Tour entity
             tour.setVideo(videoUrl);
             tourRepository.save(tour);
 
@@ -107,6 +106,7 @@ public class VideoService {
             return ResponseEntity.status(500).body(Map.of("success", false, "message", e.getMessage()));
         }
     }
+
 
     // Extract public ID from Cloudinary URL
     private String extractPublicId(String url) {
