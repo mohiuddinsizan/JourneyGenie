@@ -128,6 +128,9 @@ const Navbar = () => {
           <NavLink to="/about" className="nav-btn">About Us</NavLink>
           <NavLink to="/howitworks" className="nav-btn">How It Works</NavLink>
 
+          {/* Add new button for Token Buying */}
+          <NavLink to="/tokenbuy" className="nav-btn">Buy Tokens</NavLink>
+
           {isLoggedIn ? (
             <button className="nav-btn logout-btn" onClick={handleLogout}>
               Logout

@@ -84,6 +84,11 @@ const TourGuideApp = () => {
   // Generate Video state
   const [genVideoLoading, setGenVideoLoading] = useState(false);
   const [genVideoError, setGenVideoError] = useState('');
+  const [showVideoTokenAlert, setShowVideoTokenAlert] = useState(false);  // To control the video token alert visibility
+  const [videoTokenAlertMessage, setVideoTokenAlertMessage] = useState("");  // To store the video token alert message
+  const [showVideoConfirmation, setShowVideoConfirmation] = useState(false);  // For confirmation modal
+  const [videoConfirmationTourId, setVideoConfirmationTourId] = useState(null);  // Store tour ID for confirmation
+
 
   // view modes: 'all' | 'selected' | 'blog' | 'vlog'
   const [dayMode, setDayMode] = useState('all');
@@ -91,6 +96,20 @@ const TourGuideApp = () => {
 
   // blog creation loading state
   const [blogLoading, setBlogLoading] = useState(false);
+
+  // Add under: const [blogLoading, setBlogLoading] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+
+
+  //Photo upload state
+  // const [showPhotoUploadConfirmation, setShowPhotoUploadConfirmation] = useState(false); // Show photo upload confirmation modal
+  // const [showPhotoUploadAlert, setShowPhotoUploadAlert] = useState(false); // Show insufficient token alert
+  // const [photoUploadAlertMessage, setPhotoUploadAlertMessage] = useState(''); // Message for the alert
+  // const [userPhotoTokens, setUserPhotoTokens] = useState(0); // Store the user's token balance
+
+
 
   const loadUserFromLocalStorage = () => {
     try {
@@ -171,10 +190,26 @@ const TourGuideApp = () => {
     setSelectedTour(tour);
     setCurrentView('tourdetails');
   };
-  const handleBack = () => {
-    setCurrentView('profile');
-    setSelectedTour(null);
-  };
+// Just modify your existing handleBack function to this:
+const handleBack = async () => {
+  setCurrentView('profile');
+  setSelectedTour(null);
+  
+  // Refresh token balance when going back to profile
+  try {
+    const res = await fetch(`${API_BASE}/token/balance`, {
+      method: 'GET',
+      credentials: 'include',
+    });
+    
+    if (res.ok) {
+      const tokenData = await res.json();
+      setUserData(prev => prev ? { ...prev, token: tokenData.tokens } : prev);
+    }
+  } catch (error) {
+    console.error('Failed to refresh token balance:', error);
+  }
+};
 
   // ====== Generate Video action ======
   async function generateVideo(tourId) {
@@ -184,22 +219,33 @@ const TourGuideApp = () => {
     setGenVideoError('');
 
     try {
+      console.log('Sending request to generate video...');
+
       const res = await fetch(`${API_BASE}/tour/${tourId}/video/generate`, {
         method: 'POST',
         credentials: 'include',
         headers: { Accept: 'application/json' },
       });
 
+      console.log('Response received:', res);
+
       if (!res.ok) {
-        const t = (await res.text()) || '';
-        if (t.toLowerCase().includes('no photos')) {
-          setGenVideoError('You still have no photos for this tour. Add some to generate a video.');
+        const errorText = await res.text();
+        console.log('Error Text:', errorText);
+
+        if (errorText.toLowerCase().includes('insufficient tokens')) {
+          // Show alert if tokens are insufficient
+          setVideoTokenAlertMessage("You need at least 10 tokens to generate a video.");
+          setShowVideoTokenAlert(true);  // Show the alert modal
         } else {
-          setGenVideoError(t || `HTTP ${res.status}`);
+          setGenVideoError(errorText || `HTTP ${res.status}`);
         }
         return;
       }
 
+      console.log('Video generation started successfully');
+
+      // Proceed with the successful response handling
       const updatedUser = await res.json();
       const { password, ...safeUser } = updatedUser || {};
       setUserData(safeUser);
@@ -214,16 +260,20 @@ const TourGuideApp = () => {
       }
 
       try { localStorage.setItem('user', JSON.stringify(safeUser)); } catch { }
-      // ✅ FIXED: closed both object braces before the parenthesis
       window.dispatchEvent(new CustomEvent('tours:updated', { detail: { reason: 'video-generated', tourId } }));
     } catch (e) {
       console.error('generateVideo failed:', e);
       setGenVideoError(e?.message || 'Failed to generate video');
-      alert(e?.message || 'Failed to generate video');
+      setVideoTokenAlertMessage(e?.message || 'Failed to generate video');
+      setShowVideoTokenAlert(true);  // Show alert if error occurs
     } finally {
       setGenVideoLoading(false);
     }
   }
+
+
+
+
   // ===================================
 
   const markActivityDone = async (tourId, dayId, activityId) => {
@@ -289,6 +339,7 @@ const TourGuideApp = () => {
     }
   };
 
+  // ========================photo upload =========================
 
   const uploadPhotoFile = async (tourId, dayId, file) => {
     if (!file) {
@@ -379,6 +430,8 @@ const TourGuideApp = () => {
       alert(e?.message || 'Failed to upload photo');
     }
   };
+
+
 
   const totalTours = tours.length;
   const rating = userData?.rating ?? null;
@@ -559,11 +612,100 @@ const TourGuideApp = () => {
 
     // Blog helpers
     const hasBlog = !!(selectedTour?.blog && String(selectedTour.blog).trim().length);
+
+
+    // const onCreateBlog = async () => {
+    //   if (!selectedTour?.id || blogLoading) return;
+
+    //   // Check token balance first
+    //   const tokenResponse = await fetch(`${API_BASE}/token/balance`, {
+    //     method: 'GET',
+    //     credentials: 'include',
+    //   });
+
+    //   if (!tokenResponse.ok) {
+    //     alert("Error checking token balance.");
+    //     return;
+    //   }
+
+    //   const tokenData = await tokenResponse.json();
+    //   const currentTokens = tokenData.tokens;
+
+    //   if (currentTokens < 5) {
+    //     alert("You need at least 5 tokens to generate a blog.");
+    //     return; // Exit early if there are insufficient tokens
+    //   }
+
+    //   setBlogLoading(true);
+
+    //   try {
+    //     const token = localStorage.getItem('token'); // optional bearer, cookies are already included
+    //     const res = await fetch(`${API_BASE}/api/blog/generate/${selectedTour.id}`, {
+    //       method: 'POST',
+    //       credentials: 'include',
+    //       headers: {
+    //         Accept: 'application/json',
+    //         ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    //       },
+    //     });
+
+    //     if (!res.ok) {
+    //       const t = await res.text();
+    //       alert(t || `Failed to generate blog (HTTP ${res.status})`);
+    //       return;
+    //     }
+
+    //     const updatedUser = await res.json();
+    //     const { password, ...safeUser } = updatedUser || {};
+    //     setUserData(safeUser);
+    //     const updatedTours = normalizeTours(safeUser.tours || []);
+    //     setTours(updatedTours);
+    //     const nt = updatedTours.find(t => String(t.id) === String(selectedTour.id));
+    //     if (nt) setSelectedTour({ ...nt, thumbnail: getTourThumb(nt, 0) });
+    //     try { localStorage.setItem('user', JSON.stringify(safeUser)); } catch { }
+    //     window.dispatchEvent(new CustomEvent('tours:updated', { detail: { reason: 'blog-generated', tourId: selectedTour.id } }));
+    //     setDayMode('blog'); // stay on Blog tab
+    //   } catch (e) {
+    //     console.error('Error calling blog API', e);
+    //     alert(e?.message || 'Error calling blog API');
+    //   } finally {
+    //     setBlogLoading(false);
+    //   }
+    // };
+
     const onCreateBlog = async () => {
       if (!selectedTour?.id || blogLoading) return;
+
+      // Check token balance first
+      const tokenResponse = await fetch(`${API_BASE}/token/balance`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (!tokenResponse.ok) {
+        alert("Error checking token balance.");
+        return;
+      }
+
+      const tokenData = await tokenResponse.json();
+      const currentTokens = tokenData.tokens;
+
+      if (currentTokens < 5) {
+        setAlertMessage("You need at least 5 tokens to generate a blog.");
+        setShowAlert(true); // Show alert if tokens are insufficient
+        return; // Exit early if there are insufficient tokens
+      }
+
+      // Show confirmation modal for token deduction
+      setShowConfirmation(true);
+    };
+
+    const handleConfirm = async () => {
       setBlogLoading(true);
+      setShowConfirmation(false); // Hide confirmation modal
+
       try {
-        const token = localStorage.getItem('token'); // optional bearer, cookies are already included
+        const token = localStorage.getItem('token'); // Optional bearer, cookies are already included
         const res = await fetch(`${API_BASE}/api/blog/generate/${selectedTour.id}`, {
           method: 'POST',
           credentials: 'include',
@@ -588,7 +730,7 @@ const TourGuideApp = () => {
         if (nt) setSelectedTour({ ...nt, thumbnail: getTourThumb(nt, 0) });
         try { localStorage.setItem('user', JSON.stringify(safeUser)); } catch { }
         window.dispatchEvent(new CustomEvent('tours:updated', { detail: { reason: 'blog-generated', tourId: selectedTour.id } }));
-        setDayMode('blog'); // stay on Blog tab
+        setDayMode('blog'); // Stay on Blog tab
       } catch (e) {
         console.error('Error calling blog API', e);
         alert(e?.message || 'Error calling blog API');
@@ -596,6 +738,16 @@ const TourGuideApp = () => {
         setBlogLoading(false);
       }
     };
+
+    const handleCancel = () => {
+      setShowConfirmation(false); // Hide confirmation modal
+    };
+
+    const handleCloseAlert = () => {
+      setShowAlert(false); // Close insufficient token alert
+    };
+
+
 
     return (
       <div className="plan-page">
@@ -623,7 +775,11 @@ const TourGuideApp = () => {
 
                 <button
                   className="btn success"
-                  onClick={() => generateVideo(selectedTour.id)}
+                  onClick={() => {
+                    if (!hasAnyPhotos) return;  // Do nothing if there are no photos
+                    setVideoConfirmationTourId(selectedTour.id); // Store tour ID for confirmation
+                    setShowVideoConfirmation(true);  // Show the confirmation modal
+                  }}
                   disabled={genVideoLoading || !hasAnyPhotos}
                   title={hasAnyPhotos ? "Create a video from all tour photos" : "Add photos to enable video"}
                 >
@@ -637,6 +793,7 @@ const TourGuideApp = () => {
                     </span>
                   )}
                 </button>
+
               </div>
             </div>
 
@@ -702,6 +859,43 @@ const TourGuideApp = () => {
                 ))}
               </div>
             )}
+
+
+            {showVideoConfirmation && (
+              <ModalPortal>
+                <div className="fixed inset-0 z-[1000] bg-black/40">
+                  <div
+                    role="dialog"
+                    aria-modal="true"
+                    className="plan-card tg-dialog-narrow max-h-[80vh] overflow-auto"
+                    style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
+                  >
+                    <div className="preview-header tg-tight">
+                      <h3 className="tg-h3-icons">Generate Video?</h3>
+                    </div>
+                    <div className="muted" style={{ marginBottom: 16 }}>
+                      Generating a video will deduct 10 tokens from your balance. Proceed?
+                    </div>
+                    <div className="tg-flex-gap8" style={{ justifyContent: 'flex-end' }}>
+                      <button type="button" className="btn" onClick={() => setShowVideoConfirmation(false)}>
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        className="btn success"
+                        onClick={() => {
+                          generateVideo(videoConfirmationTourId);  // Trigger the video generation
+                          setShowVideoConfirmation(false);  // Close the confirmation modal
+                        }}
+                      >
+                        Confirm
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </ModalPortal>
+            )}
+
 
             {/* ACTIVITIES PAGE (All/Selected) */}
             {(dayMode === 'all' || dayMode === 'selected') && (
@@ -791,6 +985,7 @@ const TourGuideApp = () => {
                 <h4 className="section-title tg-inlinecenter-8">
                   <BookOpen size={18} /> Blog
                 </h4>
+
                 {hasBlog ? (
                   <div className="kv" style={{ whiteSpace: 'pre-wrap' }}>
                     <div className="k">Memory</div>
@@ -817,6 +1012,55 @@ const TourGuideApp = () => {
                     </button>
                   </div>
                 )}
+
+                {/* Confirm 5-token deduction */}
+                {showConfirmation && (
+                  <ModalPortal>
+                    <div className="fixed inset-0 z-[1000] bg-black/40">
+                      <div
+                        role="dialog"
+                        aria-modal="true"
+                        className="plan-card tg-dialog-narrow max-h-[80vh] overflow-auto"
+                        style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
+                      >
+                        <div className="preview-header tg-tight">
+                          <h3 className="tg-h3-icons">Deduct 5 tokens?</h3>
+                        </div>
+                        <div className="muted" style={{ marginBottom: 16 }}>
+                          Generating a blog will deduct <strong>5</strong> tokens from your balance. Proceed?
+                        </div>
+                        <div className="tg-flex-gap8" style={{ justifyContent: 'flex-end' }}>
+                          <button type="button" className="btn" onClick={handleCancel}>Cancel</button>
+                          <button type="button" className="btn success" onClick={handleConfirm}>
+                            Confirm
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </ModalPortal>
+                )}
+
+                {/* Fancy alert (insufficient tokens / errors) */}
+                {showAlert && (
+                  <ModalPortal>
+                    <div className="fixed inset-0 z-[1000] bg-black/40">
+                      <div
+                        role="alertdialog"
+                        aria-modal="true"
+                        className="plan-card tg-dialog-narrow max-h-[80vh] overflow-auto"
+                        style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
+                      >
+                        <div className="preview-header tg-tight">
+                          <h3 className="tg-h3-icons">Notice</h3>
+                        </div>
+                        <div className="muted" style={{ marginBottom: 16 }}>{alertMessage}</div>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                          <button type="button" className="btn success" onClick={handleCloseAlert}>OK</button>
+                        </div>
+                      </div>
+                    </div>
+                  </ModalPortal>
+                )}
               </div>
             )}
 
@@ -842,6 +1086,35 @@ const TourGuideApp = () => {
                 {genVideoError && <p className="muted text-error" style={{ marginTop: 8 }}>{genVideoError}</p>}
               </div>
             )}
+
+            {showVideoTokenAlert && (
+              <ModalPortal>
+                <div className="fixed inset-0 z-[1000] bg-black/40">
+                  <div
+                    role="alertdialog"
+                    aria-modal="true"
+                    className="plan-card tg-dialog-narrow max-h-[80vh] overflow-auto"
+                    style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
+                  >
+                    <div className="preview-header tg-tight">
+                      <h3 className="tg-h3-icons">Insufficient Tokens</h3>
+                    </div>
+                    <div className="muted" style={{ marginBottom: 16 }}>
+                      {videoTokenAlertMessage}
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                      <button type="button" className="btn success" onClick={() => setShowVideoTokenAlert(false)}>
+                        OK
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </ModalPortal>
+            )}
+
+
+
+
 
             {/* Edit Title Modal */}
             {typeof editOpen !== 'undefined' && editOpen && (
@@ -998,6 +1271,12 @@ const AddPhotoRow = React.memo(function AddPhotoRow({ onUpload }) {
   const [fileObj, setFileObj] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [uploading, setUploading] = useState(false);
+
+  // Modal states
+  const [showPhotoUploadConfirmation, setShowPhotoUploadConfirmation] = useState(false);
+  const [showPhotoUploadAlert, setShowPhotoUploadAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+
   const inputRef = React.useRef(null);
 
   useEffect(() => {
@@ -1013,102 +1292,199 @@ const AddPhotoRow = React.memo(function AddPhotoRow({ onUpload }) {
     if (inputRef.current) inputRef.current.value = '';
   };
 
+  // Check token balance
+  const checkTokenBalance = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/token/balance`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to fetch token balance');
+      }
+
+      const data = await res.json();
+      return data.tokens || 0;
+    } catch (error) {
+      console.error('Error checking token balance:', error);
+      return 0;
+    }
+  };
+
   const submitFile = async () => {
     if (!fileObj || uploading) return alert('Choose a file');
+
+    // Check token balance first
+    const tokenBalance = await checkTokenBalance();
+
+    if (tokenBalance < 1) {
+      setAlertMessage('Insufficient tokens. You need at least 1 token to upload a photo.');
+      setShowPhotoUploadAlert(true);
+      return;
+    }
+
+    // Show confirmation modal
+    setShowPhotoUploadConfirmation(true);
+  };
+
+  const handleConfirm = async () => {
+    setShowPhotoUploadConfirmation(false);
+
     try {
       setUploading(true);
       await onUpload(fileObj);
       resetSelection();
     } catch (e) {
       console.error('upload error:', e);
+      // Show error in alert modal
+      setAlertMessage(e?.message || 'Failed to upload photo');
+      setShowPhotoUploadAlert(true);
     } finally {
       setUploading(false);
     }
   };
 
+  const handleCancel = () => {
+    setShowPhotoUploadConfirmation(false);
+  };
+
+  const handleCloseAlert = () => {
+    setShowPhotoUploadAlert(false);
+    setAlertMessage('');
+  };
+
   return (
-    <div className="add-activity tg-row tg-mt-12" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-      {/* 🔹 Buttons Row */}
-      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-        {/* Choose file */}
-        <label className={`btn tg-pointer ${uploading ? 'tg-disabled' : ''}`}>
-          <span className="tg-inlinecenter-6">
-            <Image size={16} /> {fileName || 'Choose image'}
-          </span>
-          <input
-            ref={inputRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            style={{ display: 'none' }}
-            disabled={uploading}
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) {
-                setFileObj(f);
-                setFileName(f.name);
-                setPreviewUrl(URL.createObjectURL(f));
-              } else {
-                resetSelection();
-              }
-            }}
-          />
-        </label>
+    <>
+      <div className="add-activity tg-row tg-mt-12" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+        {/* 🔹 Buttons Row */}
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          {/* Choose file */}
+          <label className={`btn tg-pointer ${uploading ? 'tg-disabled' : ''}`}>
+            <span className="tg-inlinecenter-6">
+              <Image size={16} /> {fileName || 'Choose image'}
+            </span>
+            <input
+              ref={inputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              style={{ display: 'none' }}
+              disabled={uploading}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) {
+                  setFileObj(f);
+                  setFileName(f.name);
+                  setPreviewUrl(URL.createObjectURL(f));
+                } else {
+                  resetSelection();
+                }
+              }}
+            />
+          </label>
 
-        {/* Upload button */}
-        <div style={{ display: 'flex' }} >
-          <button
-            type="button"
-            className="btn success cancel-btn"
-            onClick={submitFile}
-            style={{ width: 160 }}
-            disabled={uploading || !fileObj}
-          >
-            {uploading ? (
-              <span className="tg-inlinecenter-6">
-                <RefreshCw size={16} className="tg-spin" /> Uploading…
-              </span>
-            ) : (
-              <span className="tg-inlinecenter-6">
-                <Image size={16} /> Upload
-              </span>
-            )}
-          </button>
-
-          {/* Cancel button (only when file selected) */}
-          {fileObj && !uploading && (
+          {/* Upload button */}
+          <div style={{ display: 'flex' }} >
             <button
               type="button"
               className="btn success cancel-btn"
-              onClick={resetSelection}
-              style={{ width: 120, marginLeft: '12px' }}
+              onClick={submitFile}
+              style={{ width: 160 }}
+              disabled={uploading || !fileObj}
             >
-              Cancel
+              {uploading ? (
+                <span className="tg-inlinecenter-6">
+                  <RefreshCw size={16} className="tg-spin" /> Uploading…
+                </span>
+              ) : (
+                <span className="tg-inlinecenter-6">
+                  <Image size={16} /> Upload
+                </span>
+              )}
             </button>
-          )}
 
+            {/* Cancel button (only when file selected) */}
+            {fileObj && !uploading && (
+              <button
+                type="button"
+                className="btn success cancel-btn"
+                onClick={resetSelection}
+                style={{ width: 120, marginLeft: '12px' }}
+              >
+                Cancel
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* 🔹 Preview below */}
+        {previewUrl && (
+          <div style={{ marginTop: '12px' }}>
+            <img
+              src={previewUrl}
+              alt="Preview"
+              style={{
+                maxHeight: '120px',
+                borderRadius: '8px',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+              }}
+            />
+          </div>
+        )}
       </div>
 
-      {/* 🔹 Preview below */}
-      {previewUrl && (
-        <div style={{ marginTop: '12px' }}>
-          <img
-            src={previewUrl}
-            alt="Preview"
-            style={{
-              maxHeight: '120px',
-              borderRadius: '8px',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-            }}
-          />
-        </div>
+      {/* Photo Upload Confirmation Modal */}
+      {showPhotoUploadConfirmation && (
+        <ModalPortal>
+          <div className="fixed inset-0 z-[1000] bg-black/40">
+            <div
+              role="dialog"
+              aria-modal="true"
+              className="plan-card tg-dialog-narrow max-h-[80vh] overflow-auto"
+              style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
+            >
+              <div className="preview-header tg-tight">
+                <h3 className="tg-h3-icons">Deduct 1 token?</h3>
+              </div>
+              <div className="muted" style={{ marginBottom: 16 }}>
+                Uploading a photo will deduct <strong>1</strong> token from your balance. Proceed?
+              </div>
+              <div className="tg-flex-gap8" style={{ justifyContent: 'flex-end' }}>
+                <button type="button" className="btn" onClick={handleCancel}>Cancel</button>
+                <button type="button" className="btn success" onClick={handleConfirm}>
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
       )}
-    </div>
+
+      {/* Photo Upload Alert Modal */}
+      {showPhotoUploadAlert && (
+        <ModalPortal>
+          <div className="fixed inset-0 z-[1000] bg-black/40">
+            <div
+              role="alertdialog"
+              aria-modal="true"
+              className="plan-card tg-dialog-narrow max-h-[80vh] overflow-auto"
+              style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
+            >
+              <div className="preview-header tg-tight">
+                <h3 className="tg-h3-icons">Notice</h3>
+              </div>
+              <div className="muted" style={{ marginBottom: 16 }}>{alertMessage}</div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                <button type="button" className="btn success" onClick={handleCloseAlert}>OK</button>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
+    </>
   );
 });
-
-
 
 
 export default TourGuideApp;

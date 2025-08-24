@@ -16,8 +16,8 @@
   transform: translate(-50%, -50%);
   width: 600px;
   height: 500px;
-  background: url('your-image-path.jpg') center/cover no-repeat;
-  background-image: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%), url('your-image-path.jpg');
+  background: url('background.png') center/cover no-repeat;
+  background-image: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%), url('background.png');
   border-radius: 25px;
   box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
   z-index: 10;

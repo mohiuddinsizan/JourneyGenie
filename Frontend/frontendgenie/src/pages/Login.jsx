@@ -215,7 +215,7 @@ const Login = () => {
               ✓
             </div>
             <h3 style={{ margin: '0 0 4px', color: '#111827', fontSize: 22 }}>Welcome, {welcome.name}!</h3>
-            <p className="muted" style={{ margin: 0 }}>What's about a new journey ? </p>
+            <p className="muted" style={{ margin: 0 }}>What about a new journey ? </p>
 
             {/* Progress bar */}
             <div

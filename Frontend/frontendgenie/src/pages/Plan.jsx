@@ -102,6 +102,13 @@ export default function Plan() {
   // Modal state
   const [showLoginAlert, setShowLoginAlert] = useState(false);
 
+
+
+  // token for the tour
+  const [showStartTourConfirmation, setShowStartTourConfirmation] = useState(false);
+  const [showStartTourAlert, setShowStartTourAlert] = useState(false);
+  const [startTourAlertMessage, setStartTourAlertMessage] = useState('');
+
   useEffect(() => {
     // ensure the page can scroll naturally everywhere
     document.documentElement.style.overflow = 'auto';
@@ -222,9 +229,85 @@ export default function Plan() {
     }
   };
 
+
+  const checkTokenBalance = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/token/balance`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to fetch token balance');
+      }
+
+      const data = await res.json();
+      return data.tokens || 0;
+    } catch (error) {
+      console.error('Error checking token balance:', error);
+      return 0;
+    }
+  };
+
+  // Replace your existing handleCommit function with this enhanced version:
   const handleCommit = async () => {
     if (!preview) return;
-    setError(''); setCommitMsg(''); setCommitting(true);
+
+    // Calculate required tokens (1 per day)
+    const numberOfDays = preview.days?.length || 0;
+
+    // Check token balance first
+    const tokenBalance = await checkTokenBalance();
+
+    if (tokenBalance < numberOfDays) {
+      setStartTourAlertMessage(`Insufficient tokens. You need at least ${numberOfDays} tokens to start this ${numberOfDays}-day tour, but you only have ${tokenBalance} tokens.`);
+      setShowStartTourAlert(true);
+      return;
+    }
+
+    // Show confirmation modal
+    setShowStartTourConfirmation(true);
+  };
+
+
+  // const handleCommit = async () => {
+  //   if (!preview) return;
+  //   setError(''); setCommitMsg(''); setCommitting(true);
+  //   try {
+  //     const res = await fetch(`${API_BASE}/api/plan/commit`, {
+  //       method: 'POST',
+  //       headers: { 'Content-Type': 'application/json' },
+  //       credentials: 'include',
+  //       body: JSON.stringify(preview),
+  //     });
+
+  //     // Show modal on 401 only. No other logic touched.
+  //     if (res.status === 401) {
+  //       setShowLoginAlert(true);
+  //       setCommitting(false);
+  //       return;
+  //     }
+
+  //     if (!res.ok) throw new Error((await res.text()) || `Server error: ${res.status}`);
+  //     const updatedUser = await res.json();
+  //     const { password, ...safeUser } = updatedUser;
+  //     localStorage.setItem('user', JSON.stringify(safeUser));
+  //     window.dispatchEvent(new CustomEvent('tours:updated', { detail: { reason: 'create' } }));
+  //     setCommitMsg('🎉 Tour saved successfully! Your adventure awaits!');
+  //   } catch (err) {
+  //     setError(err.message || 'Failed to save tour');
+  //     console.error('Commit error:', err);
+  //   } finally {
+  //     setCommitting(false);
+  //   }
+  // };
+
+  const handleStartTourConfirm = async () => {
+    setShowStartTourConfirmation(false);
+    setError('');
+    setCommitMsg('');
+    setCommitting(true);
+
     try {
       const res = await fetch(`${API_BASE}/api/plan/commit`, {
         method: 'POST',
@@ -233,14 +316,23 @@ export default function Plan() {
         body: JSON.stringify(preview),
       });
 
-      // Show modal on 401 only. No other logic touched.
       if (res.status === 401) {
         setShowLoginAlert(true);
         setCommitting(false);
         return;
       }
 
-      if (!res.ok) throw new Error((await res.text()) || `Server error: ${res.status}`);
+      if (!res.ok) {
+        const errorText = await res.text();
+        if (errorText.toLowerCase().includes('insufficient tokens')) {
+          setStartTourAlertMessage(errorText);
+          setShowStartTourAlert(true);
+        } else {
+          setError(errorText || `Server error: ${res.status}`);
+        }
+        return;
+      }
+
       const updatedUser = await res.json();
       const { password, ...safeUser } = updatedUser;
       localStorage.setItem('user', JSON.stringify(safeUser));
@@ -252,6 +344,15 @@ export default function Plan() {
     } finally {
       setCommitting(false);
     }
+  };
+
+  const handleStartTourCancel = () => {
+    setShowStartTourConfirmation(false);
+  };
+
+  const handleCloseStartTourAlert = () => {
+    setShowStartTourAlert(false);
+    setStartTourAlertMessage('');
   };
 
   return (
@@ -499,6 +600,41 @@ export default function Plan() {
           navigate("/login");
         }}
       />
+
+
+      {/* Start Tour Confirmation Modal */}
+      {showStartTourConfirmation && preview && (
+        <div className="alert-backdrop">
+          <div className="alert-modal">
+            <h3>Deduct {preview.days?.length || 0} tokens?</h3>
+            <p>
+              Starting this {preview.days?.length || 0}-day tour will deduct <strong>{preview.days?.length || 0}</strong> tokens from your balance (1 token per day). Proceed?
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '16px' }}>
+              <button className="btn" onClick={handleStartTourCancel}>Cancel</button>
+              <button className="btn primary" onClick={handleStartTourConfirm}>
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Start Tour Alert Modal */}
+      {showStartTourAlert && (
+        <div className="alert-backdrop">
+          <div className="alert-modal">
+            <h3>Insufficient Tokens</h3>
+            <p>{startTourAlertMessage}</p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
+              <button className="btn primary" onClick={handleCloseStartTourAlert}>OK</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
+
     </div>
   );
 }

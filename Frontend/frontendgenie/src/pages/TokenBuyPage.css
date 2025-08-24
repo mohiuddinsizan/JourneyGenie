@@ -1,0 +1,25 @@
+/* Custom alert style */
+.custom-alert {
+    background: red;
+    color: white;
+    padding: 16px;
+    border-radius: 12px;
+    margin-top: 20px;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    animation: fadeInAlert 0.5s ease-out;
+  }
+  
+  .custom-alert span {
+    display: inline-block;
+    max-width: 100%;
+    white-space: nowrap;
+  }
+  
+  @keyframes fadeInAlert {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  

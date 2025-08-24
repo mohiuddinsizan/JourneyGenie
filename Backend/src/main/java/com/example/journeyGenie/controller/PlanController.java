@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.example.journeyGenie.service.TokenService;
+
 
 import java.io.IOException;
 import java.net.URI;
@@ -27,6 +29,9 @@ public class PlanController {
 
     @Autowired
     private TourService tourService;
+
+    @Autowired
+    private TokenService tokenService;
 
     private static final String GEMINI_API_URL =
             "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
@@ -130,6 +135,48 @@ public class PlanController {
     @PostMapping("/commit")
     public ResponseEntity<?> commitPlan(@RequestBody Map<String, Object> planRequest, HttpServletRequest request) {
         try {
+            // Calculate number of days for token deduction
+            int numberOfDays = 0;
+            Object daysObj = planRequest.get("days");
+            if (daysObj instanceof List<?> daysList) {
+                numberOfDays = daysList.size();
+            }
+
+            // Check if the user has enough tokens (1 token per day)
+            ResponseEntity<?> tokenResponse = tokenService.getUserToken(request, null);
+
+            // Debug: Log the response body to understand its structure
+            System.out.println("Token Response: " + tokenResponse.getBody());
+
+            if (!tokenResponse.getStatusCode().is2xxSuccessful()) {
+                return ResponseEntity.status(401).body("User not authenticated");
+            }
+
+            // Extract token balance from the response
+            Integer userTokens = null;
+
+            if (tokenResponse.getBody() instanceof Map) {
+                Map<?, ?> responseMap = (Map<?, ?>) tokenResponse.getBody();
+                System.out.println("Response Map Keys: " + responseMap.keySet());
+                userTokens = (Integer) responseMap.get("tokens");
+            } else {
+                userTokens = (Integer) tokenResponse.getBody();
+            }
+
+            System.out.println("User Tokens: " + userTokens);
+            System.out.println("Required Tokens: " + numberOfDays);
+
+            if (userTokens == null || userTokens < numberOfDays) {
+                return ResponseEntity.status(400).body("Insufficient tokens. You need at least " + numberOfDays + " tokens to start this " + numberOfDays + "-day tour.");
+            }
+
+            // Deduct tokens (1 per day)
+            ResponseEntity<?> deductionResponse = tokenService.deductTokens(request, numberOfDays);
+            if (!deductionResponse.getStatusCode().is2xxSuccessful()) {
+                return ResponseEntity.status(400).body("Failed to deduct tokens.");
+            }
+
+            // Proceed with tour creation (your existing logic)
             Tour tour = new Tour();
 
             tour.setStartLocation((String) planRequest.get("startLocation"));
@@ -140,7 +187,6 @@ public class PlanController {
             tour.setUser(null); // bound in service
 
             List<Day> days = new ArrayList<>();
-            Object daysObj = planRequest.get("days");
             if (daysObj instanceof List<?> daysList) {
                 for (Object dayObj : daysList) {
                     if (!(dayObj instanceof Map)) continue;
@@ -166,10 +212,7 @@ public class PlanController {
                         }
                     }
 
-                    // ─────────────────────────────────────────────────────────────
-                    // NEW: inject transport/hotel as synthetic activities so they
-                    // render in the "Activities" list with costs.
-                    // ─────────────────────────────────────────────────────────────
+                    // NEW: inject transport/hotel as synthetic activities
                     String transport = optString(dayMap, "transportation");
                     Double transportCost = readNumber(dayMap, "transportationCostBdt", "transportation_cost_bdt");
                     if (hasText(transport) || (transportCost != null && transportCost > 0)) {
@@ -183,7 +226,6 @@ public class PlanController {
                         }
                         a.setDescription(sb.toString());
                         a.setDay(day);
-                        // Put transport at the TOP of the list
                         activities.add(0, a);
                     }
 
@@ -200,12 +242,10 @@ public class PlanController {
                         }
                         a.setDescription(sb.toString());
                         a.setDay(day);
-                        // Put hotel right after transport (if any)
                         int insertAt = !activities.isEmpty() && activities.get(0).getDescription().startsWith("Transport:")
                                 ? 1 : 0;
                         activities.add(insertAt, a);
                     }
-                    // ─────────────────────────────────────────────────────────────
 
                     day.setActivities(activities);
                     day.setPhotos(new ArrayList<>());

@@ -9,6 +9,7 @@ import LandingPage from './pages/LandingPage';
 import AboutUs from './pages/AboutUs';
 import HowItWorks from './pages/HowItWorks';
 import Navbar from './components/Navbar';
+import TokenBuyPage from './pages/TokenBuyPage';
 import './App.css';
 
 const App = () => {
@@ -34,6 +35,7 @@ const App = () => {
           <Route path="/profile" element={<Profile />} />
           <Route path="/about" element={<AboutUs />} />
           <Route path="/howitworks" element={<HowItWorks />} />
+          <Route path="/tokenbuy" element={<TokenBuyPage />} />
         </Routes>
       </main>
     </>
