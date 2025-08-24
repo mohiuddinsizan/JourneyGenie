@@ -81,6 +81,8 @@ const TokenBuyPage = () => {
         couponCode: couponCode // The coupon code to be sent
       };
 
+      console.log("Applying coupon with payload: ", payload); // Debugging line
+
       const response = await fetch(`${API_BASE}/token/apply-coupon`, {
         method: "POST",
         headers: {
@@ -89,6 +91,8 @@ const TokenBuyPage = () => {
         body: JSON.stringify(payload), // Sending couponCode in request body as JSON
         credentials: 'include', // Include credentials (cookies with JWT) in the request
       });
+
+      console.log("Response status: 2 : ", response.status); // Debugging line
 
       if (!response.ok) {
         const errorText = await response.text();
