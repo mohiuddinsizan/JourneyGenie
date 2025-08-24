@@ -47,14 +47,15 @@ const TokenBuyPage = () => {
     resetMessages(); // Reset previous messages before making request
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE}/token/add`, {
+      const response = await fetch(`${API_BASE}/token/add?tokens=${amount}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ tokens: amount }),
-        credentials: 'include', // Include credentials if needed (like cookies)
+        // Remove the body since we're using URL parameters
+        credentials: 'include',
       });
+  
 
       if (!response.ok) {
         const errorText = await response.text();
