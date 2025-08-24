@@ -1,11 +1,6 @@
 # Use an official Java runtime as a parent image
 FROM openjdk:17-jdk-slim
 
-# Install ffmpeg
-RUN apt-get update && \
-    apt-get install -y ffmpeg && \
-    rm -rf /var/lib/apt/lists/*
-
 # Set the working directory inside the container
 WORKDIR /app
 
