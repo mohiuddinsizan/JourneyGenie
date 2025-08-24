@@ -1,5 +1,6 @@
 package com.example.journeyGenie.controller;
 
+import com.example.journeyGenie.dto.CouponRequestDTO;
 import com.example.journeyGenie.service.TokenService;
 import com.example.journeyGenie.util.Debug;
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,19 +39,18 @@ public class TokenController {
         return tokenService.addTokens(request, tokensToAdd);
     }
 
-    // Apply a coupon for token bonus (e.g., "sizan" coupon for 100 tokens)
+    // Apply a coupon for token bonus (Received as JSON body)
     @PostMapping("/apply-coupon")
-    public ResponseEntity<?> applyCoupon(@RequestParam("couponCode") String couponCode, HttpServletRequest request) {
+    public ResponseEntity<?> applyCoupon(@RequestBody CouponRequestDTO couponRequestDTO, HttpServletRequest request) {
         Debug.log("Applying coupon for user");
-        Debug.log("Coupon Code received: " + couponCode); // Debugging line to check coupon code
+        Debug.log("Coupon Code received: " + couponRequestDTO.getCouponCode());
 
-        if ("sizan".equalsIgnoreCase(couponCode)) {
-            Debug.log("Coupon 'sizan' applied, awarding 100 tokens");
-            return tokenService.addTokens(request, 10);  // Award 100 tokens for the coupon "sizan"
+        if ("sizan".equalsIgnoreCase(couponRequestDTO.getCouponCode())) {
+            Debug.log("Coupon 'sizan' applied, awarding 10 tokens");
+            return tokenService.addTokens(request, 10);  // Award 10 tokens for the coupon "sizan"
         } else {
-            Debug.log("Invalid coupon code entered: " + couponCode);
+            Debug.log("Invalid coupon code entered: " + couponRequestDTO.getCouponCode());
             return ResponseEntity.badRequest().body("Invalid coupon code.");
         }
     }
-
 }

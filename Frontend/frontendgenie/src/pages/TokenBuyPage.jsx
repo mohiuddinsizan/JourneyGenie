@@ -77,23 +77,28 @@ const TokenBuyPage = () => {
     resetMessages(); // Reset previous messages before making request
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE}/token/apply-coupon?couponCode=${couponCode}`, {
+      const payload = {
+        couponCode: couponCode // The coupon code to be sent
+      };
+
+      const response = await fetch(`${API_BASE}/token/apply-coupon`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        body: JSON.stringify(payload), // Sending couponCode in request body as JSON
         credentials: 'include', // Include credentials (cookies with JWT) in the request
       });
-  
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(errorText || "Failed to apply coupon");
       }
-  
+
       const data = await response.json();
       setTokens(data.tokens); // Directly set tokens to the new value received from coupon (not adding to previous)
       setMessage(`Coupon applied! Now you have total ${data.tokens} tokens.`);
-  
+
       // Only show the success message (no need for alert)
     } catch (err) {
       setError(err.message); // Show error if any
@@ -102,7 +107,6 @@ const TokenBuyPage = () => {
       setLoading(false);
     }
   };
-  
 
   return (
     <div className="token-buy-page">
