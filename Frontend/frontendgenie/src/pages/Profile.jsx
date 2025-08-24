@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import ReactDOM from 'react-dom';
 import {
-  MapPin, Calendar, DollarSign, Users, Star, Clock, CheckCircle, Plus, Image,
+  MapPin, Calendar, DollarSign, Users, Star, Wallet, Clock, CheckCircle, Plus, Image,
   RefreshCw, List, CheckSquare, Video, LogOut, BookOpen
 } from 'lucide-react';
 import './Profile.css';
@@ -382,6 +382,7 @@ const TourGuideApp = () => {
 
   const totalTours = tours.length;
   const rating = userData?.rating ?? null;
+  const balance = userData?.token ?? null;
   const joinDate = userData?.joinDate ?? null;
 
   const initials = useMemo(() => {
@@ -436,8 +437,8 @@ const TourGuideApp = () => {
                 <div className="v">{rating ? `${rating} ⭐` : '4.8'}</div>
               </div>
               <div className="kv">
-                <div className="k"><Calendar size={16} /> Joined</div>
-                <div className="v">{joinDate ? new Date(joinDate).toLocaleDateString() : '—'}</div>
+                <div className="k"><Wallet size={16} /> Balance</div>
+                <div className="v">{balance ? `${balance}` : '0.00'}</div>
               </div>
             </div>
           </div>
@@ -672,7 +673,7 @@ const TourGuideApp = () => {
                 title="Show video only"
               >
                 <span className="tg-inlinecenter-6"><Video size={16} /> Vlog</span>
-              </button>              
+              </button>
               <button
                 type="button"
                 className={`btn`}
@@ -1055,7 +1056,7 @@ const AddPhotoRow = React.memo(function AddPhotoRow({ onUpload }) {
         </label>
 
         {/* Upload button */}
-        <div style={{display:'flex'}} >
+        <div style={{ display: 'flex' }} >
           <button
             type="button"
             className="btn success cancel-btn"
