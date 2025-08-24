@@ -1,11 +1,12 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    "./index.html",  // Make sure this is included, especially if you are using Vite's default HTML.
-    "./src/**/*.{js,ts,jsx,tsx}",  // This is perfect if you're using React or TypeScript in the `src` folder.
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}", // adjust if you're using JS/TS/React
   ],
   theme: {
     extend: {},
   },
   plugins: [],
 }
+
