@@ -162,7 +162,7 @@ html, body {
   transform: translateX(-50%);
   width: 80px;
   height: 80px;
-  background: linear-gradient(45deg, #ff6b35, #f7931e);
+  background: linear-gradient(45deg, #f0e8e5, #db2777);
   border-radius: 50%;
   z-index: 3;
   box-shadow: 0 0 40px rgba(255, 107, 53, 0.5);
@@ -171,11 +171,11 @@ html, body {
 
 @keyframes sunGlow {
   0%, 100% { 
-    box-shadow: 0 0 40px rgba(255, 107, 53, 0.5);
+    box-shadow: 0 0 40px rgba(212, 9, 134, 0.5);
     transform: translateX(-50%) scale(1);
   }
   50% { 
-    box-shadow: 0 0 60px rgba(255, 107, 53, 0.8);
+    box-shadow: 0 0 60px rgba(205, 18, 115, 0.8);
     transform: translateX(-50%) scale(1.05);
   }
 }
