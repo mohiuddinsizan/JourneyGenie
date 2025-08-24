@@ -35,10 +35,24 @@ public class VideoService {
         return cloudinary;
     }
 
-    /** ffmpeg absolute path (you confirmed it's here) */
+    // /** ffmpeg absolute path (you confirmed it's here) */
+    // private String ffmpegPath() {
+    //     return "/usr/bin/ffmpeg";
+    // }
+
     private String ffmpegPath() {
-        return "/usr/bin/ffmpeg";
+        String ffmpegPath = "/usr/bin/ffmpeg";
+        if (!new File(ffmpegPath).exists()) {
+            Debug.log("First way failed, checking alternate ffmpeg path");
+            ffmpegPath = "/usr/local/bin/ffmpeg"; // Check alternate location
+        }
+        Debug.log("Using ffmpeg path: " + ffmpegPath);
+
+        return ffmpegPath;
     }
+
+
+
 
     @Transactional
     public ResponseEntity<?> generateTourVideo(Long tourId, HttpServletRequest request) {
