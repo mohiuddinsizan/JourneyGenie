@@ -297,15 +297,6 @@ const TokenBuyPage = () => {
               {/* Action Buttons */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <button
-                  className="btn success"
-                  onClick={handleTokenPurchase}
-                  disabled={loading}
-                  style={{ width: '100%', fontSize: '1rem' }}
-                >
-                  {loading ? "Processing..." : "🛒 Add to Account"}
-                </button>
-
-                <button
                   className="btn primary"
                   onClick={handlePayment}
                   style={{ width: '100%', fontSize: '1rem' }}
