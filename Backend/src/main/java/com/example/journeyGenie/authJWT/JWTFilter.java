@@ -108,5 +108,4 @@ public class JWTFilter extends OncePerRequestFilter {
         return path.startsWith("/user/login") || path.startsWith("/user/signup") || path.startsWith("/test-no-auth");
     }
 
-
 }
