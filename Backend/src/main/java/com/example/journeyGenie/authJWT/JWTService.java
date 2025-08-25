@@ -78,6 +78,13 @@ public class JWTService {
         return extractExpiration(token).before(new Date());
     }
 
+
+    public long getRemainingValidityMinutes(String token) {
+        Date expiration = extractExpiration(token);
+        long diffMillis = expiration.getTime() - System.currentTimeMillis();
+        return diffMillis / (1000 * 60);
+    }
+
     public boolean validateToken(String token, UserDetails userDetails) {
         final String userName = extractUserName(token);
         return (userName.equals(userDetails.getUsername()) && !isTokenExpired(token));
