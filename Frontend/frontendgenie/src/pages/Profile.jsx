@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import ReactDOM from 'react-dom';
 import {
   MapPin, Calendar, DollarSign, Users, Star, Wallet, Clock, CheckCircle, Plus, Image,
-  RefreshCw, List, CheckSquare, Video, LogOut, BookOpen
+  RefreshCw, List, CheckSquare, Video, LogOut,Share2, BookOpen
 } from 'lucide-react';
 import { FacebookShareModal } from '../components/FacebookShareHandler';
 import './Profile.css';
@@ -104,8 +104,11 @@ const TourGuideApp = () => {
   const [alertMessage, setAlertMessage] = useState('');
 
 
-  // Facebook Share Modal state
-  const [showFacebookModal, setShowFacebookModal] = useState(false);
+  //Photo upload state
+  // const [showPhotoUploadConfirmation, setShowPhotoUploadConfirmation] = useState(false); // Show photo upload confirmation modal
+  // const [showPhotoUploadAlert, setShowPhotoUploadAlert] = useState(false); // Show insufficient token alert
+  // const [photoUploadAlertMessage, setPhotoUploadAlertMessage] = useState(''); // Message for the alert
+  // const [userPhotoTokens, setUserPhotoTokens] = useState(0); // Store the user's token balance
 
 
 
@@ -188,26 +191,26 @@ const TourGuideApp = () => {
     setSelectedTour(tour);
     setCurrentView('tourdetails');
   };
-  // Just modify your existing handleBack function to this:
-  const handleBack = async () => {
-    setCurrentView('profile');
-    setSelectedTour(null);
-
-    // Refresh token balance when going back to profile
-    try {
-      const res = await fetch(`${API_BASE}/token/balance`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      if (res.ok) {
-        const tokenData = await res.json();
-        setUserData(prev => prev ? { ...prev, token: tokenData.tokens } : prev);
-      }
-    } catch (error) {
-      console.error('Failed to refresh token balance:', error);
+// Just modify your existing handleBack function to this:
+const handleBack = async () => {
+  setCurrentView('profile');
+  setSelectedTour(null);
+  
+  // Refresh token balance when going back to profile
+  try {
+    const res = await fetch(`${API_BASE}/token/balance`, {
+      method: 'GET',
+      credentials: 'include',
+    });
+    
+    if (res.ok) {
+      const tokenData = await res.json();
+      setUserData(prev => prev ? { ...prev, token: tokenData.tokens } : prev);
     }
-  };
+  } catch (error) {
+    console.error('Failed to refresh token balance:', error);
+  }
+};
 
   // ====== Generate Video action ======
   async function generateVideo(tourId) {
@@ -268,25 +271,6 @@ const TourGuideApp = () => {
       setGenVideoLoading(false);
     }
   }
-
-
-  //=============Facebook Share Modal handlers ============
-
-  const handleFacebookShare = async () => {
-    if (!selectedTour?.id) return;
-
-    // Check if blog exists
-    const hasBlog = !!(selectedTour?.blog && String(selectedTour.blog).trim().length);
-
-    if (!hasBlog) {
-      setAlertMessage("Please generate a blog first before sharing to Facebook.");
-      setShowAlert(true);
-      return;
-    }
-
-    // Open Facebook share modal
-    setShowFacebookModal(true);
-  };
 
 
 
@@ -793,9 +777,9 @@ const TourGuideApp = () => {
                 <button
                   className="btn success"
                   onClick={() => {
-                    if (!hasAnyPhotos) return;
-                    setVideoConfirmationTourId(selectedTour.id);
-                    setShowVideoConfirmation(true);
+                    if (!hasAnyPhotos) return;  // Do nothing if there are no photos
+                    setVideoConfirmationTourId(selectedTour.id); // Store tour ID for confirmation
+                    setShowVideoConfirmation(true);  // Show the confirmation modal
                   }}
                   disabled={genVideoLoading || !hasAnyPhotos}
                   title={hasAnyPhotos ? "Create a video from all tour photos" : "Add photos to enable video"}
@@ -811,17 +795,6 @@ const TourGuideApp = () => {
                   )}
                 </button>
 
-                {/* FACEBOOK SHARE BUTTON */}
-                <button
-                  className="btn success"
-                  onClick={handleFacebookShare}
-                  title="Share your tour on Facebook"
-                  disabled={!selectedTour?.blog}
-                >
-                  <span className="tg-inlinecenter-6">
-                    <Share2 size={16} /> Share to Facebook
-                  </span>
-                </button>
               </div>
             </div>
 
@@ -1140,22 +1113,8 @@ const TourGuideApp = () => {
               </ModalPortal>
             )}
 
-            {/* Facebook Share Modal */}
-            {showFacebookModal && (
-              <FacebookShareModal
-                isOpen={showFacebookModal}
-                onClose={() => setShowFacebookModal(false)}
-                tourData={{
-                  title: selectedTour.title,
-                  content: selectedTour.blog,
-                  destination: selectedTour.destination,
-                  startDate: selectedTour.startDate,
-                  endDate: selectedTour.endDate,
-                  budget: selectedTour.budget,
-                  thumbnail: selectedTour.thumbnail,
-                }}
-              />
-            )}
+
+
 
 
             {/* Edit Title Modal */}
