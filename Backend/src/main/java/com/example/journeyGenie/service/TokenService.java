@@ -3,6 +3,7 @@ package com.example.journeyGenie.service;
 import com.example.journeyGenie.authJWT.JWTService;
 import com.example.journeyGenie.entity.User;
 import com.example.journeyGenie.repository.UserRepository;
+import com.example.journeyGenie.util.Debug;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.Getter;
@@ -18,7 +19,7 @@ import java.util.Map;
 @Service
 public class TokenService {
     private final int blogGenerationTokenCost = 1;
-    private final int tourGenerationTokenCost = 5;
+    private final int tourGenerationTokenCostPerDay = 1;
     private final int videoGenerationTokenCost = 10;
     private final int photoUploadTokenCost = 1;
 
@@ -41,6 +42,11 @@ public class TokenService {
                     .body(Map.of("error", "User not found"));
         }
 
+        if (user.getToken() == null) {
+            user.setToken(0);
+            userRepository.save(user);
+        }
+
         return ResponseEntity.ok(Map.of("tokens", user.getToken()));
     }
 
@@ -57,6 +63,11 @@ public class TokenService {
                     .body(Map.of("error", "User not found"));
         }
 
+        if (user.getToken() == null) {
+            user.setToken(0);
+            userRepository.save(user);
+        }
+
         int currentTokens = user.getToken();
         if (currentTokens >= tokensToDeduct) {
             user.setToken(currentTokens - tokensToDeduct);
@@ -71,6 +82,7 @@ public class TokenService {
     }
 
     public ResponseEntity<?> addTokens(HttpServletRequest request, int tokensToAdd) {
+        Debug.log("Adding " + tokensToAdd + " tokens to user");
         String email = jwtService.getEmailFromRequest(request);
         if (email == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -81,6 +93,11 @@ public class TokenService {
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("error", "User not found"));
+        }
+
+        if (user.getToken() == null) {
+            user.setToken(0);
+            userRepository.save(user);
         }
 
         int currentTokens = user.getToken();

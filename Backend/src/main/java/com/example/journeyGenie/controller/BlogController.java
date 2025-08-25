@@ -40,8 +40,7 @@ public class BlogController {
         ResponseEntity<?> blogResponse = blogService.generateAndSaveBlog(tourId, request);
 
         if (blogResponse.getStatusCode().is2xxSuccessful()) {
-            // Deduct 5 tokens after the blog is generated successfully
-            tokenService.deductTokens(request, 5);  // Deduct 5 tokens for blog generation
+            tokenService.deductTokens(request, tokenService.getBlogGenerationTokenCost());
         }
 
         return blogResponse;

@@ -170,8 +170,7 @@ public class PlanController {
                 return ResponseEntity.status(400).body("Insufficient tokens. You need at least " + numberOfDays + " tokens to start this " + numberOfDays + "-day tour.");
             }
 
-            // Deduct tokens (1 per day)
-            ResponseEntity<?> deductionResponse = tokenService.deductTokens(request, numberOfDays);
+            ResponseEntity<?> deductionResponse = tokenService.deductTokens(request, numberOfDays*tokenService.getTourGenerationTokenCostPerDay());
             if (!deductionResponse.getStatusCode().is2xxSuccessful()) {
                 return ResponseEntity.status(400).body("Failed to deduct tokens.");
             }

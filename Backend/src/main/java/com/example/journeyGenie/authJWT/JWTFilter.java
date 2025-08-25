@@ -31,6 +31,7 @@ public class JWTFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
+        Debug.log("[DEBUG] ----------------- JWT Filter -----------------");
         Debug.log("JWT filter invoked for request: " + request.getRequestURI());
 
         String token = null;
@@ -63,17 +64,23 @@ public class JWTFilter extends OncePerRequestFilter {
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
 
-                    // 4. Generate new token and update cookie
-                    String newToken = jwtService.generateToken(username);
-                    Cookie newCookie = new Cookie("jwt", newToken);
-                    newCookie.setHttpOnly(true);
-                    newCookie.setSecure(true);
-                    newCookie.setPath("/");
-                    newCookie.setMaxAge(60 * AppEnv.getTokenValidityMinutes());
-                    newCookie.setAttribute("SameSite","None"); // Set to "None" for cross-site requests, adjust as needed
-                    response.addCookie(newCookie);
+                    // 4. Generate new token only if remaining validity < 5 minutes
+                    Debug.log("[DEBUG] TOKEN_REFRESH_ENABLED: " + AppEnv.isTokenRefreshEnabled());
+                    long remainingMinutes = jwtService.getRemainingValidityMinutes(token);
+                    if (AppEnv.isTokenRefreshEnabled() && remainingMinutes < 5) {
+                        String newToken = jwtService.generateToken(username);
+                        Cookie newCookie = new Cookie("jwt", newToken);
+                        newCookie.setHttpOnly(true);
+                        newCookie.setSecure(true);
+                        newCookie.setPath("/");
+                        newCookie.setMaxAge(60 * AppEnv.getTokenValidityMinutes());
+                        newCookie.setAttribute("SameSite", "None"); // Set to "None" for cross-site requests
+                        response.addCookie(newCookie);
 
-                    Debug.log("JWT token validated and new token set in cookie: " + newToken);
+                        Debug.log("[DEBUG] JWT token refreshed (remaining validity < 5 min). New token set in cookie: " + newToken);
+                    } else {
+                        Debug.log("[DEBUG] JWT token still valid (" + remainingMinutes + " minutes left). No refresh needed.");
+                    }
 
                     // 5. Continue filter chain
                     filterChain.doFilter(request, response);
@@ -102,6 +109,5 @@ public class JWTFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         return path.startsWith("/user/login") || path.startsWith("/user/signup") || path.startsWith("/test-no-auth");
     }
-
 
 }

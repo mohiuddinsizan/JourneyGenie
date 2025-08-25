@@ -53,7 +53,7 @@ public class VideoController {
         }
 
         // Deduct 10 tokens for video generation
-        ResponseEntity<?> deductionResponse = tokenService.deductTokens(request, 10); // Deduct 10 tokens for video
+        ResponseEntity<?> deductionResponse = tokenService.deductTokens(request, tokenService.getVideoGenerationTokenCost());
         if (!deductionResponse.getStatusCode().is2xxSuccessful()) {
             return ResponseEntity.status(400).body("Failed to deduct tokens.");
         }
