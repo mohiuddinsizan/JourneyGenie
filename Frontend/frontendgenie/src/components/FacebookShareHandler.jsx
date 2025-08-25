@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { Copy, CheckCircle } from 'lucide-react'; // Add these imports
+
 export const shareToFacebook = (tourData) => {
   // Format the content for sharing
   const shareText = `${tourData.title || `Amazing trip to ${tourData.destination}!`}
@@ -66,6 +68,7 @@ export const FacebookShareModal = ({
   tourData 
 }) => {
   const [shareText, setShareText] = useState('');
+  const [copySuccess, setCopySuccess] = useState(false);
 
   React.useEffect(() => {
     if (isOpen && tourData) {
@@ -101,6 +104,31 @@ ${tourData.content}
 
     await shareToFacebookWebAPI(modifiedTourData);
     onClose();
+  };
+
+  const handleCopyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(shareText);
+      setCopySuccess(true);
+      
+      // Reset success message after 2 seconds
+      setTimeout(() => setCopySuccess(false), 2000);
+      
+    } catch (error) {
+      console.error('Failed to copy:', error);
+      // Fallback method for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = shareText;
+      textArea.style.position = 'fixed';
+      textArea.style.opacity = '0';
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    }
   };
 
   if (!isOpen) return null;
@@ -172,9 +200,25 @@ ${tourData.content}
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
           <button onClick={onClose} className="btn">
             Cancel
+          </button>
+          
+          <button 
+            onClick={handleCopyToClipboard}
+            className={`btn ${copySuccess ? 'success' : ''}`}
+            title="Copy post content to clipboard"
+          >
+            {copySuccess ? (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <CheckCircle size={16} /> Copied!
+              </span>
+            ) : (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Copy size={16} /> Copy to Clipboard
+              </span>
+            )}
           </button>
           
           {navigator.share && (

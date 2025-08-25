@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import ReactDOM from 'react-dom';
 import {
   MapPin, Calendar, DollarSign, Users, Star, Wallet, Clock, CheckCircle, Plus, Image,
-  RefreshCw, List, CheckSquare, Video, LogOut, Share2, BookOpen
+  RefreshCw, List, CheckSquare, Video, Share2,Copy, BookOpen
 } from 'lucide-react';
 import { FacebookShareModal } from '../components/FacebookShareHandler';
 import './Profile.css';
