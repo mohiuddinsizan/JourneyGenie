@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import ReactDOM from 'react-dom';
 import {
   MapPin, Calendar, DollarSign, Users, Star, Wallet, Clock, CheckCircle, Plus, Image,
-  RefreshCw, List, CheckSquare, Video, LogOut,Share2, BookOpen
+  RefreshCw, List, CheckSquare, Video, LogOut, Share2, BookOpen
 } from 'lucide-react';
 import { FacebookShareModal } from '../components/FacebookShareHandler';
 import './Profile.css';
@@ -786,8 +786,17 @@ const TourGuideApp = () => {
               </div>
 
               <div className="tg-flex-gap8" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <button onClick={() => setEditOpen(true)} className="btn" title="Edit Title">
-                  Edit Title
+
+                {/* FACEBOOK SHARE BUTTON */}
+                <button
+                  className="btn success"
+                  onClick={handleFacebookShare}
+                  title="Share your tour on Facebook"
+                  disabled={!selectedTour?.blog}
+                >
+                  <span className="tg-inlinecenter-6">
+                    <Share2 size={16} /> Post
+                  </span>
                 </button>
 
                 <button
@@ -811,17 +820,7 @@ const TourGuideApp = () => {
                   )}
                 </button>
 
-                {/* FACEBOOK SHARE BUTTON */}
-                <button
-                  className="btn success"
-                  onClick={handleFacebookShare}
-                  title="Share your tour on Facebook"
-                  disabled={!selectedTour?.blog}
-                >
-                  <span className="tg-inlinecenter-6">
-                    <Share2 size={16} /> Post
-                  </span>
-                </button>
+                
               </div>
             </div>
 
@@ -1142,19 +1141,25 @@ const TourGuideApp = () => {
 
             {/* Facebook Share Modal */}
             {showFacebookModal && (
-              <FacebookShareModal
-                isOpen={showFacebookModal}
-                onClose={() => setShowFacebookModal(false)}
-                tourData={{
-                  title: selectedTour.title,
-                  content: selectedTour.blog,
-                  destination: selectedTour.destination,
-                  startDate: selectedTour.startDate,
-                  endDate: selectedTour.endDate,
-                  budget: selectedTour.budget,
-                  thumbnail: selectedTour.thumbnail,
-                }}
-              />
+              <ModalPortal>
+                <div className="fixed inset-0 z-[1000] bg-black/40 flex items-center justify-center p-4">
+                  <div className="relative max-h-[90vh] max-w-[90vw] overflow-auto">
+                    <FacebookShareModal
+                      isOpen={showFacebookModal}
+                      onClose={() => setShowFacebookModal(false)}
+                      tourData={{
+                        title: selectedTour.title,
+                        content: selectedTour.blog,
+                        destination: selectedTour.destination,
+                        startDate: selectedTour.startDate,
+                        endDate: selectedTour.endDate,
+                        budget: selectedTour.budget,
+                        thumbnail: selectedTour.thumbnail,
+                      }}
+                    />
+                  </div>
+                </div>
+              </ModalPortal>
             )}
 
 
