@@ -13,14 +13,13 @@ const TokenBuyPage = () => {
   const [alertMessage, setAlertMessage] = useState("");
   const [discount, setDiscount] = useState(0);
   const [discountApplied, setDiscountApplied] = useState(false);
-  // const navigate = useNavigate(); // Uncomment when using with React Router
 
   // Predefined discount coupons (frontend validation)
   const discountCoupons = {
-    "SAVE10": { discount: 10, description: "10% off on total amount" },
-    "SAVE20": { discount: 20, description: "20% off on total amount" },
-    "WELCOME": { discount: 15, description: "15% welcome discount" },
-    "STUDENT": { discount: 25, description: "25% student discount" }
+    "SAVE10": { discount: 10, description: "10% off on total amount", color: "#3b82f6", emoji: "💎" },
+    "SAVE20": { discount: 20, description: "20% off on total amount", color: "#8b5cf6", emoji: "🎯" },
+    "WELCOME": { discount: 15, description: "15% welcome discount", color: "#10b981", emoji: "🌟" },
+    "STUDENT": { discount: 25, description: "25% student discount", color: "#f59e0b", emoji: "🎓" }
   };
 
   const resetMessages = () => {
@@ -148,17 +147,98 @@ const TokenBuyPage = () => {
       showAlert("Please enter a valid amount before proceeding to payment.");
       return;
     }
-    // For demo purposes - in real app, navigate to payment page
     showAlert(`Redirecting to payment for ${calculateTotal().toFixed(2)} TK`);
-    // navigate('/payment', { 
-    //   state: { 
-    //     amount: amount, 
-    //     total: calculateTotal(),
-    //     discount: discount,
-    //     tokens: amount 
-    //   } 
-    // });
   };
+
+  const CouponCard = ({ code, info, onClick }) => (
+    <div 
+      className="coupon-card"
+      onClick={() => onClick(code)}
+      style={{
+        background: `linear-gradient(135deg, ${info.color}15, ${info.color}08)`,
+        border: `1px solid ${info.color}40`,
+        borderRadius: '16px',
+        padding: '16px',
+        cursor: 'pointer',
+        position: 'relative',
+        overflow: 'hidden',
+        transform: 'translateZ(0)',
+        transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+        boxShadow: `0 4px 20px ${info.color}10, inset 0 1px 0 ${info.color}20`
+      }}
+    >
+      {/* 3D Background Pattern */}
+      <div style={{
+        position: 'absolute',
+        top: '-50%',
+        right: '-50%',
+        width: '100%',
+        height: '100%',
+        background: `radial-gradient(circle, ${info.color}10 0%, transparent 70%)`,
+        transform: 'rotate(45deg)',
+        pointerEvents: 'none'
+      }} />
+      
+      {/* Coupon Content */}
+      <div style={{ position: 'relative', zIndex: 2 }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '12px'
+        }}>
+          <div style={{
+            fontSize: '1.5rem',
+            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
+          }}>
+            {info.emoji}
+          </div>
+          <div style={{
+            background: info.color,
+            color: 'white',
+            padding: '4px 12px',
+            borderRadius: '20px',
+            fontSize: '0.8rem',
+            fontWeight: 'bold',
+            boxShadow: `0 2px 8px ${info.color}40`
+          }}>
+            {info.discount}% OFF
+          </div>
+        </div>
+        
+        <div style={{
+          fontSize: '1rem',
+          fontWeight: 'bold',
+          color: '#e9edf1',
+          marginBottom: '4px',
+          textShadow: '0 1px 2px rgba(0,0,0,0.5)'
+        }}>
+          {code}
+        </div>
+        
+        <div style={{
+          fontSize: '0.85rem',
+          color: '#9aa5b1',
+          lineHeight: 1.3
+        }}>
+          {info.description}
+        </div>
+      </div>
+      
+      {/* Hover Glow Effect */}
+      <div className="coupon-glow" style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: `linear-gradient(135deg, ${info.color}20, transparent)`,
+        opacity: 0,
+        transition: 'opacity 0.3s ease',
+        borderRadius: '16px'
+      }} />
+    </div>
+  );
 
   return (
     <div className="plan-page plan-scrollfix">
@@ -213,9 +293,7 @@ const TokenBuyPage = () => {
           {/* Left Column - Token Purchase & Price */}
           <div className="day-card">
             <div className="day-head">
-              <h4>
-                🪙 Purchase Tokens
-              </h4>
+              <h4>🪙 Purchase Tokens</h4>
             </div>
             
             <div className="day-content">
@@ -306,148 +384,200 @@ const TokenBuyPage = () => {
             </div>
           </div>
 
-          {/* Right Column - Coupons */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            
-            {/* Discount Coupon */}
-            <div className="day-card" style={{ flex: 1 }}>
-              <div className="day-head">
-                <h4 style={{ fontSize: '1.1rem' }}>
-                  <span style={{color: 'initial'}}></span>
-                  🎫  Discount Coupon
-                </h4>
-                <div className="chip">Save Money</div>
-              </div>
-              
-              <div className="day-content">
-                <div style={{ marginBottom: '16px' }}>
-                  <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-                    <input
-                      type="text"
-                      value={discountCoupon}
-                      onChange={(e) => setDiscountCoupon(e.target.value)}
-                      placeholder="Enter discount code"
-                      style={{
-                        flex: 1,
-                        padding: '10px 12px',
-                        border: '1px solid #2a2f38',
-                        borderRadius: '8px',
-                        background: '#0f1216',
-                        color: '#e9edf1',
-                        outline: 'none'
-                      }}
-                    />
-                    <button
-                      className="btn primary"
-                      onClick={handleDiscountCoupon}
-                      style={{ padding: '10px 16px', fontSize: '0.9rem' }}
-                    >
-                      Apply
-                    </button>
-                    {discountApplied && (
-                      <button
-                        onClick={removeDiscount}
-                        style={{
-                          background: '#dc3545',
-                          border: 'none',
-                          borderRadius: '8px',
-                          color: 'white',
-                          padding: '10px 16px',
-                          cursor: 'pointer',
-                          fontSize: '0.9rem',
-                          fontWeight: '600'
-                        }}
-                      >
-                        Remove
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Available Coupons - Compact Display */}
-                <div style={{ 
-                  background: 'rgba(26,31,39,0.5)', 
-                  borderRadius: '8px', 
-                  padding: '12px',
-                  border: '1px solid rgba(236,72,153,0.1)'
-                }}>
-                  <div style={{ 
-                    fontSize: '0.85rem', 
-                    color: '#ec4899', 
-                    fontWeight: '600',
-                    marginBottom: '8px'
-                  }}>
-                    Available Codes:
-                  </div>
-                  <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: '1fr 1fr', 
-                    gap: '6px',
-                    fontSize: '0.8rem'
-                  }}>
-                    {Object.entries(discountCoupons).map(([code, info]) => (
-                      <div key={code} style={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between',
-                        color: '#9aa5b1'
-                      }}>
-                        <span style={{ color: '#e9edf1', fontWeight: '600' }}>{code}</span>
-                        <span style={{ color: '#2ecc71' }}>{info.discount}%</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+          {/* Right Column - Combined Coupons */}
+          <div className="day-card" style={{ display: 'flex', flexDirection: 'column', height: 'fit-content' }}>
+            {/* Header */}
+            <div className="day-head">
+              <h4 style={{ fontSize: '1.1rem' }}>
+                🎫 Coupon Center
+              </h4>
+              <div className="chip">Save & Earn</div>
             </div>
-
-            {/* Special Coupon */}
-            <div className="day-card" style={{ flex: 1 }}>
-              <div className="day-head">
-                <h4 style={{ fontSize: '1.1rem' }}>
-                  🎁 Special Coupon
-                </h4>
-                <div className="chip">Bonus Tokens</div>
-              </div>
-              
-              <div className="day-content">
-                <div style={{ marginBottom: '12px' }}>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <input
-                      type="text"
-                      value={couponCode}
-                      onChange={(e) => setCouponCode(e.target.value)}
-                      placeholder="Enter special code"
-                      style={{
-                        flex: 1,
-                        padding: '10px 12px',
-                        border: '1px solid #2a2f38',
-                        borderRadius: '8px',
-                        background: '#0f1216',
-                        color: '#e9edf1',
-                        outline: 'none'
-                      }}
-                    />
-                    <button
-                      className="btn primary"
-                      onClick={handleApplyCoupon}
-                      disabled={loading}
-                      style={{ padding: '10px 16px', fontSize: '0.9rem' }}
-                    >
-                      {loading ? "..." : "Apply"}
-                    </button>
-                  </div>
+            
+            <div className="day-content" style={{ padding: '16px' }}>
+              {/* Discount Coupon Input */}
+              <div style={{ marginBottom: '20px' }}>
+                <div style={{ 
+                  fontSize: '0.95rem', 
+                  color: '#ec4899', 
+                  fontWeight: '600',
+                  marginBottom: '8px'
+                }}>
+                  🎯 Discount Coupon
                 </div>
-                
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                  <input
+                    type="text"
+                    value={discountCoupon}
+                    onChange={(e) => setDiscountCoupon(e.target.value)}
+                    placeholder="Enter discount code"
+                    style={{
+                      flex: 1,
+                      padding: '10px 12px',
+                      border: '2px solid #2a2f38',
+                      borderRadius: '10px',
+                      background: 'linear-gradient(135deg, #0f1216, #1a1f27)',
+                      color: '#e9edf1',
+                      outline: 'none',
+                      fontSize: '0.9rem',
+                      transition: 'all 0.3s ease'
+                    }}
+                  />
+                  <button
+                    className="btn primary"
+                    onClick={handleDiscountCoupon}
+                    style={{ 
+                      padding: '10px 16px', 
+                      fontSize: '0.9rem',
+                      borderRadius: '10px',
+                      background: 'linear-gradient(135deg, #ec4899, #db2777)',
+                      boxShadow: '0 3px 12px rgba(236,72,153,0.4)'
+                    }}
+                  >
+                    Apply
+                  </button>
+                  {discountApplied && (
+                    <button
+                      onClick={removeDiscount}
+                      style={{
+                        background: 'linear-gradient(135deg, #dc3545, #c82333)',
+                        border: 'none',
+                        borderRadius: '10px',
+                        color: 'white',
+                        padding: '10px 16px',
+                        cursor: 'pointer',
+                        fontSize: '0.9rem',
+                        fontWeight: '600',
+                        boxShadow: '0 3px 12px rgba(220,53,69,0.4)',
+                        transition: 'all 0.3s ease'
+                      }}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Available Coupons - Compact 4-in-a-row */}
+              <div style={{ marginBottom: '20px' }}>
                 <div style={{ 
                   fontSize: '0.85rem', 
                   color: '#9aa5b1', 
-                  fontStyle: 'italic',
-                  background: 'rgba(26,31,39,0.3)',
-                  padding: '8px',
-                  borderRadius: '6px',
-                  border: '1px solid rgba(236,72,153,0.1)'
+                  fontWeight: '600',
+                  marginBottom: '10px',
+                  textAlign: 'center'
                 }}>
-                  💡 Special coupons provide bonus tokens or exclusive benefits
+                  ✨ Click to Apply ✨
+                </div>
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(2, 1fr)', 
+                  gap: '8px'
+                }}>
+                  {Object.entries(discountCoupons).map(([code, info]) => (
+                    <div 
+                      key={code}
+                      className="coupon-card-compact"
+                      onClick={() => setDiscountCoupon(code)}
+                      style={{
+                        background: `linear-gradient(135deg, ${info.color}12, ${info.color}06)`,
+                        border: `1px solid ${info.color}30`,
+                        borderRadius: '10px',
+                        padding: '8px 10px',
+                        cursor: 'pointer',
+                        position: 'relative',
+                        transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                        boxShadow: `0 2px 8px ${info.color}08`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: '1rem' }}>{info.emoji}</span>
+                        <div>
+                          <div style={{
+                            fontSize: '0.8rem',
+                            fontWeight: 'bold',
+                            color: '#e9edf1'
+                          }}>
+                            {code}
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{
+                        background: info.color,
+                        color: 'white',
+                        padding: '2px 8px',
+                        borderRadius: '12px',
+                        fontSize: '0.7rem',
+                        fontWeight: 'bold'
+                      }}>
+                        {info.discount}%
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Special Coupon */}
+              <div style={{ 
+                borderTop: '1px solid rgba(236,72,153,0.2)',
+                paddingTop: '16px'
+              }}>
+                <div style={{ 
+                  fontSize: '0.95rem', 
+                  color: '#f59e0b', 
+                  fontWeight: '600',
+                  marginBottom: '8px'
+                }}>
+                  🎁 Special Coupon
+                </div>
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                  <input
+                    type="text"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value)}
+                    placeholder="Enter special code"
+                    style={{
+                      flex: 1,
+                      padding: '10px 12px',
+                      border: '2px solid #2a2f38',
+                      borderRadius: '10px',
+                      background: 'linear-gradient(135deg, #0f1216, #1a1f27)',
+                      color: '#e9edf1',
+                      outline: 'none',
+                      fontSize: '0.9rem',
+                      transition: 'all 0.3s ease'
+                    }}
+                  />
+                  <button
+                    className="btn primary"
+                    onClick={handleApplyCoupon}
+                    disabled={loading}
+                    style={{ 
+                      padding: '10px 16px', 
+                      fontSize: '0.9rem',
+                      borderRadius: '10px',
+                      background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                      boxShadow: '0 3px 12px rgba(245,158,11,0.4)'
+                    }}
+                  >
+                    {loading ? "..." : "Apply"}
+                  </button>
+                </div>
+                
+                <div style={{ 
+                  fontSize: '0.8rem', 
+                  color: '#9aa5b1', 
+                  fontStyle: 'italic',
+                  background: 'linear-gradient(135deg, rgba(26,31,39,0.4), rgba(15,18,24,0.6))',
+                  padding: '8px',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(236,72,153,0.1)',
+                  textAlign: 'center'
+                }}>
+                  💡 Get bonus tokens & exclusive benefits
                 </div>
               </div>
             </div>
@@ -502,9 +632,40 @@ const TokenBuyPage = () => {
           }
         }
         
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) rotateX(0deg); }
+          50% { transform: translateY(-2px) rotateX(5deg); }
+        }
+        
+        .coupon-card-compact:hover {
+          transform: translateY(-2px) scale(1.02) !important;
+          box-shadow: 0 4px 20px rgba(236,72,153,0.2) !important;
+          border-color: rgba(236,72,153,0.5) !important;
+        }
+        
+        .coupon-card-compact:active {
+          transform: translateY(0px) scale(0.98) !important;
+        }
+        
         .plan-form input:focus {
           border-color: #ec4899 !important;
-          box-shadow: 0 0 0 2px rgba(236,72,153,0.1);
+          box-shadow: 0 0 0 3px rgba(236,72,153,0.2) !important;
+          background: linear-gradient(135deg, #1a1f27, #2a2f38) !important;
+        }
+        
+        .day-content input:focus {
+          border-color: #ec4899 !important;
+          box-shadow: 0 0 0 3px rgba(236,72,153,0.2) !important;
+          background: linear-gradient(135deg, #1a1f27, #2a2f38) !important;
+        }
+        
+        .btn:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 6px 20px rgba(236,72,153,0.4);
+        }
+        
+        .btn:active {
+          transform: translateY(0px);
         }
         
         @media (max-width: 1024px) {
@@ -513,9 +674,8 @@ const TokenBuyPage = () => {
             gap: 20px !important;
           }
           
-          .day-card .day-content > div:first-child > div {
-            flex-direction: column;
-            gap: 8px;
+          .coupon-card {
+            grid-column: span 2;
           }
         }
         
@@ -528,10 +688,8 @@ const TokenBuyPage = () => {
             font-size: 1rem !important;
           }
           
-          .day-number {
-            width: 32px !important;
-            height: 32px !important;
-            font-size: 0.9rem !important;
+          .coupon-card {
+            grid-column: span 1;
           }
         }
       `}</style>
