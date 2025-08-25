@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 const API_BASE = import.meta.env.REACT_APP_API_URL || 'http://localhost:8080';
 
@@ -13,6 +13,40 @@ const TokenBuyPage = () => {
   const [alertMessage, setAlertMessage] = useState("");
   const [discount, setDiscount] = useState(0);
   const [discountApplied, setDiscountApplied] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(null); // null = checking, false = not authenticated, true = authenticated
+  const [userInfo, setUserInfo] = useState(null);
+
+  // Check authentication status on component mount
+  useEffect(() => {
+    checkAuthStatus();
+  }, []);
+
+  const checkAuthStatus = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/auth/check`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setIsAuthenticated(true);
+        setUserInfo(data.user);
+        setTokens(data.user?.tokens || 0);
+      } else {
+        setIsAuthenticated(false);
+      }
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      setIsAuthenticated(false);
+    }
+  };
+
+  const handleLogin = () => {
+    // Navigate to login page - replace with your navigation method
+    window.location.href = '/login';
+    // If using React Router: navigate('/login');
+  };
 
   // Predefined discount coupons (frontend validation)
   const discountCoupons = {
@@ -239,6 +273,209 @@ const TokenBuyPage = () => {
       }} />
     </div>
   );
+
+  // Show loading state while checking authentication
+  if (isAuthenticated === null) {
+    return (
+      <div className="plan-page plan-scrollfix">
+        <div className="plan-card" style={{ textAlign: 'center', padding: '60px 24px' }}>
+          <div style={{
+            fontSize: '3rem',
+            marginBottom: '20px',
+            animation: 'spin 1s linear infinite'
+          }}>
+            ⚡
+          </div>
+          <h3 style={{ color: '#ec4899', marginBottom: '10px' }}>
+            Loading...
+          </h3>
+          <p style={{ color: '#9aa5b1' }}>
+            Checking authentication status
+          </p>
+        </div>
+        
+        <style jsx>{`
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  // Show login required screen if not authenticated
+  if (isAuthenticated === false) {
+    return (
+      <div className="plan-page plan-scrollfix">
+        <div className="plan-card" style={{ textAlign: 'center', padding: '60px 24px' }}>
+          {/* Header */}
+          <div style={{
+            background: 'linear-gradient(135deg, #ec4899, #db2777)',
+            margin: '-24px -24px 40px -24px',
+            padding: '40px 24px',
+            borderRadius: '14px 14px 0 0',
+            position: 'relative',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'linear-gradient(135deg, rgba(236,72,153,0.9), rgba(219,39,119,0.9))',
+              backdropFilter: 'blur(10px)'
+            }}></div>
+            <div style={{ position: 'relative', zIndex: 2 }}>
+              <div style={{
+                fontSize: '4rem',
+                marginBottom: '20px',
+                filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))'
+              }}>
+                🔐
+              </div>
+              <h2 style={{ 
+                margin: 0,
+                fontSize: '2.2rem',
+                fontWeight: 'bold',
+                color: '#ffffff',
+                textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                marginBottom: '8px'
+              }}>
+                Authentication Required
+              </h2>
+              <p style={{ 
+                margin: 0, 
+                fontSize: '1.1rem',
+                color: 'rgba(255,255,255,0.9)'
+              }}>
+                Please log in to purchase tokens
+              </p>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div style={{ 
+            background: 'linear-gradient(135deg, rgba(15,18,24,0.8), rgba(26,31,39,0.6))',
+            borderRadius: '16px',
+            padding: '40px 30px',
+            border: '1px solid rgba(236,72,153,0.2)',
+            backdropFilter: 'blur(10px)',
+            marginBottom: '30px'
+          }}>
+            <div style={{
+              fontSize: '1.5rem',
+              marginBottom: '16px'
+            }}>
+              💰✨🪙
+            </div>
+            
+            <h3 style={{
+              color: '#e9edf1',
+              fontSize: '1.5rem',
+              marginBottom: '16px',
+              fontWeight: '600'
+            }}>
+              Ready to Buy Tokens?
+            </h3>
+            
+            <p style={{
+              color: '#9aa5b1',
+              fontSize: '1rem',
+              lineHeight: 1.6,
+              marginBottom: '0',
+              maxWidth: '400px',
+              margin: '0 auto 24px auto'
+            }}>
+              Access our secure token purchase system with exclusive discounts, 
+              special coupons, and instant delivery to your account.
+            </p>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '16px',
+              marginBottom: '30px',
+              maxWidth: '500px',
+              margin: '0 auto 30px auto'
+            }}>
+              <div style={{
+                background: 'rgba(236,72,153,0.1)',
+                borderRadius: '12px',
+                padding: '16px',
+                border: '1px solid rgba(236,72,153,0.2)'
+              }}>
+                <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>🎯</div>
+                <div style={{ color: '#e9edf1', fontSize: '0.9rem', fontWeight: '600' }}>
+                  Instant Delivery
+                </div>
+                <div style={{ color: '#9aa5b1', fontSize: '0.8rem' }}>
+                  Tokens added immediately
+                </div>
+              </div>
+              
+              <div style={{
+                background: 'rgba(16,185,129,0.1)',
+                borderRadius: '12px',
+                padding: '16px',
+                border: '1px solid rgba(16,185,129,0.2)'
+              }}>
+                <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>🎫</div>
+                <div style={{ color: '#e9edf1', fontSize: '0.9rem', fontWeight: '600' }}>
+                  Discount Coupons
+                </div>
+                <div style={{ color: '#9aa5b1', fontSize: '0.8rem' }}>
+                  Save up to 25% off
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Login Button */}
+          <button
+            onClick={handleLogin}
+            style={{
+              background: 'linear-gradient(135deg, #ec4899, #db2777)',
+              border: 'none',
+              borderRadius: '16px',
+              color: 'white',
+              padding: '16px 40px',
+              fontSize: '1.1rem',
+              fontWeight: '700',
+              cursor: 'pointer',
+              boxShadow: '0 8px 25px rgba(236,72,153,0.4)',
+              transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+              position: 'relative',
+              overflow: 'hidden',
+              minWidth: '200px'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.transform = 'translateY(-2px) scale(1.05)';
+              e.target.style.boxShadow = '0 12px 35px rgba(236,72,153,0.5)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = 'translateY(0px) scale(1)';
+              e.target.style.boxShadow = '0 8px 25px rgba(236,72,153,0.4)';
+            }}
+          >
+            <span style={{ position: 'relative', zIndex: 2 }}>
+              🚀 Login to Continue
+            </span>
+          </button>
+
+          <p style={{
+            color: '#9aa5b1',
+            fontSize: '0.9rem',
+            marginTop: '20px',
+            fontStyle: 'italic'
+          }}>
+            New user? Create an account during the login process
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="plan-page plan-scrollfix">
