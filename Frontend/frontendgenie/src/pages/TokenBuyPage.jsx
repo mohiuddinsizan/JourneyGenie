@@ -183,7 +183,7 @@ const TokenBuyPage = () => {
             backdropFilter: 'blur(10px)'
           }}></div>
           <div style={{ position: 'relative', zIndex: 2 }}>
-            <h2 style={{ 
+            <h2 style={{
               margin: 0,
               fontSize: '2rem',
               fontWeight: 'bold',
@@ -192,8 +192,8 @@ const TokenBuyPage = () => {
             }}>
               💰 Buy Tokens
             </h2>
-            <p style={{ 
-              margin: '8px 0 0 0', 
+            <p style={{
+              margin: '8px 0 0 0',
               fontSize: '1rem',
               color: 'rgba(255,255,255,0.9)'
             }}>
@@ -203,25 +203,25 @@ const TokenBuyPage = () => {
         </div>
 
         {/* Main Content - Horizontal Layout */}
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: '1fr 1fr', 
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
           gap: '32px',
           marginBottom: '24px'
         }}>
-          
+
           {/* Left Column - Token Purchase & Price */}
           <div className="day-card">
-          <h2 style={{ 
+            <h4 style={{
               margin: 0,
               fontSize: '2rem',
               fontWeight: 'bold',
               color: '#ffffff',
               textShadow: '0 2px 4px rgba(0,0,0,0.3)'
             }}>
-              💰 Buy Tokens
-            </h2>
-            
+              🪙 Purchase Tokens
+            </h4>
+
             <div className="day-content">
               <div className="plan-form" style={{ marginBottom: '20px' }}>
                 <label style={{ color: '#9aa5b1', marginBottom: '8px', display: 'block', fontWeight: '600' }}>
@@ -250,9 +250,9 @@ const TokenBuyPage = () => {
                   border: '1px solid rgba(236,72,153,0.2)',
                   marginBottom: '20px'
                 }}>
-                  <h4 style={{ 
-                    margin: '0 0 12px 0', 
-                    color: '#ec4899', 
+                  <h4 style={{
+                    margin: '0 0 12px 0',
+                    color: '#ec4899',
                     fontSize: '1rem',
                     display: 'flex',
                     alignItems: 'center',
@@ -260,16 +260,16 @@ const TokenBuyPage = () => {
                   }}>
                     💳 Price Details
                   </h4>
-                  
+
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                     <span style={{ color: '#9aa5b1' }}>Tokens ({amount})</span>
                     <span style={{ color: '#e9edf1', fontWeight: '600' }}>{amount} TK</span>
                   </div>
-                  
+
                   {discountApplied && (
-                    <div style={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
                       marginBottom: '8px',
                       color: '#2ecc71'
                     }}>
@@ -277,14 +277,14 @@ const TokenBuyPage = () => {
                       <span>-{((amount * discount) / 100).toFixed(2)} TK</span>
                     </div>
                   )}
-                  
+
                   <div style={{
                     borderTop: '1px solid rgba(236,72,153,0.3)',
                     paddingTop: '12px',
                     marginTop: '12px'
                   }}>
-                    <div style={{ 
-                      display: 'flex', 
+                    <div style={{
+                      display: 'flex',
                       justifyContent: 'space-between',
                       fontSize: '1.2rem',
                       fontWeight: 'bold',
@@ -312,16 +312,22 @@ const TokenBuyPage = () => {
 
           {/* Right Column - Coupons */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            
+
             {/* Discount Coupon */}
             <div className="day-card" style={{ flex: 1 }}>
               <div className="day-head">
-                <h4 style={{ fontSize: '1.1rem' }}>
+                <h4 style={{
+                  margin: 0,
+                  fontSize: '2rem',
+                  fontWeight: 'bold',
+                  color: '#ffffff',
+                  textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                }}>
                   🎫 Discount Coupon
                 </h4>
                 <div className="chip">Save Money</div>
               </div>
-              
+
               <div className="day-content">
                 <div style={{ marginBottom: '16px' }}>
                   <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
@@ -368,29 +374,29 @@ const TokenBuyPage = () => {
                 </div>
 
                 {/* Available Coupons - Compact Display */}
-                <div style={{ 
-                  background: 'rgba(26,31,39,0.5)', 
-                  borderRadius: '8px', 
+                <div style={{
+                  background: 'rgba(26,31,39,0.5)',
+                  borderRadius: '8px',
                   padding: '12px',
                   border: '1px solid rgba(236,72,153,0.1)'
                 }}>
-                  <div style={{ 
-                    fontSize: '0.85rem', 
-                    color: '#ec4899', 
+                  <div style={{
+                    fontSize: '0.85rem',
+                    color: '#ec4899',
                     fontWeight: '600',
                     marginBottom: '8px'
                   }}>
                     Available Codes:
                   </div>
-                  <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: '1fr 1fr', 
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
                     gap: '6px',
                     fontSize: '0.8rem'
                   }}>
                     {Object.entries(discountCoupons).map(([code, info]) => (
-                      <div key={code} style={{ 
-                        display: 'flex', 
+                      <div key={code} style={{
+                        display: 'flex',
                         justifyContent: 'space-between',
                         color: '#9aa5b1'
                       }}>
@@ -406,12 +412,18 @@ const TokenBuyPage = () => {
             {/* Special Coupon */}
             <div className="day-card" style={{ flex: 1 }}>
               <div className="day-head">
-                <h4 style={{ fontSize: '1.1rem' }}>
+                <h4 style={{
+                  margin: 0,
+                  fontSize: '2rem',
+                  fontWeight: 'bold',
+                  color: '#ffffff',
+                  textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                }}>
                   🎁 Special Coupon
                 </h4>
                 <div className="chip">Bonus Tokens</div>
               </div>
-              
+
               <div className="day-content">
                 <div style={{ marginBottom: '12px' }}>
                   <div style={{ display: 'flex', gap: '8px' }}>
@@ -440,10 +452,10 @@ const TokenBuyPage = () => {
                     </button>
                   </div>
                 </div>
-                
-                <div style={{ 
-                  fontSize: '0.85rem', 
-                  color: '#9aa5b1', 
+
+                <div style={{
+                  fontSize: '0.85rem',
+                  color: '#9aa5b1',
                   fontStyle: 'italic',
                   background: 'rgba(26,31,39,0.3)',
                   padding: '8px',
