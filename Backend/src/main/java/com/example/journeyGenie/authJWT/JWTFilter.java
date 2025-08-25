@@ -65,8 +65,9 @@ public class JWTFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(authToken);
 
                     // 4. Generate new token only if remaining validity < 5 minutes
+                    Debug.log("[DEBUG] TOKEN_REFRESH_ENABLED: " + AppEnv.isTokenRefreshEnabled());
                     long remainingMinutes = jwtService.getRemainingValidityMinutes(token);
-                    if (remainingMinutes < 5) {
+                    if (AppEnv.isTokenRefreshEnabled() && remainingMinutes < 5) {
                         String newToken = jwtService.generateToken(username);
                         Cookie newCookie = new Cookie("jwt", newToken);
                         newCookie.setHttpOnly(true);
@@ -76,10 +77,9 @@ public class JWTFilter extends OncePerRequestFilter {
                         newCookie.setAttribute("SameSite", "None"); // Set to "None" for cross-site requests
                         response.addCookie(newCookie);
 
-                        Debug.log("JWT token refreshed (remaining validity < 5 min). New token set in cookie: " + newToken);
+                        Debug.log("[DEBUG] JWT token refreshed (remaining validity < 5 min). New token set in cookie: " + newToken);
                     } else {
-                        Debug.log("[DEBUG] JWT token remaining validity: " + remainingMinutes + " minutes.");
-                        Debug.log("JWT token still valid (" + remainingMinutes + " minutes left). No refresh needed.");
+                        Debug.log("[DEBUG] JWT token still valid (" + remainingMinutes + " minutes left). No refresh needed.");
                     }
 
                     // 5. Continue filter chain

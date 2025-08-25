@@ -16,11 +16,14 @@ public class JourneyGenieApplication {
 
 		SpringApplication.run(JourneyGenieApplication.class, args);
 
+        System.out.println("Updated");
+
 		System.out.println("JourneyGenie Application Started Successfully!");
 		System.out.println("Testing environment variables");
         System.out.println("PRODUCTION: " + AppEnv.isProduction());
         System.out.println("TOKEN_SECRET: " + AppEnv.getTokenSecret());
         System.out.println("TOKEN_VALIDITY_MINUTES: " + AppEnv.getTokenValidityMinutes());
+        System.out.println("TOKEN_REFRESH_ENABLED: " + AppEnv.isTokenRefreshEnabled());
         System.out.println("OAUTH_REDIRECT_PAGE: " + AppEnv.getOauthRedirectPage());
 		System.out.println("FRONTEND_URL: " + AppEnv.getFrontendUrl());
 		System.out.println("BACKEND_URL: " + AppEnv.getBackendUrl());

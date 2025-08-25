@@ -18,8 +18,8 @@ public class OneTimeInitializer implements CommandLineRunner {
     public void run(String... args) throws Exception {
         // This method is called once when the application starts
 
-        // Set default token value for users with null token
-        // em.createQuery("UPDATE User u SET u.token = 0 WHERE u.token IS NULL")
-        //        .executeUpdate();
+//         Set default token value for users with null token
+//         em.createQuery("UPDATE User u SET u.token = 0 WHERE u.token IS NULL")
+//                .executeUpdate();
     }
 }

@@ -28,6 +28,10 @@ public class AppEnv {
         }
     }
 
+    public static boolean isTokenRefreshEnabled() {
+        return "true".equalsIgnoreCase(dotenv.get("TOKEN_REFRESH_ENABLED"));
+    }
+
     public static String getOauthRedirectPage() {
         return dotenv.get("OAUTH_REDIRECT_PAGE");
     }
