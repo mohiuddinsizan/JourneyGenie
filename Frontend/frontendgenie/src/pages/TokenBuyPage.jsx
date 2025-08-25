@@ -212,11 +212,15 @@ const TokenBuyPage = () => {
           
           {/* Left Column - Token Purchase & Price */}
           <div className="day-card">
-            <div className="day-head">
-              <h4>
-                🪙 Purchase Tokens
-              </h4>
-            </div>
+          <h2 style={{ 
+              margin: 0,
+              fontSize: '2rem',
+              fontWeight: 'bold',
+              color: '#ffffff',
+              textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+            }}>
+              💰 Buy Tokens
+            </h2>
             
             <div className="day-content">
               <div className="plan-form" style={{ marginBottom: '20px' }}>
