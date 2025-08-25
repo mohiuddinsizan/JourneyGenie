@@ -31,6 +31,7 @@ public class JWTFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
+        Debug.log("[DEBUG] ----------------- JWT Filter -----------------");
         Debug.log("JWT filter invoked for request: " + request.getRequestURI());
 
         String token = null;
@@ -77,6 +78,7 @@ public class JWTFilter extends OncePerRequestFilter {
 
                         Debug.log("JWT token refreshed (remaining validity < 5 min). New token set in cookie: " + newToken);
                     } else {
+                        Debug.log("[DEBUG] JWT token remaining validity: " + remainingMinutes + " minutes.");
                         Debug.log("JWT token still valid (" + remainingMinutes + " minutes left). No refresh needed.");
                     }
 
