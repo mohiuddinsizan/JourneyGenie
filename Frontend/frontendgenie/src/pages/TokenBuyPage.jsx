@@ -214,8 +214,7 @@ const TokenBuyPage = () => {
           <div className="day-card">
             <div className="day-head">
               <h4>
-                <span style={{color: 'initial'}}>🪙</span>
-                Purchase Tokens
+                🪙 Purchase Tokens
               </h4>
             </div>
             
@@ -314,8 +313,7 @@ const TokenBuyPage = () => {
             <div className="day-card" style={{ flex: 1 }}>
               <div className="day-head">
                 <h4 style={{ fontSize: '1.1rem' }}>
-                  <span style={{color: 'initial'}}>🎫</span>
-                  Discount Coupon
+                  🎫 Discount Coupon
                 </h4>
                 <div className="chip">Save Money</div>
               </div>
@@ -405,8 +403,7 @@ const TokenBuyPage = () => {
             <div className="day-card" style={{ flex: 1 }}>
               <div className="day-head">
                 <h4 style={{ fontSize: '1.1rem' }}>
-                  <span style={{color: 'initial'}}>🎁</span>
-                  Special Coupon
+                  🎁 Special Coupon
                 </h4>
                 <div className="chip">Bonus Tokens</div>
               </div>
