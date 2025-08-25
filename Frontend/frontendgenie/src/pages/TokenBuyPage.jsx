@@ -23,7 +23,19 @@ const TokenBuyPage = () => {
 
   const checkAuthStatus = async () => {
     try {
-      const response = await fetch(`${API_BASE}/auth/check`, {
+      // First check localStorage for user data
+      const storedUser = localStorage.getItem('user');
+      if (!storedUser) {
+        setIsAuthenticated(false);
+        return;
+      }
+
+      const userData = JSON.parse(storedUser);
+      setUserInfo(userData);
+      setTokens(userData.tokens || 0);
+
+      // Also verify with API (similar to your Plan.jsx pattern)
+      const response = await fetch(`${API_BASE}/token/balance`, {
         method: 'GET',
         credentials: 'include',
       });
@@ -31,21 +43,34 @@ const TokenBuyPage = () => {
       if (response.ok) {
         const data = await response.json();
         setIsAuthenticated(true);
-        setUserInfo(data.user);
-        setTokens(data.user?.tokens || 0);
+        setTokens(data.tokens || userData.tokens || 0);
+        
+        // Update localStorage with fresh token data
+        const updatedUser = { ...userData, tokens: data.tokens };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        setUserInfo(updatedUser);
       } else {
-        setIsAuthenticated(false);
+        // API call failed but we have localStorage data - might be network issue
+        setIsAuthenticated(true); // Still authenticated based on localStorage
       }
     } catch (error) {
       console.error('Auth check failed:', error);
-      setIsAuthenticated(false);
+      // Check if we at least have localStorage data
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        const userData = JSON.parse(storedUser);
+        setIsAuthenticated(true);
+        setUserInfo(userData);
+        setTokens(userData.tokens || 0);
+      } else {
+        setIsAuthenticated(false);
+      }
     }
   };
 
   const handleLogin = () => {
-    // Navigate to login page - replace with your navigation method
+    // Navigate to login page - using window.location like in Plan.jsx
     window.location.href = '/login';
-    // If using React Router: navigate('/login');
   };
 
   // Predefined discount coupons (frontend validation)
@@ -134,6 +159,16 @@ const TokenBuyPage = () => {
       const data = await response.json();
       setMessage(data.message);
       setTokens(data.tokens);
+      
+      // Update localStorage like in Plan.jsx
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        const userData = JSON.parse(storedUser);
+        const updatedUser = { ...userData, tokens: data.tokens };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        setUserInfo(updatedUser);
+      }
+      
       showAlert(data.message);
     } catch (err) {
       setError(err.message);
@@ -168,6 +203,15 @@ const TokenBuyPage = () => {
       const data = await response.json();
       setTokens(data.tokens);
       setMessage(`Coupon applied! Now you have total ${data.tokens} tokens.`);
+      
+      // Update localStorage like in Plan.jsx
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        const userData = JSON.parse(storedUser);
+        const updatedUser = { ...userData, tokens: data.tokens };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        setUserInfo(updatedUser);
+      }
     } catch (err) {
       setError(err.message);
       showAlert(err.message);
