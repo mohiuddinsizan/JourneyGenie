@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import logo from "../assets/world-tour.png";
+import logo from "../assets/genielogo.png";
 import "./Navbar.css";
 
 const API_BASE = import.meta.env.REACT_APP_API_URL || "http://localhost:8080";
