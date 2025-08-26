@@ -18,7 +18,7 @@ import java.util.Map;
 @Getter
 @Service
 public class TokenService {
-    private final int blogGenerationTokenCost = 1;
+    private final int blogGenerationTokenCost = 5;
     private final int tourGenerationTokenCostPerDay = 1;
     private final int videoGenerationTokenCost = 10;
     private final int photoUploadTokenCost = 1;
