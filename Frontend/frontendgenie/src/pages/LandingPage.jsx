@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "./LandingPage.css";
-import image from '../assets/genie.png';
+import image from '../assets/genielogo.png';
 import ChatBot from "../components/Chatbot";
 import image1 from "../assets/tour-thumbnail-10.jpg"
 import image2 from "../assets/tour-thumbnail-9.jpg";
