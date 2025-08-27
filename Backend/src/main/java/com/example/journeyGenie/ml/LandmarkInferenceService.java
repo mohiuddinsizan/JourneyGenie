@@ -19,7 +19,10 @@ import org.springframework.stereotype.Service;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Map;
 
 import org.springframework.core.io.ClassPathResource;
@@ -32,15 +35,23 @@ public class LandmarkInferenceService {
     public LandmarkInferenceService() {
         ZooModel<Image, float[]> tempModel = null;
         try {
-            // Load ONNX model from classpath
-            File modelFile = new ClassPathResource("models/landmark_resnet18.onnx").getFile();
-            Path modelPath = modelFile.toPath();
+            // Load model from resources (inside JAR)
+            ClassPathResource resource = new ClassPathResource("models/landmark_resnet18.onnx");
+
+            // Create a temp file because DJL's Criteria.optModelPath() expects a Path
+            File tempFile = File.createTempFile("landmark_resnet18", ".onnx");
+            try (InputStream is = resource.getInputStream()) {
+                Files.copy(is, tempFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
+
+            Path modelPath = tempFile.toPath();
 
             Criteria<Image, float[]> criteria = Criteria.builder()
                     .setTypes(Image.class, float[].class)
-                    .optEngine("OnnxRuntime") // explicit engine for .onnx
-                    .optModelPath(modelPath)
-                    .optTranslator(new PreprocessTranslator(224, 224,
+                    .optEngine("OnnxRuntime")
+                    .optModelPath(modelPath)  // now points to a real file
+                    .optTranslator(new PreprocessTranslator(
+                            224, 224,
                             new float[]{0.485f, 0.456f, 0.406f},
                             new float[]{0.229f, 0.224f, 0.225f},
                             true))
