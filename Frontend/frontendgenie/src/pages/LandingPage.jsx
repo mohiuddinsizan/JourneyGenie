@@ -9,6 +9,8 @@ import image3 from "../assets/tour-thumbnail-7.jpg";
 import imagehero from "../assets/imagehero.jpg";
 import naturelover from "../assets/naturelover.jpg";
 import image6 from "../assets/tour-thumbnail-1.jpg";
+import LandmarkUploader from "../components/LandmarkUploader.jsx";
+
 const API_BASE = import.meta.env.REACT_APP_API_URL || 'http://localhost:8080';
 
 
@@ -276,6 +278,10 @@ const LandingPage = () => {
             Discover Nature →
           </button>
         </div>
+      </div>
+
+      <div className="landmark-uploader">
+        <LandmarkUploader />
       </div>
 
     </div>

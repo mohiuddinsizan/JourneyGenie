@@ -38,6 +38,7 @@ public class JWTFilter extends OncePerRequestFilter {
         String username = null;
 
         try {
+            Debug.log("Starting JWT extraction and validation process...");
             // 1. Extract JWT token from cookies
             if (request.getCookies() != null) {
                 for (Cookie cookie : request.getCookies()) {

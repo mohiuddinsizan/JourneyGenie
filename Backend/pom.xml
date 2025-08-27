@@ -114,29 +114,34 @@
             <artifactId>spring-boot-starter-oauth2-client</artifactId>
         </dependency>
 
+        <!-- DJL API -->
         <dependency>
             <groupId>ai.djl</groupId>
             <artifactId>api</artifactId>
-            <version>0.27.0</version>
+            <version>0.25.0</version>
         </dependency>
 
-<!--        <dependency>-->
-<!--            <groupId>ai.djl.tensorflow</groupId>-->
-<!--            <artifactId>tflite-engine</artifactId>-->
-<!--            <version>0.27.0</version>-->
-<!--        </dependency>-->
-
+        <!-- DJL ONNX Runtime Engine -->
         <dependency>
             <groupId>ai.djl.onnxruntime</groupId>
             <artifactId>onnxruntime-engine</artifactId>
-            <version>0.27.0</version>
+            <version>0.25.0</version>
         </dependency>
 
+        <!-- DJL Torch Engine (optional if you want PyTorch inference locally) -->
         <dependency>
-            <groupId>ai.djl.tensorflow</groupId>
-            <artifactId>tensorflow-engine</artifactId>
-            <version>0.27.0</version>
+            <groupId>ai.djl.pytorch</groupId>
+            <artifactId>pytorch-engine</artifactId>
+            <version>0.25.0</version>
         </dependency>
+
+        <!-- CSV reading -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-csv</artifactId>
+            <version>1.10.0</version>
+        </dependency>
+
     </dependencies>
 
     <build>
