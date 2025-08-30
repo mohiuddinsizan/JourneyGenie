@@ -16,7 +16,7 @@ public class JourneyGenieApplication {
 
 		SpringApplication.run(JourneyGenieApplication.class, args);
 
-        System.out.println("Updated service");
+        System.out.println("Resnet18 v2 model loaded successfully!");
 
 		System.out.println("JourneyGenie Application Started Successfully!");
 		System.out.println("Testing environment variables");

@@ -18,7 +18,7 @@ public class LandmarkMapping {
     private Map<Integer, String> idToCategory = new HashMap<>();
 
     // CSV is stored at src/main/resources/datasets/train_label_to_category.csv
-    private static final String CSV_RESOURCE = "datasets/train_label_to_category.csv";
+    private static final String CSV_RESOURCE = "datasets/train_label_to_category_v2.csv";
 
     @PostConstruct
     public void init() throws Exception {

@@ -36,7 +36,7 @@ public class LandmarkInferenceService {
         ZooModel<Image, float[]> tempModel = null;
         try {
             // Load model from resources (inside JAR)
-            ClassPathResource resource = new ClassPathResource("models/landmark_resnet18.onnx");
+            ClassPathResource resource = new ClassPathResource("models/landmark_resnet18_v2.onnx");
 
             // Create a temp file because DJL's Criteria.optModelPath() expects a Path
             File tempFile = File.createTempFile("landmark_resnet18", ".onnx");
