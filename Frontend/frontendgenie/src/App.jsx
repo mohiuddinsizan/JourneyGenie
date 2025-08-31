@@ -10,12 +10,13 @@ import AboutUs from './pages/AboutUs';
 import HowItWorks from './pages/HowItWorks';
 import Navbar from './components/Navbar';
 import TokenBuyPage from './pages/TokenBuyPage';
+import SearchPlacePage from './pages/SearchPlacePage';
+import GalleryPage from './pages/GalleryPage';
 import './App.css';
 
 const App = () => {
   const location = useLocation();
 
-  // ❌ Routes where Navbar should NOT appear
   const noNavbarRoutes = ["/", "/login", "/register", "/idle"];
 
   const shouldShowNavbar = !noNavbarRoutes.includes(location.pathname);
@@ -36,6 +37,8 @@ const App = () => {
           <Route path="/about" element={<AboutUs />} />
           <Route path="/howitworks" element={<HowItWorks />} />
           <Route path="/tokenbuy" element={<TokenBuyPage />} />
+          <Route path="/searchplace" element={<SearchPlacePage />} />
+          <Route path="/gallery" element={<GalleryPage />} />
         </Routes>
       </main>
     </>

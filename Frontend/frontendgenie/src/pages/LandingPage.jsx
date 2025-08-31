@@ -279,11 +279,6 @@ const LandingPage = () => {
           </button>
         </div>
       </div>
-
-      <div className="landmark-uploader">
-        <LandmarkUploader />
-      </div>
-
     </div>
   );
 };
