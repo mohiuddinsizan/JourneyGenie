@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Search, Calendar, MapPin, ImageIcon, Video, ArrowLeft } from "lucide-react";
+import "./GalleryPage.css";
 
 const API_BASE = import.meta.env.REACT_APP_API_URL || 'http://localhost:8080';
 
@@ -34,16 +35,17 @@ const GalleryPage = () => {
     fetchUserData();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="gallery-container">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p>Loading your gallery...</p>
-        </div>
-      </div>
-    );
-  }
+
+if (loading) {
+  return (
+    <div className="loading-popup">
+      <div className="loading-spinner"></div>
+      <p>Loading your gallery...</p>
+    </div>
+  );
+}
+
+  
 
   if (!user) {
     return (
