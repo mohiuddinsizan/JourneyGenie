@@ -270,56 +270,104 @@ const TourGuideApp = () => {
   // }
 
 
-  async function generateVideo(tourId) {
-    if (!tourId) return;
-    setGenVideoLoading(true);
-    setGenVideoError('');
+// Replace your generateVideo function with this updated version:
+
+async function generateVideo(tourId) {
+  if (!tourId) return;
+  setGenVideoLoading(true);
+  setGenVideoError('');
+  
+  try {
+    console.log('Sending request to generate video...');
+    const res = await fetch(`${API_BASE}/tour/${tourId}/video/generate`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+    });
     
-    try {
-      console.log('Sending request to generate video...');
-      const res = await fetch(`${API_BASE}/tour/${tourId}/video/generate`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-      });
+    console.log('Response received:', res);
+    
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({ message: `HTTP ${res.status}` }));
+      console.log('Error Data:', errorData);
       
-      console.log('Response received:', res);
-      
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({ message: `HTTP ${res.status}` }));
-        console.log('Error Data:', errorData);
-        
-        if (errorData.message && errorData.message.toLowerCase().includes('insufficient tokens')) {
-          setVideoTokenAlertMessage("You need at least 10 tokens to generate a video.");
-          setShowVideoTokenAlert(true);
-        } else {
-          setGenVideoError(errorData.message || `HTTP ${res.status}`);
-        }
-        return;
-      }
-  
-      const response = await res.json();
-      console.log('Video generation started:', response);
-  
-      if (response.success && response.jobId) {
-        // Start polling for status
-        await pollVideoStatus(tourId, response.jobId);
+      if (errorData.message && errorData.message.toLowerCase().includes('insufficient tokens')) {
+        setVideoTokenAlertMessage("You need at least 10 tokens to generate a video.");
+        setShowVideoTokenAlert(true);
       } else {
-        setGenVideoError('Failed to start video generation');
+        setGenVideoError(errorData.message || `HTTP ${res.status}`);
       }
-  
-    } catch (e) {
-      console.error('generateVideo failed:', e);
-      setGenVideoError(e?.message || 'Failed to generate video');
-      setVideoTokenAlertMessage(e?.message || 'Failed to generate video');
-      setShowVideoTokenAlert(true);
-    } finally {
-      setGenVideoLoading(false);
+      return;
     }
+
+    const response = await res.json();
+    console.log('Video generation response:', response);
+
+    // Check if it's the new format (with success field)
+    if (response.success !== undefined) {
+      if (response.success) {
+        console.log('Video generation completed successfully');
+        
+        // Handle successful synchronous generation
+        if (response.data) {
+          const { password, ...safeUser } = response.data;
+          setUserData(safeUser);
+          const updatedTours = normalizeTours(safeUser.tours || []);
+          setTours(updatedTours);
+          
+          if (selectedTour) {
+            const nt = updatedTours.find(t => String(t.id) === String(selectedTour.id));
+            if (nt) setSelectedTour({ ...nt, thumbnail: getTourThumb(nt, 0) });
+            else setSelectedTour(null);
+          }
+          
+          try { localStorage.setItem('user', JSON.stringify(safeUser)); } catch { }
+          window.dispatchEvent(new CustomEvent('tours:updated', { detail: { reason: 'video-generated', tourId } }));
+        }
+      } else {
+        setGenVideoError(response.message || 'Video generation failed');
+      }
+    }
+    // Check if it's async format (with jobId)
+    else if (response.jobId) {
+      // Start polling for status
+      await pollVideoStatus(tourId, response.jobId);
+    }
+    // Check if it's the old format (direct user object)
+    else if (response.id && response.email) {
+      console.log('Video generation completed successfully (legacy format)');
+      
+      // Handle legacy direct user object response
+      const { password, ...safeUser } = response;
+      setUserData(safeUser);
+      const updatedTours = normalizeTours(safeUser.tours || []);
+      setTours(updatedTours);
+      
+      if (selectedTour) {
+        const nt = updatedTours.find(t => String(t.id) === String(selectedTour.id));
+        if (nt) setSelectedTour({ ...nt, thumbnail: getTourThumb(nt, 0) });
+        else setSelectedTour(null);
+      }
+      
+      try { localStorage.setItem('user', JSON.stringify(safeUser)); } catch { }
+      window.dispatchEvent(new CustomEvent('tours:updated', { detail: { reason: 'video-generated', tourId } }));
+    }
+    else {
+      setGenVideoError('Unexpected response format from server');
+    }
+
+  } catch (e) {
+    console.error('generateVideo failed:', e);
+    setGenVideoError(e?.message || 'Failed to generate video');
+    setVideoTokenAlertMessage(e?.message || 'Failed to generate video');
+    setShowVideoTokenAlert(true);
+  } finally {
+    setGenVideoLoading(false);
   }
+}
   
   // ====== Poll video generation status ======
   async function pollVideoStatus(tourId, jobId, attempt = 1, maxAttempts = 60) {
