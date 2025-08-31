@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
@@ -19,6 +20,9 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class VideoService {
@@ -26,22 +30,84 @@ public class VideoService {
     @Autowired private TourRepository tourRepository;
     @Autowired private JWTService jwtService;
 
-    // Cloudinary init (same as your PhotoService style)
-    private Cloudinary cloudinary;
-    private Cloudinary getCloudinary() {
-        if (cloudinary == null) {
-            cloudinary = new Cloudinary("cloudinary://214429925976299:KRgnNaisrd_3PPVxjDRHfSOWAhY@dg1sx19ve");
+    // In-memory job tracking (use Redis in production)
+    private final Map<String, VideoJob> videoJobs = new ConcurrentHashMap<>();
+
+    @Async
+    public String startAsyncVideoGeneration(Long tourId, HttpServletRequest request) {
+        String jobId = UUID.randomUUID().toString();
+        VideoJob job = new VideoJob(jobId, "processing", null, null);
+        videoJobs.put(jobId, job);
+
+        // Run the actual video generation in background
+        CompletableFuture.runAsync(() -> {
+            try {
+                ResponseEntity<?> result = generateTourVideo(tourId, request);
+                if (result.getStatusCode().is2xxSuccessful()) {
+                    // Extract video URL from the result
+                    if (result.getBody() instanceof User) {
+                        User user = (User) result.getBody();
+                        Tour tour = user.getTours().stream()
+                                .filter(t -> t.getId().equals(tourId))
+                                .findFirst()
+                                .orElse(null);
+                        if (tour != null && tour.getVideo() != null) {
+                            job.setStatus("completed");
+                            job.setVideoUrl(tour.getVideo());
+                        } else {
+                            job.setStatus("failed");
+                            job.setError("Video URL not found after generation");
+                        }
+                    }
+                } else {
+                    job.setStatus("failed");
+                    job.setError("Video generation failed: " + result.getBody());
+                }
+            } catch (Exception e) {
+                job.setStatus("failed");
+                job.setError("Video generation error: " + e.getMessage());
+                e.printStackTrace();
+            }
+        });
+
+        return jobId;
+    }
+
+    public Map<String, Object> getVideoGenerationStatus(String jobId, Long tourId, String email) {
+        VideoJob job = videoJobs.get(jobId);
+        if (job == null) {
+            return Map.of("success", false, "message", "Job not found");
         }
-        return cloudinary;
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("status", job.getStatus());
+        response.put("jobId", jobId);
+
+        if ("completed".equals(job.getStatus())) {
+            response.put("videoUrl", job.getVideoUrl());
+            // Also return updated user data
+            try {
+                Tour tour = tourRepository.findById(tourId).orElse(null);
+                if (tour != null && tour.getUser().getEmail().equalsIgnoreCase(email)) {
+                    response.put("updatedUser", tour.getUser());
+                }
+            } catch (Exception e) {
+                // Log but don't fail the response
+                e.printStackTrace();
+            }
+        } else if ("failed".equals(job.getStatus())) {
+            response.put("error", job.getError());
+        }
+
+        return response;
     }
 
-    /** ffmpeg absolute path (you confirmed it's here) */
-    private String ffmpegPath() {
-        return "/usr/bin/ffmpeg";
-    }
-
+    // Keep your existing method name for the controller
     @Transactional
     public ResponseEntity<?> generateTourVideo(Long tourId, HttpServletRequest request) {
+        // Your existing generateTourVideo method content goes here
+        // ... (same as before)
         try {
             final String email = jwtService.getEmailFromRequest(request);
             if (email == null) {
@@ -85,15 +151,23 @@ public class VideoService {
             Path workDir = Files.createTempDirectory("jg-video-" + tourId + "-");
             workDir.toFile().deleteOnExit();
 
-            // Download images
+            // Download images with error handling
             List<File> frames = new ArrayList<>();
             for (int i = 0; i < imageUrls.size(); i++) {
                 String link = imageUrls.get(i);
                 File out = workDir.resolve(String.format("img_%05d.jpg", i)).toFile();
                 try (InputStream in = new URL(link).openStream()) {
                     Files.copy(in, out.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    frames.add(out);
+                } catch (Exception e) {
+                    Debug.log("Failed to download image " + link + ": " + e.getMessage());
+                    // Continue with other images
                 }
-                frames.add(out);
+            }
+
+            if (frames.isEmpty()) {
+                safeDeleteRecursive(workDir);
+                return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Failed to download any images"));
             }
 
             // Build ffmpeg concat file
@@ -109,7 +183,7 @@ public class VideoService {
 
             File outMp4 = workDir.resolve("tour-" + tourId + ".mp4").toFile();
 
-            // ffmpeg command
+            // ffmpeg command with timeout
             List<String> cmd = List.of(
                     ffmpegPath(), "-y",
                     "-f", "concat", "-safe", "0",
@@ -119,15 +193,24 @@ public class VideoService {
                     "-movflags", "+faststart",
                     outMp4.getAbsolutePath()
             );
+
             Debug.log("Running ffmpeg: " + String.join(" ", cmd));
-            Process proc = new ProcessBuilder(cmd).redirectErrorStream(true).start();
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(proc.getInputStream()))) {
-                String line; while ((line = br.readLine()) != null) Debug.log(line);
+            ProcessBuilder pb = new ProcessBuilder(cmd);
+            pb.redirectErrorStream(true);
+            Process proc = pb.start();
+
+            // Read output with timeout
+            boolean finished = proc.waitFor(5, TimeUnit.MINUTES); // 5 minute timeout
+            if (!finished) {
+                proc.destroyForcibly();
+                safeDeleteRecursive(workDir);
+                return ResponseEntity.status(500).body(Map.of("success", false, "message", "Video generation timed out"));
             }
-            int exit = proc.waitFor();
+
+            int exit = proc.exitValue();
             if (exit != 0 || !outMp4.exists()) {
                 safeDeleteRecursive(workDir);
-                return ResponseEntity.status(500).body(Map.of("success", false, "message", "Video encoding failed (ffmpeg)"));
+                return ResponseEntity.status(500).body(Map.of("success", false, "message", "Video encoding failed (ffmpeg exit: " + exit + ")"));
             }
 
             // Upload to Cloudinary as a VIDEO
@@ -147,10 +230,11 @@ public class VideoService {
                 return ResponseEntity.status(500).body(Map.of("success", false, "message", "Cloudinary video upload failed"));
             }
 
-            // Save and return owner with initialized graph
+            // Save and return owner
             tour.setVideo(videoUrl);
             tourRepository.save(tour);
 
+            // Initialize lazy collections if needed
             if (owner.getTours() != null) {
                 owner.getTours().size();
                 owner.getTours().forEach(t -> {
@@ -173,7 +257,43 @@ public class VideoService {
         }
     }
 
-    // remove temp dir (pure Java)
+    // Helper classes
+    private static class VideoJob {
+        private String jobId;
+        private String status; // "processing", "completed", "failed"
+        private String videoUrl;
+        private String error;
+
+        public VideoJob(String jobId, String status, String videoUrl, String error) {
+            this.jobId = jobId;
+            this.status = status;
+            this.videoUrl = videoUrl;
+            this.error = error;
+        }
+
+        // getters and setters
+        public String getJobId() { return jobId; }
+        public String getStatus() { return status; }
+        public void setStatus(String status) { this.status = status; }
+        public String getVideoUrl() { return videoUrl; }
+        public void setVideoUrl(String videoUrl) { this.videoUrl = videoUrl; }
+        public String getError() { return error; }
+        public void setError(String error) { this.error = error; }
+    }
+
+    // Your existing methods...
+    private Cloudinary cloudinary;
+    private Cloudinary getCloudinary() {
+        if (cloudinary == null) {
+            cloudinary = new Cloudinary("cloudinary://214429925976299:KRgnNaisrd_3PPVxjDRHfSOWAhY@dg1sx19ve");
+        }
+        return cloudinary;
+    }
+
+    private String ffmpegPath() {
+        return "/usr/bin/ffmpeg";
+    }
+
     private void safeDeleteRecursive(Path root) {
         if (root == null) return;
         try {

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import './Login.css';
 import './Background.css';
-import {useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 
 const apiUrl = import.meta.env.REACT_APP_API_URL;
@@ -10,32 +10,43 @@ const loginWithGoogle = apiUrl + "/oauth2/authorization/google";
 
 const styles = {
   googleButton: {
-    padding: '8px 12px',
-    background: '#ffffff',
-    color: '#444',
-    borderRadius: '6px',
-    fontWeight: 500,
-    fontSize: '0.85em',
-    border: '1px solid #ccc',
+    width: '100%',
+    padding: '14px 20px',
+    background: 'rgba(26, 31, 39, 0.9)',
+    border: '1px solid rgba(255, 255, 255, 0.15)',
+    borderRadius: '12px',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: '8px',
-    transition: 'background 0.3s',
+    gap: '12px',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    backdropFilter: 'blur(12px)',
+    WebkitBackdropFilter: 'blur(12px)',
+    position: 'relative',
+    overflow: 'hidden',
+    textDecoration: 'none',
   },
-  googleIcon: { width: '16px', height: '16px' },
-  googleText: { color: '#444' }
+  googleIcon: {
+    width: '20px',
+    height: '20px',
+    borderRadius: '2px',
+  },
+  googleText: {
+    color: '#e9edf1',
+    fontWeight: '600',
+    fontSize: '15px',
+  }
 };
 
 const Login = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ email: '', password: '' });
-  
+
 
   // Overlays
   const [welcome, setWelcome] = useState({ open: false, name: '' });
-  const [errorBox, setErrorBox]   = useState({ open: false, message: '' });
+  const [errorBox, setErrorBox] = useState({ open: false, message: '' });
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -68,7 +79,7 @@ const Login = () => {
         try {
           const text = (await res.text())?.trim();
           if (text) msg = text;
-        } catch {}
+        } catch { }
         setErrorBox({ open: true, message: msg });
       }
     } catch (err) {
@@ -163,16 +174,17 @@ const Login = () => {
             </button>
 
             {/* Google Login Button */}
-            <a href={loginWithGoogle} style={{ marginTop: '12px', textDecoration: 'none' }}>
+            <a href={loginWithGoogle} style={{ marginTop: '16px', textDecoration: 'none' }}>
               <div style={styles.googleButton}>
                 <img
                   src="https://developers.google.com/identity/images/g-logo.png"
                   alt="Google"
                   style={styles.googleIcon}
                 />
-                <span style={styles.googleText}>Login with Google</span>
+                <span style={styles.googleText}>Continue with Google</span>
               </div>
             </a>
+
           </form>
         </div>
       </div>

@@ -4,10 +4,12 @@ import com.example.journeyGenie.util.AppEnv;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @SpringBootApplication
+@EnableAsync
 @EntityScan(basePackages = "com.example.journeyGenie.entity")
 @RestController
 public class JourneyGenieApplication {
