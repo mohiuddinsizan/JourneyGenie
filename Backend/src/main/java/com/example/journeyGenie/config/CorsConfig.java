@@ -55,24 +55,24 @@ public class CorsConfig implements WebMvcConfigurer {
                 .maxAge(3600); // Cache preflight for 1 hour
     }
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
-        configuration.setAllowedOrigins(Arrays.asList(
-                "http://localhost:5173",
-                "http://localhost:3000",
-                "https://journey-genie-nu.vercel.app",
-                AppEnv.getFrontendUrl()
-        ));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowCredentials(true);
-        configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setExposedHeaders(Arrays.asList("Set-Cookie", "Authorization"));
-        configuration.setMaxAge(3600L);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
+//    @Bean
+//    public CorsConfigurationSource corsConfigurationSource() {
+//        CorsConfiguration configuration = new CorsConfiguration();
+//        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
+//        configuration.setAllowedOrigins(Arrays.asList(
+//                "http://localhost:5173",
+//                "http://localhost:3000",
+//                "https://journey-genie-nu.vercel.app",
+//                AppEnv.getFrontendUrl()
+//        ));
+//        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"));
+//        configuration.setAllowCredentials(true);
+//        configuration.setAllowedHeaders(Arrays.asList("*"));
+//        configuration.setExposedHeaders(Arrays.asList("Set-Cookie", "Authorization"));
+//        configuration.setMaxAge(3600L);
+//
+//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+//        source.registerCorsConfiguration("/**", configuration);
+//        return source;
+//    }
 }
