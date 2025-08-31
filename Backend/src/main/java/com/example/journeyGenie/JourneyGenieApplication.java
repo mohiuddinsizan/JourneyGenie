@@ -13,12 +13,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class JourneyGenieApplication {
 
 	public static void main(String[] args) {
-
 		SpringApplication.run(JourneyGenieApplication.class, args);
+        System.out.println("JourneyGenie Application Started Successfully!");
 
         System.out.println("Resnet18 v2 model loaded successfully!");
 
-		System.out.println("JourneyGenie Application Started Successfully!");
 		System.out.println("Testing environment variables");
         System.out.println("PRODUCTION: " + AppEnv.isProduction());
         System.out.println("TOKEN_SECRET: " + AppEnv.getTokenSecret());
