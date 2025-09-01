@@ -80,17 +80,17 @@ public class LandmarkInferenceService {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Model is not loaded"));
         }
-
-        Debug.log("Model loaded successfully, starting prediction...");
+        Debug.log("Model loaded successfully");
 
         try {
             Image img = ImageFactory.getInstance().fromImage(buffered);
-            Debug.log("Image converted to DJL format, running prediction...");
+            Debug.log("Image converted to DJL format");
 
             try (var predictor = model.newPredictor()) {
+                Debug.log("Starting prediction...");
                 float[] probs = predictor.predict(img);
-
                 Debug.log("Prediction completed, processing results...");
+
                 int idx = argmax(probs);
                 String fullLink = mapping.getCategory(idx);
 
