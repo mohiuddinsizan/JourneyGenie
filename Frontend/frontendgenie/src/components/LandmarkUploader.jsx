@@ -3,14 +3,25 @@ import axios from "axios";
 
 const LandmarkUploader = () => {
   const [file, setFile] = useState(null);
-  const [result, setResult] = useState(null); // store object { location, link }
+  const [preview, setPreview] = useState(null);
+  const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const API_BASE = import.meta.env.REACT_APP_API_URL || "http://localhost:8080";
 
   const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
-    setResult(null); // reset previous result
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+      setPreview(URL.createObjectURL(selectedFile));
+      setResult(null);
+    }
+  };
+
+  const handleCancelFile = () => {
+    setFile(null);
+    setPreview(null);
+    setResult(null);
   };
 
   const handleUpload = async () => {
@@ -37,14 +48,14 @@ const LandmarkUploader = () => {
     }
   };
 
-  // --- CSS Styles ---
+  // --- Inline Styles ---
   const styles = {
     container: {
       backgroundColor: "#121212",
       color: "#fff",
       padding: "30px",
       borderRadius: "12px",
-      maxWidth: "450px",
+      maxWidth: "480px",
       margin: "40px auto",
       fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
       boxShadow: "0 0 20px rgba(0,0,0,0.5)",
@@ -64,6 +75,27 @@ const LandmarkUploader = () => {
       color: "#fff",
       marginBottom: "15px",
     },
+    previewBox: {
+      marginTop: "15px",
+      textAlign: "center",
+    },
+    previewImg: {
+      maxWidth: "100%",
+      height: "180px",
+      objectFit: "cover",
+      borderRadius: "10px",
+      border: "1px solid #333",
+      marginBottom: "10px",
+    },
+    cancelBtn: {
+      padding: "6px 14px",
+      backgroundColor: "#ff4c4c",
+      color: "#fff",
+      border: "none",
+      borderRadius: "6px",
+      cursor: "pointer",
+      fontSize: "0.9rem",
+    },
     button: {
       width: "100%",
       padding: "12px",
@@ -74,6 +106,7 @@ const LandmarkUploader = () => {
       fontWeight: "bold",
       cursor: "pointer",
       transition: "all 0.3s",
+      marginTop: "10px",
     },
     buttonDisabled: {
       backgroundColor: "#555",
@@ -85,6 +118,8 @@ const LandmarkUploader = () => {
       backgroundColor: "#1e1e1e",
       borderRadius: "10px",
       border: "1px solid #333",
+      wordWrap: "break-word",
+      overflowWrap: "anywhere",
     },
     link: {
       color: "#00e0ff",
@@ -94,20 +129,42 @@ const LandmarkUploader = () => {
       color: "#ff4c4c",
       fontWeight: "bold",
     },
+    loader: {
+      textAlign: "center",
+      marginTop: "20px",
+      fontStyle: "italic",
+      color: "#00e0ff",
+    },
   };
 
   return (
     <div style={styles.container}>
       <h2 style={styles.title}>Upload a Landmark Image</h2>
+
+      {/* File Input */}
       <input type="file" accept="image/*" onChange={handleFileChange} style={styles.input} />
+
+      {/* Preview */}
+      {preview && (
+        <div style={styles.previewBox}>
+          <img src={preview} alt="Preview" style={styles.previewImg} />
+          <button onClick={handleCancelFile} style={styles.cancelBtn}>Remove</button>
+        </div>
+      )}
+
+      {/* Upload Button */}
       <button
         onClick={handleUpload}
-        disabled={loading}
-        style={{ ...styles.button, ...(loading ? styles.buttonDisabled : {}) }}
+        disabled={loading || !file}
+        style={{ ...styles.button, ...(loading || !file ? styles.buttonDisabled : {}) }}
       >
         {loading ? "Predicting..." : "Predict"}
       </button>
 
+      {/* Loader */}
+      {loading && <div style={styles.loader}>Analyzing image, please wait...</div>}
+
+      {/* Result */}
       {result && (
         <div style={styles.resultBox}>
           {result.error ? (
