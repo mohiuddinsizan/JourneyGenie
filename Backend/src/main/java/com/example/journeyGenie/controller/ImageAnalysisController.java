@@ -17,16 +17,9 @@ public class ImageAnalysisController {
 
     @PostMapping("/analyze-image-content")
     public ResponseEntity<?> analyzeImageContent(@RequestBody ImageAnalysisDTO imageAnalysisDTO, HttpServletRequest request) {
-        Debug.log("Analyzing image content: ");
+        Debug.log("Analyzing image content with Gemini: ");
         Debug.log("Image URL: " + imageAnalysisDTO.getImageUrl());
         Debug.log("Prompt: " + imageAnalysisDTO.getPrompt());
         return imageAnalysisService.analyzeImageContent(imageAnalysisDTO, request);
-    }
-
-    @PostMapping("/google-vision-describe")
-    public ResponseEntity<?> googleVisionDescribe(@RequestBody ImageAnalysisDTO imageAnalysisDTO, HttpServletRequest request) {
-        Debug.log("Google Vision analyzing image: ");
-        Debug.log("Image URL: " + imageAnalysisDTO.getImageUrl());
-        return imageAnalysisService.googleVisionDescribe(imageAnalysisDTO, request);
     }
 }

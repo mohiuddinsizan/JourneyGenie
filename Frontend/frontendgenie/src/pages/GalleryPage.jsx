@@ -1,141 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { Search, Calendar, MapPin, ImageIcon, Video, ArrowLeft, Tag } from "lucide-react";
-import "./GalleryPage.css";
-
+import { Search, Calendar, MapPin, Image, Video, ArrowLeft, Loader2 } from "lucide-react";
+import './GalleryPage.css';
 const API_BASE = import.meta.env.REACT_APP_API_URL || 'http://localhost:8080';
-
-// AI Image Analysis Service - generates descriptions for content matching
-const generateImageDescription = async (imageUrl) => {
-  try {
-    // Option 1: Using OpenAI Vision API (recommended)
-    const response = await fetch(`${API_BASE}/api/analyze-image-content`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ 
-        imageUrl,
-        prompt: "Describe this image in detail, including objects, animals, landscapes, people, food, activities, weather, time of day, and any notable features. Be comprehensive but concise."
-      }),
-    });
-    
-    if (response.ok) {
-      const result = await response.json();
-      return result.description || '';
-    }
-  } catch (error) {
-    console.error('Image description generation failed:', error);
-  }
-  
-  return '';
-};
-
-// Alternative: Using Google Vision API
-const generateImageDescriptionGoogle = async (imageUrl) => {
-  try {
-    const response = await fetch(`${API_BASE}/api/google-vision-describe`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ imageUrl }),
-    });
-    
-    if (response.ok) {
-      const result = await response.json();
-      return result.description || '';
-    }
-  } catch (error) {
-    console.error('Google Vision analysis failed:', error);
-  }
-  
-  return '';
-};
-
-// Calculate relevance score for search matching
-const calculateRelevanceScore = (description, searchTerm) => {
-  if (!description || !searchTerm) return 0;
-  
-  const descLower = description.toLowerCase();
-  const searchLower = searchTerm.toLowerCase();
-  
-  let score = 0;
-  
-  // Exact match bonus
-  if (descLower.includes(searchLower)) {
-    score += 100;
-  }
-  
-  // Word matching
-  const searchWords = searchLower.split(' ').filter(word => word.length > 2);
-  const descWords = descLower.split(' ');
-  
-  searchWords.forEach(searchWord => {
-    descWords.forEach(descWord => {
-      if (descWord.includes(searchWord) || searchWord.includes(descWord)) {
-        score += 50;
-      }
-      // Partial matching for similar words
-      if (descWord.length > 3 && searchWord.length > 3) {
-        const similarity = calculateStringSimilarity(searchWord, descWord);
-        if (similarity > 0.7) {
-          score += 30;
-        }
-      }
-    });
-  });
-  
-  return score;
-};
-
-// Simple string similarity calculation
-const calculateStringSimilarity = (str1, str2) => {
-  const longer = str1.length > str2.length ? str1 : str2;
-  const shorter = str1.length > str2.length ? str2 : str1;
-  
-  if (longer.length === 0) return 1.0;
-  
-  const editDistance = levenshteinDistance(longer, shorter);
-  return (longer.length - editDistance) / longer.length;
-};
-
-const levenshteinDistance = (str1, str2) => {
-  const matrix = [];
-  
-  for (let i = 0; i <= str2.length; i++) {
-    matrix[i] = [i];
-  }
-  
-  for (let j = 0; j <= str1.length; j++) {
-    matrix[0][j] = j;
-  }
-  
-  for (let i = 1; i <= str2.length; i++) {
-    for (let j = 1; j <= str1.length; j++) {
-      if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
-        matrix[i][j] = matrix[i - 1][j - 1];
-      } else {
-        matrix[i][j] = Math.min(
-          matrix[i - 1][j - 1] + 1,
-          matrix[i][j - 1] + 1,
-          matrix[i - 1][j] + 1
-        );
-      }
-    }
-  }
-  
-  return matrix[str2.length][str1.length];
-};
 
 const GalleryPage = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedSection, setSelectedSection] = useState(null);
+  const [selectedSection, setSelectedSection] = useState(null); // 'photos' or 'videos'
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedVideo, setSelectedVideo] = useState(null);
-  const [imageDescriptions, setImageDescriptions] = useState({}); // Store AI descriptions
-  const [analyzingImages, setAnalyzingImages] = useState(new Set()); // Track which images are being analyzed
+  const [filteredPhotos, setFilteredPhotos] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -149,6 +25,8 @@ const GalleryPage = () => {
         if (res.ok) {
           const userData = await res.json();
           setUser(userData);
+          const initialPhotos = extractPhotos(userData);
+          setFilteredPhotos(initialPhotos);
         }
       } catch (error) {
         console.error("Failed to fetch user data:", error);
@@ -160,40 +38,118 @@ const GalleryPage = () => {
     fetchUserData();
   }, []);
 
-  // Analyze image when needed for search
-  const analyzeImageForSearch = async (photo) => {
-    if (imageDescriptions[photo.link] || analyzingImages.has(photo.link)) {
-      return imageDescriptions[photo.link] || '';
-    }
-    
-    setAnalyzingImages(prev => new Set(prev).add(photo.link));
-    
-    try {
-      const description = await generateImageDescription(photo.link);
-      
-      setImageDescriptions(prev => ({
-        ...prev,
-        [photo.link]: description
-      }));
-      
-      return description;
-    } catch (error) {
-      console.error('Failed to analyze image:', error);
-      return '';
-    } finally {
-      setAnalyzingImages(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(photo.link);
-        return newSet;
+  // Extract photos
+  const extractPhotos = (userData) => {
+    const photos = [];
+    if (userData?.tours) {
+      userData.tours.forEach(tour => {
+        if (tour.days) {
+          tour.days.forEach(day => {
+            if (day.photos) {
+              day.photos.forEach(photo => {
+                photos.push({
+                  ...photo,
+                  tourTitle: `${tour.destination} Trip`,
+                  date: day.date,
+                  startLocation: tour.startLocation,
+                  destination: tour.destination
+                });
+              });
+            }
+          });
+        }
       });
+    }
+    return photos;
+  };
+
+  // Handle AI-powered search
+  const handleSearch = async () => {
+    if (!searchTerm.trim()) {
+      setFilteredPhotos(extractPhotos(user));
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const allPhotos = extractPhotos(user);
+      const analysisPromises = allPhotos.map(async (photo) => {
+        try {
+          const response = await fetch(`${API_BASE}/api/analyze-image-content`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+              imageUrl: photo.link,
+              prompt: searchTerm
+            })
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            if (result && typeof result === 'object' && result.description) {
+              return {
+                ...photo,
+                relevance: result.description.toLowerCase().includes(searchTerm.toLowerCase()) ? 1 : 0,
+                description: result.description
+              };
+            }
+          }
+        } catch (error) {
+          console.error("Failed to analyze photo:", error);
+        }
+        
+        const photoText = `${photo.tourTitle} ${photo.startLocation} ${photo.destination}`.toLowerCase();
+        const matchScore = photoText.includes(searchTerm.toLowerCase()) ? 0.5 : 0;
+        
+        return { 
+          ...photo, 
+          relevance: matchScore, 
+          description: 'Basic search match' 
+        };
+      });
+
+      const analyzedPhotos = await Promise.all(analysisPromises);
+      const relevantPhotos = analyzedPhotos
+        .filter(photo => photo.relevance > 0)
+        .sort((a, b) => b.relevance - a.relevance);
+      
+      setFilteredPhotos(relevantPhotos);
+    } catch (error) {
+      console.error("Failed to perform AI search:", error);
+      const allPhotos = extractPhotos(user);
+      const basicResults = allPhotos.filter(photo => 
+        `${photo.tourTitle} ${photo.startLocation} ${photo.destination}`
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())
+      );
+      setFilteredPhotos(basicResults);
+    } finally {
+      setIsSearching(false);
     }
   };
 
+  // Trigger search on Enter key
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  // Reset search when clearing input
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFilteredPhotos(extractPhotos(user));
+    }
+  }, [searchTerm, user]);
+
   if (loading) {
     return (
-      <div className="loading-popup">
-        <div className="loading-spinner"></div>
-        <p>Loading your gallery...</p>
+      <div className="gallery-container">
+        <div className="loading-spinner">
+          <div className="spinner"></div>
+          <p>Loading your gallery...</p>
+        </div>
       </div>
     );
   }
@@ -208,29 +164,6 @@ const GalleryPage = () => {
     );
   }
 
-  // Extract photos
-  const photos = [];
-  if (user.tours) {
-    user.tours.forEach(tour => {
-      if (tour.days) {
-        tour.days.forEach(day => {
-          if (day.photos) {
-            day.photos.forEach(photo => {
-              photos.push({
-                ...photo,
-                tourTitle: `${tour.destination} Trip`,
-                date: day.date,
-                startLocation: tour.startLocation,
-                destination: tour.destination
-              });
-            });
-          }
-        });
-      }
-    });
-  }
-
-  // Extract videos
   const videos = [];
   if (user.tours) {
     user.tours.forEach(tour => {
@@ -249,68 +182,6 @@ const GalleryPage = () => {
     });
   }
 
-  // Smart filtering with AI descriptions and relevance scoring
-  const getFilteredPhotos = async () => {
-    if (!searchTerm.trim()) return photos;
-    
-    const photosWithScores = await Promise.all(
-      photos.map(async (photo) => {
-        let score = 0;
-        
-        // Location and title matching (existing functionality)
-        const searchLower = searchTerm.toLowerCase();
-        const locationMatch = 
-          photo.tourTitle.toLowerCase().includes(searchLower) ||
-          photo.destination.toLowerCase().includes(searchLower) ||
-          photo.startLocation.toLowerCase().includes(searchLower);
-        
-        if (locationMatch) {
-          score += 200; // High priority for location matches
-        }
-        
-        // AI description matching
-        const description = await analyzeImageForSearch(photo);
-        const contentScore = calculateRelevanceScore(description, searchTerm);
-        score += contentScore;
-        
-        return {
-          photo,
-          score,
-          description
-        };
-      })
-    );
-    
-    // Filter and sort by relevance score
-    return photosWithScores
-      .filter(item => item.score > 0)
-      .sort((a, b) => b.score - a.score)
-      .map(item => item.photo);
-  };
-
-  // Use state for filtered photos to trigger re-render
-  const [filteredPhotos, setFilteredPhotos] = useState(photos);
-  const [searching, setSearching] = useState(false);
-
-  // Update filtered photos when search term changes
-  useEffect(() => {
-    const updateFilteredPhotos = async () => {
-      if (!searchTerm.trim()) {
-        setFilteredPhotos(photos);
-        return;
-      }
-      
-      setSearching(true);
-      const filtered = await getFilteredPhotos();
-      setFilteredPhotos(filtered);
-      setSearching(false);
-    };
-
-    const debounceTimer = setTimeout(updateFilteredPhotos, 500);
-    return () => clearTimeout(debounceTimer);
-  }, [searchTerm, photos, imageDescriptions]);
-
-  // Section selection view
   if (!selectedSection) {
     return (
       <div className="gallery-container">
@@ -325,13 +196,13 @@ const GalleryPage = () => {
             onClick={() => setSelectedSection('photos')}
           >
             <div className="section-icon-wrapper">
-              <ImageIcon className="section-main-icon" />
+              <Image className="section-main-icon" />
             </div>
             <div className="section-content">
-              <h3>Smart Photos</h3>
-              <p>{photos.length} travel photos</p>
+              <h3>Photos</h3>
+              <p>{filteredPhotos.length} travel photos</p>
               <span className="section-description">
-                Search your photos by content using AI - find animals, landscapes, food, and more
+                Browse through all your captured moments from your trips
               </span>
             </div>
             <div className="section-arrow">→</div>
@@ -358,8 +229,168 @@ const GalleryPage = () => {
     );
   }
 
-  // Photos section view
   if (selectedSection === 'photos') {
+    return (
+      <div className="gallery-container">
+        <div className="section-view-header">
+          <button 
+            className="back-button"
+            onClick={() => {
+              setSelectedSection(null);
+              setSearchTerm("");
+              setFilteredPhotos(extractPhotos(user));
+            }}
+          >
+            <ArrowLeft size={20} />
+            Back to Gallery
+          </button>
+          
+          <div className="section-title-with-search">
+            <div className="section-title">
+              <Image className="section-icon" />
+              <h2>Photos ({filteredPhotos.length})</h2>
+            </div>
+            
+            <div className="search-container">
+              <Search className="search-icon" />
+              <input
+                type="text"
+                placeholder="Search photos with AI (e.g., 'beach sunset')..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyPress={handleKeyPress}
+                className="search-input"
+                disabled={isSearching}
+              />
+              <button
+                className="search-button"
+                onClick={handleSearch}
+                disabled={isSearching}
+              >
+                {isSearching ? (
+                  <Loader2 className="search-spinner" size={16} />
+                ) : (
+                  <Search size={16} />
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="gallery-section">
+          <div className="photos-grid">
+            {isSearching ? (
+              <div className="search-loading-grid">
+                <div className="spinner"></div>
+                <p>Analyzing photos with AI...</p>
+              </div>
+            ) : filteredPhotos.length > 0 ? (
+              filteredPhotos.map((photo, index) => (
+                <div 
+                  key={`${photo.id}-${index}`} 
+                  className="photo-card"
+                  onClick={() => setSelectedImage(photo)}
+                >
+                  <img 
+                    src={photo.link} 
+                    alt={photo.tourTitle}
+                    className="photo-image"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'flex';
+                    }}
+                  />
+                  <div className="image-error" style={{ display: 'none' }}>
+                    <Image size={24} />
+                    <p>Image unavailable</p>
+                  </div>
+                  <div className="photo-overlay">
+                    <div className="photo-info">
+                      <h4>{photo.tourTitle}</h4>
+                      <div className="photo-details">
+                        <span className="photo-location">
+                          <MapPin size={14} />
+                          {photo.startLocation} → {photo.destination}
+                        </span>
+                        <span className="photo-date">
+                          <Calendar size={14} />
+                          {new Date(photo.date).toLocaleDateString()}
+                        </span>
+                      </div>
+                      {photo.description && photo.description !== 'Basic search match' && (
+                        <span className="photo-description">
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="no-content">
+                <Image size={48} />
+                <p>
+                  {searchTerm.trim() 
+                    ? "No photos found matching your search. Try different keywords!"
+                    : "No photos found. Start your first trip to capture memories!"
+                  }
+                </p>
+                {searchTerm.trim() && (
+                  <button 
+                    className="clear-search-btn"
+                    onClick={() => {
+                      setSearchTerm("");
+                      setFilteredPhotos(extractPhotos(user));
+                    }}
+                  >
+                    Clear Search
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {selectedImage && (
+          <div className="modal-overlay" onClick={() => setSelectedImage(null)}>
+            <div className="modal-content image-modal" onClick={(e) => e.stopPropagation()}>
+              <button className="modal-close" onClick={() => setSelectedImage(null)}>×</button>
+              <img 
+                src={selectedImage.link} 
+                alt={selectedImage.tourTitle} 
+                className="modal-image"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'flex';
+                }}
+              />
+              <div className="modal-image-error" style={{ display: 'none' }}>
+                <Image size={48} />
+                <p>Image could not be loaded</p>
+              </div>
+              <div className="modal-info">
+                <h3>{selectedImage.tourTitle}</h3>
+                <p>
+                  <MapPin size={16} />
+                  {selectedImage.startLocation} → {selectedImage.destination}
+                </p>
+                <p>
+                  <Calendar size={16} />
+                  {new Date(selectedImage.date).toLocaleDateString()}
+                </p>
+                {selectedImage.description && selectedImage.description !== 'Basic search match' && (
+                  <div className="modal-description">
+                    
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (selectedSection === 'videos') {
     return (
       <div className="gallery-container">
         <div className="section-view-header">
@@ -374,206 +405,67 @@ const GalleryPage = () => {
             Back to Gallery
           </button>
           
-          <div className="section-title-with-search">
-            <div className="section-title">
-              <ImageIcon className="section-icon" />
-              <h2>Smart Photos ({filteredPhotos.length})</h2>
-              {(searching || analyzingImages.size > 0) && (
-                <span className="analyzing-indicator">
-                  <div className="small-spinner"></div>
-                  {searching ? 'Searching...' : `Analyzing ${analyzingImages.size} image${analyzingImages.size === 1 ? '' : 's'}...`}
-                </span>
-              )}
-            </div>
-            
-            <div className="search-container">
-              <Search className="search-icon" />
-              <input
-                type="text"
-                placeholder="Search by content: animals, mountains, food, sunset, beach, people..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="search-input"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Search examples */}
-        {!searchTerm && (
-          <div className="search-examples">
-            <p>Try searching for:</p>
-            <div className="example-tags">
-              {['animals', 'mountains', 'food', 'sunset', 'beach', 'people', 'flowers', 'buildings'].map(example => (
-                <button
-                  key={example}
-                  className="example-tag"
-                  onClick={() => setSearchTerm(example)}
-                >
-                  {example}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="photos-grid">
-          {filteredPhotos.length > 0 ? (
-            filteredPhotos.map((photo, index) => (
-              <div 
-                key={`${photo.id}-${index}`} 
-                className="photo-card"
-                onClick={() => setSelectedImage(photo)}
-              >
-                <img 
-                  src={photo.link} 
-                  alt={photo.tourTitle}
-                  className="photo-image"
-                />
-                <div className="photo-overlay">
-                  <div className="photo-info">
-                    <h4>{photo.tourTitle}</h4>
-                    <div className="photo-details">
-                      <span className="photo-location">
-                        <MapPin size={14} />
-                        {photo.startLocation} → {photo.destination}
-                      </span>
-                      <span className="photo-date">
-                        <Calendar size={14} />
-                        {new Date(photo.date).toLocaleDateString()}
-                      </span>
-                    </div>
-                    {/* Show AI description preview if available and relevant */}
-                    {imageDescriptions[photo.link] && searchTerm && (
-                      <div className="ai-match-preview">
-                        <Tag size={10} />
-                        AI found: {imageDescriptions[photo.link].slice(0, 60)}...
-                      </div>
-                    )}
-                  </div>
-                </div>
-                {analyzingImages.has(photo.link) && (
-                  <div className="analyzing-overlay">
-                    <div className="small-spinner"></div>
-                  </div>
-                )}
-              </div>
-            ))
-          ) : (
-            <div className="no-content">
-              <ImageIcon size={48} />
-              <p>
-                {searchTerm ? 
-                  `No photos found matching "${searchTerm}". AI is analyzing your images to find the best matches. Try different keywords like "animals", "landscapes", or "food".` :
-                  "No photos found. Start your first trip to capture memories!"
-                }
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Enhanced Image Modal with AI description */}
-        {selectedImage && (
-          <div className="modal-overlay" onClick={() => setSelectedImage(null)}>
-            <div className="modal-content image-modal" onClick={(e) => e.stopPropagation()}>
-              <button className="modal-close" onClick={() => setSelectedImage(null)}>×</button>
-              <img src={selectedImage.link} alt={selectedImage.tourTitle} className="modal-image" />
-              <div className="modal-info">
-                <h3>{selectedImage.tourTitle}</h3>
-                <p>
-                  <MapPin size={16} />
-                  {selectedImage.startLocation} → {selectedImage.destination}
-                </p>
-                <p>
-                  <Calendar size={16} />
-                  {new Date(selectedImage.date).toLocaleDateString()}
-                </p>
-                {/* Show AI description */}
-                {imageDescriptions[selectedImage.link] && (
-                  <div className="ai-description">
-                    <h4>🤖 AI Description:</h4>
-                    <p>{imageDescriptions[selectedImage.link]}</p>
-                  </div>
-                )}
-                {analyzingImages.has(selectedImage.link) && (
-                  <div className="ai-analyzing">
-                    <div className="small-spinner"></div>
-                    <span>Analyzing image content...</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // Videos section view (unchanged)
-  if (selectedSection === 'videos') {
-    return (
-      <div className="gallery-container">
-        <div className="section-view-header">
-          <button 
-            className="back-button"
-            onClick={() => setSelectedSection(null)}
-          >
-            <ArrowLeft size={20} />
-            Back to Gallery
-          </button>
-          
           <div className="section-title">
             <Video className="section-icon" />
             <h2>Trip Videos ({videos.length})</h2>
           </div>
         </div>
 
-        <div className="videos-grid">
-          {videos.length > 0 ? (
-            videos.map((video) => (
-              <div 
-                key={video.id} 
-                className="video-card"
-                onClick={() => setSelectedVideo(video)}
-              >
-                <div className="video-thumbnail">
-                  <video
-                    src={video.link}
-                    className="video-preview"
-                    muted
-                    preload="metadata"
-                  />
-                  <div className="play-button">
-                    <Video size={32} />
+        <div className="gallery-section">
+          <div className="videos-grid">
+            {videos.length > 0 ? (
+              videos.map((video) => (
+                <div 
+                  key={video.id} 
+                  className="video-card"
+                  onClick={() => setSelectedVideo(video)}
+                >
+                  <div className="video-thumbnail">
+                    <video
+                      src={video.link}
+                      className="video-preview"
+                      muted
+                      preload="metadata"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                    <div className="video-error" style={{ display: 'none' }}>
+                      <Video size={24} />
+                      <p>Video unavailable</p>
+                    </div>
+                    <div className="play-button">
+                      <Video size={32} />
+                    </div>
+                  </div>
+                  <div className="video-info">
+                    <h4>{video.title}</h4>
+                    <div className="video-details">
+                      <span className="video-route">
+                        <MapPin size={14} />
+                        {video.startLocation} → {video.destination}
+                      </span>
+                      <span className="video-duration">
+                        <Calendar size={14} />
+                        {new Date(video.startDate).toLocaleDateString()} - {new Date(video.endDate).toLocaleDateString()}
+                      </span>
+                      <span className={`budget-badge budget-${video.budget}`}>
+                        {video.budget} budget
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <div className="video-info">
-                  <h4>{video.title}</h4>
-                  <div className="video-details">
-                    <span className="video-route">
-                      <MapPin size={14} />
-                      {video.startLocation} → {video.destination}
-                    </span>
-                    <span className="video-duration">
-                      <Calendar size={14} />
-                      {new Date(video.startDate).toLocaleDateString()} - {new Date(video.endDate).toLocaleDateString()}
-                    </span>
-                    <span className={`budget-badge budget-${video.budget}`}>
-                      {video.budget} budget
-                    </span>
-                  </div>
-                </div>
+              ))
+            ) : (
+              <div className="no-content">
+                <Video size={48} />
+                <p>No trip videos available. Complete your trips to generate travel videos!</p>
               </div>
-            ))
-          ) : (
-            <div className="no-content">
-              <Video size={48} />
-              <p>No trip videos available. Complete your trips to generate travel videos!</p>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
-        {/* Video Modal */}
         {selectedVideo && (
           <div className="modal-overlay" onClick={() => setSelectedVideo(null)}>
             <div className="modal-content video-modal" onClick={(e) => e.stopPropagation()}>
@@ -583,7 +475,15 @@ const GalleryPage = () => {
                 controls 
                 autoPlay 
                 className="modal-video"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'flex';
+                }}
               />
+              <div className="modal-video-error" style={{ display: 'none' }}>
+                <Video size={48} />
+                <p>Video could not be loaded</p>
+              </div>
               <div className="modal-info">
                 <h3>{selectedVideo.title}</h3>
                 <p>

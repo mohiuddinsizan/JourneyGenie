@@ -12,6 +12,7 @@ import Navbar from './components/Navbar';
 import TokenBuyPage from './pages/TokenBuyPage';
 import SearchPlacePage from './pages/SearchPlacePage';
 import GalleryPage from './pages/GalleryPage';
+import SupportPage from './pages/Support';
 import './App.css';
 
 const App = () => {
@@ -39,6 +40,7 @@ const App = () => {
           <Route path="/tokenbuy" element={<TokenBuyPage />} />
           <Route path="/searchplace" element={<SearchPlacePage />} />
           <Route path="/gallery" element={<GalleryPage />} />
+          <Route path="/support" element={<SupportPage />} />
         </Routes>
       </main>
     </>

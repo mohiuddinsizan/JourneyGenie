@@ -8,8 +8,7 @@ import image2 from "../assets/tour-thumbnail-9.jpg";
 import image3 from "../assets/tour-thumbnail-7.jpg";
 import imagehero from "../assets/imagehero.jpg";
 import naturelover from "../assets/naturelover.jpg";
-import image6 from "../assets/tour-thumbnail-1.jpg";
-import LandmarkUploader from "../components/LandmarkUploader.jsx";
+
 
 const API_BASE = import.meta.env.REACT_APP_API_URL || 'http://localhost:8080';
 
@@ -114,6 +113,7 @@ const LandingPage = () => {
 
   const handlePlanTrip = () => requireLoginOr(() => navigate("/plan"));
   const handleProfile = () => requireLoginOr(() => navigate("/profile"));
+  const handleFindPlaces = () => requireLoginOr(() => navigate("/searchplace"));
 
   return (
     <div className="container">
@@ -155,8 +155,8 @@ const LandingPage = () => {
           <button className="fancy-btn" onClick={handleProfile}>
             Profile
           </button>
-          <button className="fancy-btn" onClick={() => navigate("/about")}>
-            About Us
+          <button className="fancy-btn" onClick={() => navigate("/searchplace")}>
+            Find a Place
           </button>
           <button className="fancy-btn" onClick={() => navigate("/howitworks")}>
             How it Works
@@ -209,9 +209,9 @@ const LandingPage = () => {
         <div className="ideas-footer">
           <button
             className="cta-primary"
-            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            onClick={handleFindPlaces}
           >
-            Start Chatting →
+            Start Finding →
           </button>
         </div>
       </div>
@@ -243,7 +243,7 @@ const LandingPage = () => {
               className="cta-primary"
               onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
             >
-              Start Chatting →
+              How it Works →
             </button>
           </div>
         </div>
@@ -273,7 +273,7 @@ const LandingPage = () => {
 
           <button
             className="cta-primary"
-            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            onClick={handlePlanTrip}
           >
             Discover Nature →
           </button>

@@ -57,7 +57,7 @@ public class PhotoController {
             return ResponseEntity.status(400).body("Insufficient tokens. You need at least 1 tokens to upload a photo.");
         }
 
-        // Deduct 10 tokens for photo upload
+        // Deduct 1 tokens for photo upload
         ResponseEntity<?> deductionResponse = tokenService.deductTokens(request, 1); // Deduct 1 tokens for upload
         if (!deductionResponse.getStatusCode().is2xxSuccessful()) {
             return ResponseEntity.status(400).body("Failed to deduct tokens.");

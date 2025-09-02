@@ -117,7 +117,7 @@ const Navbar = () => {
         {/* Logo + Name */}
         <div className="navbar-logo" onClick={() => navigate("/idle")}>
           <img src={logo} alt="logo" className="navbar-logo-img" />
-          <h2>JourneyGenie</h2>
+          <h2 className="navbar-logo-text">JourneyGenie</h2>
         </div>
 
         {/* Links */}
@@ -128,8 +128,9 @@ const Navbar = () => {
           <NavLink to="/gallery" className="nav-btn">Gallery</NavLink>
           <NavLink to="/searchplace" className="nav-btn">Search Places</NavLink>  
           <NavLink to="/tokenbuy" className="nav-btn">Buy Tokens</NavLink>
-          <NavLink to="/about" className="nav-btn">About Us</NavLink>
           <NavLink to="/howitworks" className="nav-btn">How It Works</NavLink>
+          <NavLink to="/support" className="nav-btn">Support</NavLink>
+          <NavLink to="/about" className="nav-btn">About Us</NavLink>
           {isLoggedIn ? (
             <button className="nav-btn logout-btn" onClick={handleLogout}>
               Logout
