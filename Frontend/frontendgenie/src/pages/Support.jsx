@@ -5,21 +5,24 @@ import {
   Send, 
   CheckCircle, 
   AlertCircle, 
-  HeadphonesIcon,
+  Headphones,
   Clock,
   Shield,
-  Zap
+  Zap,
+  ExternalLink
 } from 'lucide-react';
 import './Support.css';
 
 const SupportPage = () => {
+  // Configuration - easily change the receiver email here
+  const RECEIVER_EMAIL = 'mohiuddinsizan13@gmail.com';
+  
   const [formData, setFormData] = useState({
     email: '',
     subject: '',
     problem: '',
     priority: 'medium'
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
 
   const handleInputChange = (e) => {
@@ -30,7 +33,7 @@ const SupportPage = () => {
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     
     if (!formData.email || !formData.problem) {
@@ -41,53 +44,60 @@ const SupportPage = () => {
       return;
     }
 
-    setIsSubmitting(true);
-    setSubmitStatus(null);
+    // Create email content
+    const emailSubject = formData.subject || 'Support Request - Landmark Recognition';
+    const emailBody = `
+Priority: ${formData.priority.toUpperCase()}
+From: ${formData.email}
+Date: ${new Date().toLocaleString()}
 
+Issue Description:
+${formData.problem}
+
+---
+This email was sent via the Landmark Recognition Support Form.
+    `.trim();
+
+    // Create mailto URL
+    const mailtoUrl = `mailto:${RECEIVER_EMAIL}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+    
     try {
-      // Simulate API call to send email
-      const emailData = {
-        to: 'mohiuddinsizan13@gmail.com',
-        from: formData.email,
-        subject: formData.subject || 'Support Request - Landmark Recognition',
-        priority: formData.priority,
-        message: formData.problem,
-        timestamp: new Date().toISOString()
-      };
-
-      // Mock API endpoint - replace with your actual email service
-      const response = await fetch('/api/support/send-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(emailData)
+      // Try to open email client with different methods
+      // Method 1: Create a temporary link and click it (works better in Chrome)
+      const link = document.createElement('a');
+      link.href = mailtoUrl;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Fallback method if the first doesn't work
+      // setTimeout(() => {
+      //   window.open(mailtoUrl);
+      // }, 100);
+      
+      setSubmitStatus({
+        type: 'success',
+        message: 'Opening your email client... Please send the email to complete your support request.'
       });
 
-      if (response.ok) {
-        setSubmitStatus({
-          type: 'success',
-          message: 'Your support request has been sent successfully! We\'ll get back to you within 24 hours.'
-        });
-        
-        // Reset form
+      // Reset form after a delay
+      setTimeout(() => {
         setFormData({
           email: '',
           subject: '',
           problem: '',
           priority: 'medium'
         });
-      } else {
-        throw new Error('Failed to send email');
-      }
+        setSubmitStatus(null);
+      }, 3000);
+
     } catch (error) {
-      console.error('Error sending support request:', error);
+      console.error('Error opening email client:', error);
       setSubmitStatus({
         type: 'error',
-        message: 'Sorry, there was an error sending your request. Please try again later or contact us directly.'
+        message: `Could not open email client. Please manually email ${RECEIVER_EMAIL} with your issue.`
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -103,7 +113,7 @@ const SupportPage = () => {
         {/* Header Section */}
         <div className="support-header">
           <div className="header-icon">
-            <HeadphonesIcon size={48} />
+            <Headphones size={48} />
           </div>
           <h1 className="support-title">Get Help & Support</h1>
           <p className="support-description">
@@ -133,12 +143,14 @@ const SupportPage = () => {
         {/* Support Form */}
         <div className="support-form-container">
           <div className="form-header">
-            <MessageCircle size={24} />
-            <h2>Tell us what's wrong</h2>
+            <h2>
+              <MessageCircle size={24} />
+              Tell us what's wrong
+            </h2>
             <p>Describe your issue and we'll get back to you soon</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="support-form">
+          <div className="support-form">
             {/* Email Field */}
             <div className="form-group">
               <label htmlFor="email" className="form-label">
@@ -219,23 +231,14 @@ const SupportPage = () => {
 
             {/* Submit Button */}
             <button
-              type="submit"
-              disabled={isSubmitting}
+              type="button"
+              onClick={handleSubmit}
               className="submit-button"
             >
-              {isSubmitting ? (
-                <>
-                  <div className="loading-spinner"></div>
-                  Sending...
-                </>
-              ) : (
-                <>
-                  <Send size={20} />
-                  Send Support Request
-                </>
-              )}
+              <ExternalLink size={20} />
+              Open Email Client
             </button>
-          </form>
+          </div>
 
           {/* Status Messages */}
           {submitStatus && (

@@ -146,8 +146,8 @@ const GalleryPage = () => {
   if (loading) {
     return (
       <div className="gallery-container">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
+        <div className="gallery-page-loading-spinner">
+          <div className="gallery-page-spinner"></div>
           <p>Loading your gallery...</p>
         </div>
       </div>
@@ -186,6 +186,7 @@ const GalleryPage = () => {
     return (
       <div className="gallery-container">
         <div className="gallery-header">
+          <div className="header-glow"></div>
           <h1>My Travel Gallery</h1>
           <p>Relive your amazing travel memories</p>
         </div>
@@ -195,34 +196,40 @@ const GalleryPage = () => {
             className="section-card"
             onClick={() => setSelectedSection('photos')}
           >
+            <div className="section-card-glow"></div>
             <div className="section-icon-wrapper">
               <Image className="section-main-icon" />
             </div>
             <div className="section-content">
               <h3>Photos</h3>
-              <p>{filteredPhotos.length} travel photos</p>
-              <span className="section-description">
+              <div className="section-count">{filteredPhotos.length} travel photos</div>
+              <p className="section-description">
                 Browse through all your captured moments from your trips
-              </span>
+              </p>
             </div>
-            <div className="section-arrow">→</div>
+            <div className="section-arrow">
+              <ArrowLeft className="arrow-icon" />
+            </div>
           </div>
 
           <div 
             className="section-card"
             onClick={() => setSelectedSection('videos')}
           >
+            <div className="section-card-glow"></div>
             <div className="section-icon-wrapper">
               <Video className="section-main-icon" />
             </div>
             <div className="section-content">
               <h3>Trip Videos</h3>
-              <p>{videos.length} travel videos</p>
-              <span className="section-description">
+              <div className="section-count">{videos.length} travel videos</div>
+              <p className="section-description">
                 Watch your complete trip experiences and highlights
-              </span>
+              </p>
             </div>
-            <div className="section-arrow">→</div>
+            <div className="section-arrow">
+              <ArrowLeft className="arrow-icon" />
+            </div>
           </div>
         </div>
       </div>
@@ -278,10 +285,10 @@ const GalleryPage = () => {
         </div>
 
         <div className="gallery-section">
-          <div className="photos-grid">
+          <div className="photos-grid-2">
             {isSearching ? (
-              <div className="search-loading-grid">
-                <div className="spinner"></div>
+              <div className="gallery-page-search-loading-grid">
+                <div className="gallery-page-spinner"></div>
                 <p>Analyzing photos with AI...</p>
               </div>
             ) : filteredPhotos.length > 0 ? (

@@ -33,6 +33,7 @@
   margin-top: 40px;
 }
 
+
 .fancy-btn {
   margin: 20px;
   padding: 16px 36px;            /* Bigger padding */
@@ -74,7 +75,7 @@ h1, h2 {
 /* Headline with gradient accent */
 h1 {
   font-size: 2.5rem;
-  background: linear-gradient(135deg, #f9f4f7, #f0eaed, #e9e6e8);
+  background: linear-gradient(135deg, #e43ea2, #da92b6, #f5d6ea);
   color: white;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
