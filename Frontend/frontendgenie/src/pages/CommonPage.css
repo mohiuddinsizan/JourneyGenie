@@ -126,3 +126,351 @@
   }
   
   .about-title { color: #fff !important; }
+
+
+  /* Mobile Responsive Styles for CommonPage - ADD to existing CSS */
+
+/* Tablet and mobile adjustments */
+@media screen and (max-width: 768px) {
+  .fancy-page {
+    padding: 40px 15px;
+    min-height: calc(100vh - 100px);
+  }
+
+  .glass-card {
+    max-width: 100%;
+    padding: 30px 20px;
+    border-radius: 16px;
+    margin: 0;
+  }
+
+  .glass-card h1,
+  .glass-card h2 {
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+    text-align: center;
+  }
+
+  .glass-card p {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  /* Section adjustments */
+  .section {
+    margin: 25px 0;
+  }
+
+  .section-title {
+    font-size: 1.3rem;
+    margin-bottom: 12px;
+  }
+
+  /* Features grid - responsive */
+  .features-grid {
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+  }
+
+  .feature-card {
+    padding: 14px;
+    font-size: 0.95rem;
+  }
+
+  /* Contact grid - responsive */
+  .contact-grid {
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+  }
+
+  .contact-card {
+    padding: 16px;
+    font-size: 0.95rem;
+  }
+
+  /* Steps list adjustments */
+  .steps li {
+    margin: 12px 0;
+    padding: 14px 16px;
+    border-radius: 10px;
+    font-size: 0.95rem;
+  }
+
+  .steps li strong {
+    display: block;
+    margin-bottom: 5px;
+  }
+
+  /* Closing section */
+  .closing {
+    margin-top: 30px;
+    font-size: 1.1rem;
+  }
+
+  /* About title */
+  .about-title {
+    font-size: 1.8rem !important;
+  }
+}
+
+/* Small mobile devices */
+@media screen and (max-width: 480px) {
+  .fancy-page {
+    padding: 30px 10px;
+    min-height: calc(100vh - 80px);
+  }
+
+  .glass-card {
+    padding: 24px 16px;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+  }
+
+  .glass-card h1,
+  .glass-card h2 {
+    font-size: 1.6rem;
+    margin-bottom: 12px;
+    line-height: 1.3;
+  }
+
+  .glass-card p {
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  /* Section adjustments */
+  .section {
+    margin: 20px 0;
+  }
+
+  .section-title {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+  }
+
+  /* Feature cards - stack with better spacing */
+  .feature-card {
+    padding: 12px;
+    font-size: 0.85rem;
+    border-radius: 10px;
+  }
+
+  /* Contact cards */
+  .contact-card {
+    padding: 14px;
+    font-size: 0.85rem;
+    border-radius: 10px;
+  }
+
+  .contact-card strong {
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  /* Steps list - better mobile layout */
+  .steps {
+    padding: 0;
+    margin: 0;
+  }
+
+  .steps li {
+    margin: 10px 0;
+    padding: 12px 14px;
+    border-left-width: 3px;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+
+  .steps li strong {
+    font-size: 0.9rem;
+    color: #ec4899;
+    margin-bottom: 6px;
+  }
+
+  /* Highlight spans */
+  .highlight {
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+
+  /* Closing section */
+  .closing {
+    margin-top: 25px;
+    font-size: 1rem;
+    padding: 0 5px;
+  }
+
+  /* About title */
+  .about-title {
+    font-size: 1.6rem !important;
+    margin-bottom: 15px;
+  }
+}
+
+/* Extra small screens */
+@media screen and (max-width: 360px) {
+  .fancy-page {
+    padding: 20px 8px;
+  }
+
+  .glass-card {
+    padding: 20px 14px;
+    border-radius: 10px;
+  }
+
+  .glass-card h1,
+  .glass-card h2 {
+    font-size: 1.4rem;
+    margin-bottom: 10px;
+  }
+
+  .glass-card p {
+    font-size: 0.85rem;
+  }
+
+  .section-title {
+    font-size: 1.1rem;
+  }
+
+  .feature-card,
+  .contact-card {
+    padding: 10px;
+    font-size: 0.8rem;
+  }
+
+  .steps li {
+    padding: 10px 12px;
+    font-size: 0.8rem;
+  }
+
+  .steps li strong {
+    font-size: 0.85rem;
+  }
+
+  .closing {
+    font-size: 0.95rem;
+  }
+
+  .about-title {
+    font-size: 1.4rem !important;
+  }
+}
+
+/* Landscape mobile orientation */
+@media screen and (max-width: 768px) and (orientation: landscape) {
+  .fancy-page {
+    padding: 20px 15px;
+  }
+
+  .glass-card {
+    max-width: 90%;
+    padding: 25px;
+  }
+
+  .features-grid,
+  .contact-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  .steps li {
+    margin: 8px 0;
+    padding: 10px 14px;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .feature-card,
+  .contact-card {
+    min-height: 80px;
+  }
+
+  /* Remove hover effects on touch devices */
+  .feature-card:hover,
+  .contact-card:hover {
+    transform: translateY(0);
+    background: rgba(26, 31, 39, 0.5);
+  }
+
+  .steps li:hover {
+    transform: translateX(0);
+    background: rgba(26, 31, 39, 0.5);
+  }
+
+  /* Add active states for better touch feedback */
+  .feature-card:active {
+    transform: scale(0.98);
+    background: rgba(26, 31, 39, 0.8);
+  }
+
+  .contact-card:active {
+    transform: scale(0.98);
+    background: rgba(26, 31, 39, 0.8);
+  }
+
+  .steps li:active {
+    transform: scale(0.98);
+    background: rgba(26, 31, 39, 0.8);
+  }
+}
+
+/* Improve readability on mobile */
+@media screen and (max-width: 768px) {
+  /* Better text contrast and spacing */
+  .glass-card p {
+    margin-bottom: 15px;
+  }
+
+  .steps li {
+    margin-bottom: 15px;
+  }
+
+  .section + .section {
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 20px;
+  }
+
+  /* Better link styling on mobile */
+  .contact-card a {
+    font-size: 0.9rem;
+    word-break: break-word;
+  }
+}
+
+/* Handle very short screens */
+@media screen and (max-height: 600px) and (max-width: 768px) {
+  .fancy-page {
+    padding: 15px 10px;
+  }
+
+  .glass-card {
+    padding: 20px 15px;
+  }
+
+  .section {
+    margin: 15px 0;
+  }
+
+  .steps li {
+    margin: 8px 0;
+    padding: 10px 12px;
+  }
+
+  .closing {
+    margin-top: 20px;
+  }
+}
+
+/* Ensure proper spacing between emoji and text on mobile */
+@media screen and (max-width: 768px) {
+  .steps li strong::after {
+    content: " ";
+    display: inline-block;
+    width: 4px;
+  }
+
+  .section-title {
+    word-spacing: 2px;
+  }
+}

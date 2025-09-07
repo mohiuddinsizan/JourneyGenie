@@ -303,3 +303,450 @@
 .login-container {
   animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+
+/* Mobile Enhancements for Login Page - Add this to your existing Login.css */
+
+/* Tablet and medium screens */
+@media (max-width: 768px) {
+  .login-container {
+    width: min(420px, 88%);
+    padding: 0 16px;
+  }
+
+  .login-form-box {
+    padding: 28px;
+  }
+
+  .login-title {
+    font-size: 26px;
+    margin-bottom: 20px;
+  }
+
+  .input-field {
+    padding: 13px 18px;
+    font-size: 15px;
+  }
+
+  .login-button,
+  .register-nav-button {
+    padding: 13px 18px;
+    font-size: 15px;
+  }
+
+  .google-button {
+    padding: 13px 18px;
+  }
+
+  .google-text {
+    font-size: 15px;
+  }
+}
+
+/* Mobile phones - Portrait */
+@media (max-width: 640px) {
+  .login-page {
+    background-size: cover;
+    background-attachment: scroll; /* Better performance on mobile */
+  }
+
+  .background {
+    background-attachment: scroll;
+  }
+
+  .login-container {
+    width: min(380px, 90%);
+    top: 50%;
+    padding: 0 12px;
+  }
+
+  .login-form-box {
+    padding: 24px 20px;
+    border-radius: 16px;
+    backdrop-filter: blur(20px) saturate(130%);
+    -webkit-backdrop-filter: blur(20px) saturate(130%);
+    background: rgba(16, 18, 22, 0.75); /* Slightly more opaque for readability */
+  }
+
+  .login-title {
+    font-size: 24px;
+    margin-bottom: 18px;
+    letter-spacing: -0.3px;
+  }
+
+  .input-group {
+    margin-bottom: 18px;
+  }
+
+  .input-field {
+    padding: 12px 16px;
+    font-size: 14px;
+    border-radius: 10px;
+  }
+
+  .input-field:focus {
+    transform: translateY(-1px); /* Less movement on mobile */
+  }
+
+  .login-button {
+    padding: 12px 16px;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 10px;
+    margin-bottom: 14px;
+    min-height: 48px; /* Better touch target */
+  }
+
+  .login-button:hover {
+    transform: translateY(-2px); /* Less movement on mobile */
+  }
+
+  .register-nav-button {
+    padding: 12px 16px;
+    font-size: 14px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    min-height: 48px;
+  }
+
+  .register-nav-button:hover {
+    transform: translateY(-1px);
+  }
+
+  .google-button {
+    padding: 12px 16px;
+    border-radius: 10px;
+    min-height: 48px;
+  }
+
+  .google-text {
+    font-size: 14px;
+  }
+
+  .google-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  /* Stars adjustment for mobile */
+  .star {
+    width: 1.5px;
+    height: 1.5px;
+  }
+}
+
+/* Small mobile phones */
+@media (max-width: 480px) {
+  .login-container {
+    width: min(340px, 92%);
+    padding: 0 8px;
+  }
+
+  .login-form-box {
+    padding: 20px 16px;
+    border-radius: 14px;
+  }
+
+  .login-title {
+    font-size: 22px;
+    margin-bottom: 16px;
+  }
+
+  .input-group {
+    margin-bottom: 16px;
+  }
+
+  .input-field {
+    padding: 11px 14px;
+    font-size: 14px;
+    border-radius: 8px;
+  }
+
+  .login-button,
+  .register-nav-button {
+    padding: 11px 14px;
+    font-size: 14px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+  }
+
+  .google-button {
+    padding: 11px 14px;
+    border-radius: 8px;
+  }
+
+  .google-text {
+    font-size: 13px;
+  }
+
+  .google-icon {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 360px) {
+  .login-container {
+    width: min(320px, 94%);
+  }
+
+  .login-form-box {
+    padding: 18px 14px;
+  }
+
+  .login-title {
+    font-size: 20px;
+    margin-bottom: 14px;
+  }
+
+  .input-field {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .login-button,
+  .register-nav-button,
+  .google-button {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+}
+
+/* Landscape orientation for mobile */
+@media (max-height: 600px) and (orientation: landscape) {
+  .login-container {
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .login-form-box {
+    padding: 20px;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+
+  .login-title {
+    font-size: 22px;
+    margin-bottom: 14px;
+  }
+
+  .input-group {
+    margin-bottom: 14px;
+  }
+
+  .input-field,
+  .login-button,
+  .register-nav-button,
+  .google-button {
+    padding: 10px 16px;
+  }
+
+  /* Reduce star count for performance */
+  .stars {
+    opacity: 0.7;
+  }
+}
+
+/* Very short screens (landscape phones) */
+@media (max-height: 500px) and (orientation: landscape) {
+  .login-form-box {
+    padding: 16px;
+    max-height: 90vh;
+  }
+
+  .login-title {
+    font-size: 20px;
+    margin-bottom: 12px;
+  }
+
+  .input-group {
+    margin-bottom: 12px;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .login-form-box:hover {
+    transform: none; /* Remove hover lift effect on touch devices */
+    box-shadow: 
+      0 25px 50px rgba(0, 0, 0, 0.4),
+      0 0 0 1px rgba(236, 72, 153, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .input-field:hover {
+    border-color: rgba(255, 255, 255, 0.1); /* Remove hover border effect */
+  }
+
+  .login-button:hover,
+  .register-nav-button:hover,
+  .google-button:hover {
+    transform: none; /* Remove hover lift effects */
+  }
+
+  /* Add active states instead */
+  .input-field:focus {
+    transform: none; /* Remove focus lift on touch */
+  }
+
+  .login-button:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+
+  .register-nav-button:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+
+  .google-button:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+
+  /* Ensure proper touch targets */
+  .login-button,
+  .register-nav-button,
+  .google-button {
+    min-height: 44px;
+  }
+}
+
+/* Modal overlays mobile optimization */
+@media (max-width: 480px) {
+  /* Welcome overlay */
+  .login-page [style*="position: fixed"][style*="inset: 0"] > div {
+    width: min(340px, 90%) !important;
+    padding: 20px !important;
+    margin: 0 16px;
+  }
+
+  .login-page [style*="position: fixed"][style*="inset: 0"] h3 {
+    font-size: 20px !important;
+  }
+
+  .login-page [style*="position: fixed"][style*="inset: 0"] p {
+    font-size: 14px !important;
+  }
+
+  /* Error overlay button */
+  .login-page [style*="position: fixed"][style*="inset: 0"] button {
+    width: 160px !important;
+    padding: 10px 16px !important;
+    font-size: 14px !important;
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .background,
+  .login-page {
+    background-size: cover;
+  }
+
+  .google-icon {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .star {
+    animation: none;
+    opacity: 0.5;
+  }
+
+  .login-form-box,
+  .login-container {
+    animation: none;
+  }
+
+  .login-button,
+  .register-nav-button,
+  .google-button,
+  .input-field {
+    transition: none;
+  }
+
+  .google-button::before {
+    transition: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .login-form-box {
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid #ffffff;
+  }
+
+  .input-field {
+    background: rgba(0, 0, 0, 0.9);
+    border: 1px solid #ffffff;
+    color: #ffffff;
+  }
+
+  .input-field:focus {
+    border: 2px solid #ec4899;
+  }
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-appearance: none) {
+  .input-field {
+    -webkit-appearance: none;
+    border-radius: 10px;
+  }
+
+  .login-button,
+  .register-nav-button,
+  .google-button {
+    -webkit-appearance: none;
+    border-radius: 10px;
+  }
+}
+
+/* Prevent zoom on input focus for iOS */
+@media screen and (max-width: 768px) {
+  .input-field {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+}
+
+/* Safe area handling for devices with notches */
+@supports (padding: max(0px)) {
+  .login-container {
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+  }
+}
+
+/* Performance optimizations for mobile */
+@media (max-width: 768px) {
+  .login-form-box {
+    will-change: transform;
+  }
+
+  .star {
+    will-change: opacity, transform;
+  }
+
+  /* Reduce blur on mobile for better performance */
+  .login-form-box {
+    backdrop-filter: blur(12px) saturate(110%);
+    -webkit-backdrop-filter: blur(12px) saturate(110%);
+  }
+
+  .input-field {
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+
+  .register-nav-button,
+  .google-button {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+}

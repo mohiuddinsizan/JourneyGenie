@@ -481,3 +481,465 @@ h2 {
     margin-top: 20px;
   }
 }
+
+
+
+
+
+/* Mobile Responsive Styles for LandingPage - ADD to existing CSS */
+
+/* Tablet and mobile adjustments */
+@media screen and (max-width: 1200px) {
+  .box {
+    width: 95%;
+    max-width: 1000px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .container {
+    padding: 1rem 0;
+    gap: 1.5rem;
+  }
+
+  .box {
+    width: 95%;
+    height: auto;
+    min-height: 400px;
+    padding: 1.5rem 1rem;
+    border-radius: 16px;
+    margin: 10px;
+  }
+
+  /* Hero section adjustments */
+  h1 {
+    font-size: 2rem;
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  h2 {
+    font-size: 1.1rem;
+    text-align: center;
+    margin: 20px 0;
+    line-height: 1.4;
+  }
+
+  /* Logo and title container */
+  .box > div:first-child {
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 50px !important;
+  }
+
+  .box > div:first-child img {
+    height: 60px !important;
+  }
+
+  /* Hero buttons - stack in 2x2 grid */
+  .hero-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin: 30px 0;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .fancy-btn {
+    margin: 0;
+    padding: 12px 20px;
+    font-size: 1rem;
+    min-width: unset;
+    width: 100%;
+  }
+
+  /* Ideas section mobile */
+  .ideas-header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .ideas-header h1 {
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+  }
+
+  .ideas-header h3 {
+    font-size: 1rem;
+    margin: 0;
+    color: #cbd5e1;
+  }
+
+  .ideas-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    max-width: 100%;
+  }
+
+  .idea-card {
+    padding: 16px;
+  }
+
+  .thumb {
+    height: 200px;
+  }
+
+  .idea-card h3 {
+    font-size: 1.1rem;
+  }
+
+  .idea-card p {
+    font-size: 0.9rem;
+  }
+
+  .ideas-footer {
+    text-align: center;
+    justify-content: center;
+  }
+
+  /* Feature box mobile */
+  .feature-box {
+    flex-direction: column;
+    padding: 20px;
+    text-align: center;
+    gap: 30px;
+  }
+
+  .feature-left h2 {
+    font-size: 1.6rem;
+    text-align: center;
+  }
+
+  .feature-list {
+    text-align: left;
+    max-width: 400px;
+    margin: 0 auto 20px;
+  }
+
+  .feature-list li {
+    font-size: 1rem;
+  }
+
+  .feature-cta {
+    justify-content: center;
+  }
+
+  .feature-right img {
+    max-width: 90%;
+    border-radius: 12px;
+  }
+
+  /* Discover box mobile */
+  .discover-box {
+    flex-direction: column;
+    padding: 20px;
+    text-align: center;
+    gap: 30px;
+  }
+
+  .discover-right h2 {
+    font-size: 1.6rem;
+    text-align: center;
+  }
+
+  .discover-right p {
+    font-size: 1rem;
+    max-width: 500px;
+    margin: 0 auto 20px;
+  }
+
+  .discover-left img {
+    max-width: 90%;
+    border-radius: 12px;
+  }
+
+  /* Alert modal mobile */
+  .alert-overlay {
+    padding: 20px;
+  }
+
+  .alert-box {
+    padding: 20px 30px;
+    font-size: 1.1rem;
+    border-radius: 12px;
+    max-width: 300px;
+  }
+}
+
+/* Small mobile devices */
+@media screen and (max-width: 480px) {
+  .container {
+    padding: 0.5rem 0;
+  }
+
+  .box {
+    width: 95%;
+    padding: 1rem 0.8rem;
+    margin: 5px;
+    border-radius: 12px;
+  }
+
+  /* Hero section small mobile */
+  h1 {
+    font-size: 1.6rem;
+  }
+
+  h2 {
+    font-size: 1rem;
+    margin: 15px 0;
+  }
+
+  .box > div:first-child {
+    margin-top: 30px !important;
+  }
+
+  .box > div:first-child img {
+    height: 50px !important;
+  }
+
+  /* Hero buttons - single column */
+  .hero-buttons {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    max-width: 280px;
+  }
+
+  .fancy-btn {
+    padding: 10px 16px;
+    font-size: 0.95rem;
+  }
+
+  /* Ideas section small mobile */
+  .ideas-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .ideas-header h3 {
+    font-size: 0.9rem;
+    margin-left: 0 !important;
+    padding: 0 10px;
+  }
+
+  .idea-card {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .thumb {
+    height: 180px;
+    border-radius: 10px;
+  }
+
+  .idea-card h3 {
+    font-size: 1rem;
+    margin: 12px 0 6px;
+  }
+
+  .idea-card p {
+    font-size: 0.85rem;
+    line-height: 1.4;
+  }
+
+  .cta-primary {
+    padding: 12px 20px;
+    font-size: 0.95rem;
+  }
+
+  /* Feature section small mobile */
+  .feature-left h2 {
+    font-size: 1.4rem;
+    line-height: 1.3;
+  }
+
+  .feature-list {
+    max-width: 100%;
+    padding: 0 10px;
+  }
+
+  .feature-list li {
+    font-size: 0.9rem;
+    margin: 8px 0;
+  }
+
+  /* Discover section small mobile */
+  .discover-right h2 {
+    font-size: 1.4rem;
+    line-height: 1.3;
+  }
+
+  .discover-right p {
+    font-size: 0.9rem;
+    max-width: 100%;
+    padding: 0 10px;
+  }
+
+  /* Alert modal small mobile */
+  .alert-box {
+    padding: 16px 24px;
+    font-size: 1rem;
+    max-width: 250px;
+  }
+}
+
+/* Extra small screens */
+@media screen and (max-width: 360px) {
+  .box {
+    width: 98%;
+    padding: 0.8rem 0.6rem;
+  }
+
+  h1 {
+    font-size: 1.4rem;
+  }
+
+  .hero-buttons {
+    max-width: 250px;
+  }
+
+  .fancy-btn {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+  }
+
+  .ideas-header h1 {
+    font-size: 1.3rem;
+  }
+
+  .feature-left h2,
+  .discover-right h2 {
+    font-size: 1.2rem;
+  }
+}
+
+/* Landscape mobile orientation */
+@media screen and (max-width: 768px) and (orientation: landscape) {
+  .box {
+    height: auto;
+    min-height: 300px;
+  }
+
+  .box > div:first-child {
+    margin-top: 20px !important;
+  }
+
+  .hero-buttons {
+    grid-template-columns: 1fr 1fr;
+    max-width: 500px;
+  }
+
+  .ideas-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+  }
+
+  .feature-box,
+  .discover-box {
+    flex-direction: row;
+    text-align: left;
+  }
+
+  .feature-left,
+  .discover-right {
+    flex: 1;
+  }
+
+  .feature-right,
+  .discover-left {
+    flex: 0.8;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .fancy-btn {
+    min-height: 44px;
+  }
+
+  .cta-primary {
+    min-height: 44px;
+  }
+
+  .idea-card {
+    min-height: 200px;
+  }
+
+  /* Remove hover effects on touch devices */
+  .fancy-btn:hover {
+    transform: translateY(0) scale(1);
+    background: rgba(16, 18, 22, 0.65);
+    color: #e9edf1;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  }
+
+  .idea-card:hover {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .35);
+    border-color: #2a2a2a;
+  }
+
+  .idea-card:hover .thumb img {
+    transform: scale(1);
+  }
+
+  .cta-primary:hover {
+    transform: translateY(0);
+    background: #ffd400;
+    box-shadow: 0 10px 24px rgba(0,0,0,.35);
+  }
+
+  /* Add active states for better touch feedback */
+  .fancy-btn:active {
+    transform: scale(0.95);
+    background: linear-gradient(135deg, #ec4899, #db2777, #be185d);
+    color: #fff;
+  }
+
+  .cta-primary:active {
+    transform: scale(0.95);
+    background: #ffdf4d;
+  }
+
+  .idea-card:active {
+    transform: scale(0.98);
+    background: #1f1f1f;
+  }
+}
+
+/* Improve scrolling performance on mobile */
+@media screen and (max-width: 768px) {
+  .container {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Better spacing for mobile sections */
+  .box + .box {
+    margin-top: 60px !important;
+  }
+}
+
+/* Handle very short screens */
+@media screen and (max-height: 600px) and (max-width: 768px) {
+  .box {
+    min-height: 300px;
+    padding: 1rem;
+  }
+
+  .box > div:first-child {
+    margin-top: 20px !important;
+  }
+
+  .hero-buttons {
+    margin: 20px auto;
+  }
+
+  .ideas-header h1 {
+    font-size: 1.4rem;
+  }
+
+  .feature-left h2,
+  .discover-right h2 {
+    font-size: 1.3rem;
+  }
+}

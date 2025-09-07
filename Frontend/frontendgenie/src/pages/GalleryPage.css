@@ -948,3 +948,428 @@
     gap: 20px;
   }
 }
+
+/* Additional Mobile Enhancements - Add this to your existing CSS */
+
+/* Enhanced mobile responsiveness for better user experience */
+@media (max-width: 640px) {
+  .gallery-container {
+    padding: 80px 12px 20px;
+  }
+
+  .gallery-header h1 {
+    font-size: 2.2rem;
+    line-height: 1.2;
+    margin-bottom: 12px;
+  }
+
+  .gallery-header p {
+    font-size: 1.1rem;
+    margin-bottom: 40px;
+  }
+
+  .header-glow {
+    width: 250px;
+    height: 120px;
+  }
+
+  /* Improved section cards for mobile */
+  .section-card {
+    padding: 28px 20px;
+    gap: 20px;
+    min-height: auto;
+    margin-bottom: 16px;
+  }
+
+  .section-icon-wrapper {
+    padding: 16px;
+    border-radius: 16px;
+    align-self: center;
+  }
+
+  .section-main-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .section-content {
+    text-align: center;
+  }
+
+  .section-content h3 {
+    font-size: 1.6rem;
+    margin-bottom: 8px;
+  }
+
+  .section-count {
+    font-size: 1rem;
+    margin-bottom: 8px;
+  }
+
+  .section-description {
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .section-arrow {
+    width: 48px;
+    height: 48px;
+    align-self: center;
+  }
+
+  .arrow-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Mobile section view improvements */
+  .section-view-header {
+    margin-bottom: 24px;
+  }
+
+  .back-button {
+    padding: 14px 18px;
+    font-size: 0.95rem;
+    margin-bottom: 20px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .section-title-with-search {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 20px;
+  }
+
+  .section-title {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .section-title h2 {
+    font-size: 1.6rem;
+  }
+
+  .section-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* Mobile search container */
+  .search-container {
+    flex-direction: column;
+    gap: 12px;
+    max-width: 100%;
+  }
+
+  .search-input {
+    padding: 16px 20px 16px 50px;
+    font-size: 1rem;
+    border-radius: 14px;
+  }
+
+  .search-button {
+    padding: 16px;
+    border-radius: 14px;
+    align-self: center;
+    min-width: 56px;
+  }
+
+  .search-icon {
+    left: 18px;
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Mobile photos grid */
+  .photos-grid-2 {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+  }
+
+  .photo-card {
+    border-radius: 16px;
+    aspect-ratio: 1;
+  }
+
+  .photo-overlay {
+    padding: 16px 12px 12px;
+  }
+
+  .photo-info h4 {
+    font-size: 1rem;
+    margin-bottom: 6px;
+  }
+
+  .photo-location,
+  .photo-date {
+    font-size: 0.8rem;
+  }
+
+  .photo-description {
+    font-size: 0.75rem;
+    margin-top: 6px;
+  }
+
+  /* Mobile videos grid */
+  .videos-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .video-card {
+    border-radius: 20px;
+  }
+
+  .play-button {
+    width: 56px;
+    height: 56px;
+  }
+
+  .video-info {
+    padding: 20px 16px;
+  }
+
+  .video-info h4 {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+  }
+
+  .video-route,
+  .video-duration {
+    font-size: 0.9rem;
+  }
+
+  .budget-badge {
+    font-size: 0.75rem;
+    padding: 4px 12px;
+    margin-top: 6px;
+  }
+
+  /* Mobile modal improvements */
+  .modal-overlay {
+    padding: 10px;
+  }
+
+  .modal-content {
+    border-radius: 20px;
+    max-width: calc(100vw - 20px);
+    max-height: calc(100vh - 20px);
+  }
+
+  .modal-close {
+    top: 12px;
+    right: 12px;
+    width: 36px;
+    height: 36px;
+    font-size: 20px;
+  }
+
+  .modal-image {
+    max-height: 60vh;
+  }
+
+  .modal-video {
+    max-height: 60vh;
+  }
+
+  .modal-info {
+    padding: 20px 16px;
+  }
+
+  .modal-info h3 {
+    font-size: 1.3rem;
+    margin-bottom: 12px;
+  }
+
+  .modal-info p {
+    font-size: 0.9rem;
+    margin: 6px 0;
+  }
+
+  .modal-description p {
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+
+  /* Mobile loading states */
+  .gallery-page-loading-spinner {
+    min-height: 50vh;
+    padding: 40px 20px;
+    border-radius: 16px;
+    margin: 20px 0;
+  }
+
+  .gallery-page-spinner {
+    width: 56px;
+    height: 56px;
+    margin-bottom: 20px;
+  }
+
+  .gallery-page-loading-spinner p {
+    font-size: 1.1rem;
+  }
+
+  .gallery-page-search-loading-grid {
+    padding: 60px 16px;
+    border-radius: 14px;
+  }
+
+  .gallery-page-search-loading-grid p {
+    font-size: 1rem;
+  }
+
+  /* Mobile no-content states */
+  .no-content {
+    padding: 60px 16px;
+    border-radius: 16px;
+  }
+
+  .no-content p {
+    font-size: 1rem;
+    max-width: 100%;
+    margin-bottom: 12px;
+  }
+
+  .clear-search-btn {
+    padding: 12px 18px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+  }
+
+  .no-user-message p {
+    font-size: 1.1rem;
+    padding: 28px 32px;
+    border-radius: 16px;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 360px) {
+  .gallery-container {
+    padding: 70px 8px 16px;
+  }
+
+  .gallery-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .gallery-header p {
+    font-size: 1rem;
+  }
+
+  .section-card {
+    padding: 24px 16px;
+    gap: 16px;
+  }
+
+  .section-content h3 {
+    font-size: 1.4rem;
+  }
+
+  .photos-grid-2 {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .search-input {
+    padding: 14px 16px 14px 44px;
+    font-size: 0.95rem;
+  }
+
+  .search-icon {
+    left: 16px;
+  }
+
+  .modal-info {
+    padding: 16px 12px;
+  }
+
+  .modal-info h3 {
+    font-size: 1.2rem;
+  }
+}
+
+/* Landscape mobile orientation */
+@media (max-height: 500px) and (orientation: landscape) {
+  .gallery-container {
+    padding: 60px 15px 20px;
+  }
+
+  .gallery-header {
+    margin-bottom: 40px;
+  }
+
+  .gallery-header h1 {
+    font-size: 2rem;
+    margin-bottom: 8px;
+  }
+
+  .gallery-header p {
+    font-size: 1rem;
+    margin-bottom: 20px;
+  }
+
+  .section-card {
+    flex-direction: row;
+    text-align: left;
+    padding: 20px 24px;
+    gap: 24px;
+  }
+
+  .section-content {
+    text-align: left;
+  }
+
+  .section-arrow {
+    align-self: center;
+  }
+
+  .modal-image,
+  .modal-video {
+    max-height: 50vh;
+  }
+
+  .modal-info {
+    padding: 16px 20px;
+  }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+  .section-card,
+  .photo-card,
+  .video-card {
+    cursor: default;
+  }
+
+  .section-card:hover,
+  .photo-card:hover,
+  .video-card:hover {
+    transform: none;
+  }
+
+  .section-card:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+
+  .photo-card:active,
+  .video-card:active {
+    transform: scale(0.95);
+    transition: transform 0.1s ease;
+  }
+
+  .back-button:active,
+  .search-button:active,
+  .clear-search-btn:active {
+    transform: scale(0.96);
+    transition: transform 0.1s ease;
+  }
+
+  /* Always show photo overlay on mobile for better UX */
+  .photo-overlay {
+    transform: translateY(0);
+    background: linear-gradient(transparent 20%, rgba(0, 0, 0, 0.85));
+  }
+}
