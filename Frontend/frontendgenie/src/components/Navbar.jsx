@@ -126,7 +126,7 @@ const Navbar = () => {
           <NavLink to="/plan" className="nav-btn">Plan</NavLink>
           <NavLink to="/profile" className="nav-btn">Profile</NavLink>
           <NavLink to="/gallery" className="nav-btn">Gallery</NavLink>
-          <NavLink to="/searchplace" className="nav-btn">Search Places</NavLink>  
+          <NavLink to="/searchplace" className="nav-btn">Detect Places</NavLink>  
           <NavLink to="/tokenbuy" className="nav-btn">Buy Tokens</NavLink>
           <NavLink to="/howitworks" className="nav-btn">How It Works</NavLink>
           <NavLink to="/support" className="nav-btn">Support</NavLink>
