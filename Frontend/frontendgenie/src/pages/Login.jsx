@@ -326,7 +326,7 @@
 // export default Login;
 
 
-// Login.jsx - Mobile Fixed Version
+// Login.jsx - Aggressive Mobile Fix
 import React, { useState, useEffect } from 'react';
 import './Login.css';
 import './Background.css';
@@ -335,22 +335,48 @@ import { useNavigate } from "react-router-dom";
 const apiUrl = import.meta.env.REACT_APP_API_URL;
 const loginWithGoogle = apiUrl + "/oauth2/authorization/google";
 
-// Enhanced helper functions for mobile compatibility
+// Mobile detection
+const isMobile = () => /Mobi|Android|iPhone|iPad|iPod|BlackBerry|Opera Mini/i.test(navigator.userAgent);
+
+// Ultra-aggressive user saving for mobile
 const saveUser = (payload) => {
   try {
     const user = payload?.user ?? payload;
-    if (!user) return;
+    if (!user || !user.id) {
+      console.error('Invalid user data:', user);
+      return false;
+    }
+    
     const { password, ...safe } = user;
+    const userString = JSON.stringify(safe);
     
-    // Multiple storage approaches for mobile compatibility
-    localStorage.setItem("user", JSON.stringify(safe));
-    sessionStorage.setItem("user", JSON.stringify(safe));
+    console.log('Saving user data:', safe.email || safe.name);
     
-    // Set a cookie as backup for mobile Safari
+    // 1. Standard storage
+    localStorage.setItem("user", userString);
+    sessionStorage.setItem("user", userString);
+    
+    // 2. Multiple cookie approaches for mobile
     const expires = new Date();
     expires.setDate(expires.getDate() + 7);
-    document.cookie = `user=${encodeURIComponent(JSON.stringify(safe))}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
     
+    // Primary cookie
+    document.cookie = `user=${encodeURIComponent(userString)}; expires=${expires.toUTCString()}; path=/; SameSite=None; Secure`;
+    
+    // Backup cookies for mobile Safari
+    document.cookie = `user_backup=${encodeURIComponent(userString)}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
+    document.cookie = `auth_user=${encodeURIComponent(userString)}; expires=${expires.toUTCString()}; path=/`;
+    
+    // 3. Window property as ultimate fallback
+    window.currentUser = safe;
+    window.userLoginTime = Date.now();
+    
+    // 4. Force a custom event with user data
+    window.dispatchEvent(new CustomEvent('user-authenticated', { 
+      detail: { user: safe, timestamp: Date.now() } 
+    }));
+    
+    console.log('User saved successfully to all storage methods');
     return true;
   } catch (error) {
     console.error('Failed to save user:', error);
@@ -358,28 +384,54 @@ const saveUser = (payload) => {
   }
 };
 
+// Enhanced user retrieval
 const getUser = () => {
   try {
-    // Try localStorage first
+    // 1. Try window property first (fastest)
+    if (window.currentUser && window.currentUser.id) {
+      console.log('User found in window property');
+      return window.currentUser;
+    }
+    
+    // 2. Try localStorage
     let userData = localStorage.getItem("user");
     if (userData) {
-      return JSON.parse(userData);
+      const parsed = JSON.parse(userData);
+      if (parsed && parsed.id) {
+        console.log('User found in localStorage');
+        return parsed;
+      }
     }
     
-    // Try sessionStorage
+    // 3. Try sessionStorage
     userData = sessionStorage.getItem("user");
     if (userData) {
-      return JSON.parse(userData);
+      const parsed = JSON.parse(userData);
+      if (parsed && parsed.id) {
+        console.log('User found in sessionStorage');
+        return parsed;
+      }
     }
     
-    // Try cookie as last resort
+    // 4. Try all cookies
     const cookies = document.cookie.split(';');
-    const userCookie = cookies.find(cookie => cookie.trim().startsWith('user='));
-    if (userCookie) {
-      const cookieValue = userCookie.split('=')[1];
-      return JSON.parse(decodeURIComponent(cookieValue));
+    for (const cookieName of ['user', 'user_backup', 'auth_user']) {
+      const cookie = cookies.find(c => c.trim().startsWith(`${cookieName}=`));
+      if (cookie) {
+        try {
+          const cookieValue = cookie.split('=')[1];
+          const parsed = JSON.parse(decodeURIComponent(cookieValue));
+          if (parsed && parsed.id) {
+            console.log(`User found in ${cookieName} cookie`);
+            return parsed;
+          }
+        } catch (e) {
+          console.warn(`Failed to parse ${cookieName} cookie:`, e);
+        }
+      }
     }
     
+    console.log('No user data found in any storage method');
     return null;
   } catch (error) {
     console.error('Failed to get user:', error);
@@ -387,20 +439,36 @@ const getUser = () => {
   }
 };
 
+// Super aggressive auth broadcasting
 const broadcastAuthChange = () => {
-  // Multiple event dispatching for better compatibility
-  window.dispatchEvent(new Event("auth-changed"));
-  window.dispatchEvent(new CustomEvent("user-login", { detail: { timestamp: Date.now() } }));
+  const events = [
+    'auth-changed',
+    'user-login', 
+    'user-authenticated',
+    'login-success',
+    'auth-update'
+  ];
   
-  // Force storage event for components listening to storage changes
+  events.forEach(eventName => {
+    window.dispatchEvent(new Event(eventName));
+    window.dispatchEvent(new CustomEvent(eventName, { 
+      detail: { user: getUser(), timestamp: Date.now() } 
+    }));
+  });
+  
+  // Force storage events
   const userData = getUser();
   if (userData) {
-    window.dispatchEvent(new StorageEvent('storage', {
-      key: 'user',
-      newValue: JSON.stringify(userData),
-      url: window.location.href
-    }));
+    ['storage', 'user-storage-change'].forEach(eventName => {
+      window.dispatchEvent(new StorageEvent(eventName, {
+        key: 'user',
+        newValue: JSON.stringify(userData),
+        url: window.location.href
+      }));
+    });
   }
+  
+  console.log('Auth change broadcasted with all events');
 };
 
 const styles = {
@@ -431,13 +499,7 @@ const styles = {
     color: '#e9edf1',
     fontWeight: '600',
     fontSize: '15px',
-  },
-  spinner: `
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-  `
+  }
 };
 
 const Login = () => {
@@ -454,142 +516,152 @@ const Login = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Enhanced fetch function for mobile compatibility
-  const fetchWithRetry = async (url, options, maxRetries = 3) => {
-    for (let i = 0; i < maxRetries; i++) {
-      try {
-        const response = await fetch(url, {
-          ...options,
-          headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0',
-            // Mobile Safari specific headers
-            'X-Requested-With': 'XMLHttpRequest',
-            ...options.headers
-          },
-          credentials: 'include',
-          mode: 'cors', // Explicitly set CORS mode
-        });
+  // Mobile-optimized fetch
+  const mobileSecureFetch = async (url, options = {}) => {
+    const fetchOptions = {
+      method: 'GET',
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+        // Mobile-specific headers
+        'X-Requested-With': 'XMLHttpRequest',
+        'Access-Control-Allow-Credentials': 'true',
+        ...(options.headers || {})
+      },
+      credentials: 'include',
+      mode: 'cors',
+    };
 
-        if (response.ok) {
-          return response;
-        }
-        
-        // If not successful, throw to trigger retry
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      } catch (error) {
-        console.warn(`Attempt ${i + 1} failed:`, error);
-        
-        if (i === maxRetries - 1) {
-          throw error;
-        }
-        
-        // Wait before retry (exponential backoff)
-        await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+    console.log(`Fetching ${url} with options:`, fetchOptions);
+    
+    try {
+      const response = await fetch(url, fetchOptions);
+      console.log(`Response status: ${response.status} ${response.statusText}`);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Fetch error: ${response.status} - ${errorText}`);
+        throw new Error(`HTTP ${response.status}: ${errorText || response.statusText}`);
       }
+      
+      return response;
+    } catch (error) {
+      console.error(`Fetch failed for ${url}:`, error);
+      throw error;
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    
+    console.log('Starting login process for:', formData.email);
 
     try {
-      // First, attempt login
-      const loginRes = await fetchWithRetry(`${apiUrl}/user/login`, {
+      // Step 1: Login request
+      const loginRes = await mobileSecureFetch(`${apiUrl}/user/login`, {
         method: 'POST',
         body: JSON.stringify(formData)
       });
 
       const loginData = await loginRes.json();
-      
-      if (loginData) {
-        // Save user data immediately
-        const saveSuccess = saveUser(loginData);
-        if (!saveSuccess) {
-          throw new Error('Failed to save user data');
-        }
+      console.log('Login response:', loginData);
 
-        // Verify the session immediately with /user/me
+      if (!loginData || !loginData.id) {
+        throw new Error('Invalid login response - no user ID');
+      }
+
+      // Step 2: Save user immediately
+      const saveSuccess = saveUser(loginData);
+      if (!saveSuccess) {
+        throw new Error('Failed to save user data to storage');
+      }
+
+      // Step 3: Verify session with multiple attempts
+      let sessionValid = false;
+      let userData = null;
+      
+      for (let attempt = 1; attempt <= 5; attempt++) {
+        console.log(`Session verification attempt ${attempt}/5`);
+        
         try {
-          const meRes = await fetchWithRetry(`${apiUrl}/user/me`, {
-            method: 'GET',
-          });
+          const meRes = await mobileSecureFetch(`${apiUrl}/user/me`);
+          userData = await meRes.json();
           
-          const meData = await meRes.json();
-          if (meData && meData.id) {
-            // Re-save with fresh data
-            saveUser(meData);
+          if (userData && userData.id) {
+            console.log('Session verified successfully:', userData.email || userData.name);
+            sessionValid = true;
             
-            // Broadcast auth change multiple times for reliability
-            broadcastAuthChange();
-            
-            // Small delay then broadcast again
-            setTimeout(() => {
-              broadcastAuthChange();
-            }, 100);
-            
-            setWelcome({ open: true, name: meData.name || meData.email || 'Traveler' });
-            
-            setTimeout(() => {
-              setIsLoading(false);
-              
-              // Final broadcast before redirect
-              broadcastAuthChange();
-              
-              // For mobile, use a more aggressive redirect strategy
-              if (/Mobi|Android/i.test(navigator.userAgent)) {
-                // Mobile: use window.location.href for better compatibility
-                window.location.href = '/';
-              } else {
-                // Desktop: use navigate with fallback
-                try {
-                  navigate('/');
-                  // Force refresh after navigation on mobile
-                  setTimeout(() => {
-                    if (/Mobi|Android/i.test(navigator.userAgent)) {
-                      window.location.reload();
-                    }
-                  }, 100);
-                } catch {
-                  window.location.href = '/';
-                }
-              }
-            }, 1400);
-            
-            return;
+            // Re-save with verified data
+            saveUser(userData);
+            break;
           }
         } catch (verifyError) {
-          console.warn('Session verification failed, but login succeeded:', verifyError);
+          console.warn(`Verification attempt ${attempt} failed:`, verifyError);
         }
         
-        // If verification failed but login succeeded, still proceed
-        setWelcome({ open: true, name: loginData.name || loginData.email || 'Traveler' });
+        if (attempt < 5) {
+          const delay = attempt * 1000; // 1s, 2s, 3s, 4s
+          console.log(`Waiting ${delay}ms before retry...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+
+      // Step 4: Proceed based on verification result
+      const finalUserData = userData || loginData;
+      const userName = finalUserData.name || finalUserData.email || 'Traveler';
+      
+      if (!sessionValid) {
+        console.warn('Session verification failed, but login succeeded. Proceeding...');
+      }
+
+      // Step 5: Broadcast auth changes aggressively
+      broadcastAuthChange();
+      setTimeout(() => broadcastAuthChange(), 100);
+      setTimeout(() => broadcastAuthChange(), 500);
+
+      // Step 6: Show welcome and redirect
+      setWelcome({ open: true, name: userName });
+      
+      setTimeout(() => {
+        setIsLoading(false);
         broadcastAuthChange();
         
-        setTimeout(() => {
-          setIsLoading(false);
-          broadcastAuthChange();
-          window.location.href = '/';
-        }, 1400);
+        console.log('Redirecting to home page...');
         
-      } else {
-        throw new Error('No user data received from login');
-      }
-      
+        if (isMobile()) {
+          // Mobile: Force hard redirect
+          console.log('Mobile detected - using window.location.replace');
+          window.location.replace('/');
+        } else {
+          // Desktop: Try navigate first, fallback to location
+          try {
+            navigate('/');
+            setTimeout(() => window.location.reload(), 200);
+          } catch {
+            window.location.replace('/');
+          }
+        }
+      }, 1400);
+
     } catch (err) {
-      console.error('Login error:', err);
+      console.error('Login process failed:', err);
       setIsLoading(false);
       
       let errorMessage = 'Login failed. Please try again.';
       
-      if (err.message.includes('404')) {
-        errorMessage = 'Login service unavailable. Please try again later.';
-      } else if (err.message.includes('401') || err.message.includes('403')) {
-        errorMessage = 'Invalid email or password.';
-      } else if (err.message.includes('network') || err.message.includes('fetch')) {
+      if (err.message.includes('401') || err.message.includes('403') || 
+          err.message.includes('Unauthorized') || err.message.includes('password')) {
+        errorMessage = 'Invalid email or password. Please check your credentials.';
+      } else if (err.message.includes('404')) {
+        errorMessage = 'Login service not found. Please contact support.';
+      } else if (err.message.includes('500') || err.message.includes('502') || err.message.includes('503')) {
+        errorMessage = 'Server error. Please try again in a few minutes.';
+      } else if (err.message.includes('network') || err.message.includes('Failed to fetch')) {
         errorMessage = 'Network error. Please check your connection and try again.';
       }
       
@@ -597,68 +669,72 @@ const Login = () => {
     }
   };
 
-  // Enhanced OAuth success detection for mobile
+  // Enhanced OAuth detection
   useEffect(() => {
     const checkOAuthSuccess = async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const hashParams = new URLSearchParams(window.location.hash.replace('#', ''));
       
-      const oauthSuccess = urlParams.get('oauth') === 'success' || 
-                          urlParams.get('success') === 'true' ||
-                          hashParams.get('oauth') === 'success' ||
-                          hashParams.get('success') === 'true';
+      const isOAuthSuccess = urlParams.get('oauth') === 'success' || 
+                            urlParams.get('success') === 'true' ||
+                            hashParams.get('oauth') === 'success' ||
+                            hashParams.get('success') === 'true';
       
       const isOAuthRedirect = window.location.pathname.includes('/oauth') || 
                               window.location.search.includes('code=') ||
                               window.location.hash.includes('access_token') ||
-                              window.location.search.includes('state=');
+                              window.location.search.includes('state=') ||
+                              document.referrer.includes('google.com') ||
+                              document.referrer.includes('oauth');
       
-      if (oauthSuccess || isOAuthRedirect) {
+      console.log('OAuth check:', { isOAuthSuccess, isOAuthRedirect, search: window.location.search, hash: window.location.hash });
+      
+      if (isOAuthSuccess || isOAuthRedirect) {
+        console.log('OAuth flow detected, starting verification...');
         setIsLoading(true);
         
         try {
-          // Multiple attempts with longer delays for mobile
           let userData = null;
           let attempts = 0;
-          const maxAttempts = 5; // Increased for mobile
+          const maxAttempts = 8; // Even more attempts for OAuth
           
           while (!userData && attempts < maxAttempts) {
             attempts++;
             console.log(`OAuth verification attempt ${attempts}/${maxAttempts}`);
             
             try {
-              const res = await fetchWithRetry(`${apiUrl}/user/me`, {
-                method: 'GET',
-              });
+              const res = await mobileSecureFetch(`${apiUrl}/user/me`);
+              const data = await res.json();
               
-              userData = await res.json();
-              
-              if (userData && userData.id) {
-                console.log('OAuth user data received:', userData.email || userData.name);
+              if (data && data.id) {
+                console.log('OAuth user data received:', data.email || data.name);
+                userData = data;
                 break;
               }
             } catch (fetchError) {
-              console.warn(`Attempt ${attempts} failed:`, fetchError);
+              console.warn(`OAuth attempt ${attempts} failed:`, fetchError);
             }
             
-            // Progressive delay increase for mobile
             if (attempts < maxAttempts) {
-              const delay = attempts * 1000; // 1s, 2s, 3s, 4s
-              console.log(`Waiting ${delay}ms before retry...`);
+              const delay = Math.min(attempts * 1000, 5000); // Cap at 5s
+              console.log(`OAuth retry delay: ${delay}ms`);
               await new Promise(resolve => setTimeout(resolve, delay));
             }
           }
           
           if (userData && userData.id) {
+            console.log('OAuth login successful!');
+            
             const saveSuccess = saveUser(userData);
             if (!saveSuccess) {
               throw new Error('Failed to save OAuth user data');
             }
             
-            // Multiple broadcasts for OAuth success
+            // Triple broadcast for OAuth
             broadcastAuthChange();
             setTimeout(() => broadcastAuthChange(), 100);
             setTimeout(() => broadcastAuthChange(), 500);
+            setTimeout(() => broadcastAuthChange(), 1000);
             
             setWelcome({ open: true, name: userData.name || userData.email || 'Traveler' });
             
@@ -666,31 +742,45 @@ const Login = () => {
               setIsLoading(false);
               broadcastAuthChange();
               
-              // Clean URL
-              const cleanUrl = window.location.origin + window.location.pathname;
+              // Clean URL and redirect
               window.history.replaceState({}, document.title, '/');
-              
-              // Force redirect for OAuth
-              window.location.href = '/';
+              console.log('OAuth complete - redirecting...');
+              window.location.replace('/');
             }, 1400);
             
             return;
           } else {
-            console.error('OAuth login failed - no valid user data after', maxAttempts, 'attempts');
-            setErrorBox({ open: true, message: 'OAuth login verification failed. Please try regular login.' });
+            console.error(`OAuth verification failed after ${maxAttempts} attempts`);
+            setErrorBox({ 
+              open: true, 
+              message: `OAuth login verification failed after ${maxAttempts} attempts. Please try regular login or contact support.` 
+            });
           }
         } catch (error) {
-          console.error('OAuth verification error:', error);
-          setErrorBox({ open: true, message: 'OAuth login failed. Please try again or use regular login.' });
+          console.error('OAuth process error:', error);
+          setErrorBox({ 
+            open: true, 
+            message: 'OAuth login failed due to an error. Please try regular login.' 
+          });
         } finally {
           setIsLoading(false);
         }
       }
     };
 
-    // Delay OAuth check slightly for mobile
-    const checkDelay = /Mobi|Android/i.test(navigator.userAgent) ? 1000 : 500;
-    setTimeout(checkOAuthSuccess, checkDelay);
+    // Longer delay for mobile OAuth
+    const oauthDelay = isMobile() ? 2000 : 1000;
+    console.log(`OAuth check scheduled in ${oauthDelay}ms`);
+    setTimeout(checkOAuthSuccess, oauthDelay);
+  }, []);
+
+  // Check if already logged in
+  useEffect(() => {
+    const existingUser = getUser();
+    if (existingUser && existingUser.id) {
+      console.log('User already logged in:', existingUser.email || existingUser.name);
+      // Don't redirect automatically - let them stay on login page if they want
+    }
   }, []);
 
   // Stars effect
@@ -711,7 +801,6 @@ const Login = () => {
     };
   }, []);
 
-  // Local keyframes
   const localCss = `
     @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
     @keyframes popIn { 0% { transform: scale(.95); opacity: 0 } 100% { transform: scale(1); opacity: 1 } }
@@ -723,7 +812,10 @@ const Login = () => {
       60% { transform: translateX(-4px) }
       80% { transform: translateX(4px) }
     }
-    ${styles.spinner}
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   `;
 
   // ESC to close error
@@ -745,6 +837,21 @@ const Login = () => {
       <div className="login-container">
         <div className="login-form-box">
           <h2 className="login-title">Login</h2>
+          
+          {/* Debug info for mobile testing */}
+          {isMobile() && process.env.NODE_ENV === 'development' && (
+            <div style={{
+              background: 'rgba(255,255,0,0.1)',
+              padding: '8px',
+              marginBottom: '16px',
+              borderRadius: '4px',
+              fontSize: '12px',
+              color: '#666'
+            }}>
+              Mobile detected - Debug mode active
+            </div>
+          )}
+          
           <form onSubmit={handleSubmit}>
             <div className="input-group">
               <input
@@ -794,7 +901,7 @@ const Login = () => {
                     animation: 'spin 1s linear infinite',
                     marginRight: '8px'
                   }}></span>
-                  Logging in...
+                  {isMobile() ? 'Logging in...' : 'Logging in...'}
                 </>
               ) : (
                 'Login'
@@ -810,7 +917,6 @@ const Login = () => {
               Create New Account
             </button>
 
-            {/* Google Login Button */}
             <a 
               href={loginWithGoogle} 
               style={{ 
@@ -935,7 +1041,7 @@ const Login = () => {
               Login failed
             </h3>
             <p style={{ margin: 0, color: '#7f1d1d' }}>
-              {errorBox.message || 'Username or password mismatch'}
+              {errorBox.message}
             </p>
 
             <div
