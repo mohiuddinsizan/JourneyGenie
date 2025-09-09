@@ -132,8 +132,8 @@
   background: rgba(236, 72, 153, 0.2);
   border-color: rgba(236, 72, 153, 0.8);
   transform: translateY(-2px);
-  color: #fff !important;
-  -webkit-text-fill-color: #fff;
+  color: bla !important;
+  -webkit-text-fill-color: black;
 }
 
 /* Mobile Responsive Styles */
@@ -289,9 +289,12 @@
 
   .mobile-nav-btn.active {
     background: rgba(236, 72, 153, 0.15);
-    color: #ec4899 !important;
-    -webkit-text-fill-color: #ec4899;
-    border-left: 3px solid #ec4899;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff;
+    border: 2px solid #ffffff;
+    border-radius: 6px;
+    margin: 2px 12px;
+    font-weight: 600;
   }
 
   /* Mobile Login/Logout buttons */
