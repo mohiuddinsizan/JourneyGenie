@@ -224,3 +224,298 @@ html, body {
     height: 35%;
   }
 }
+
+
+
+/* Enhanced Mobile Responsive Styles for Background - ADD to existing CSS */
+
+/* Small mobile devices */
+@media (max-width: 480px) {
+  html, body {
+    /* Optimize background for mobile performance */
+    background-attachment: scroll;
+    background-size: cover;
+    background-position: center center;
+  }
+
+  /* Planet adjustments for small screens */
+  .planet {
+    width: 120px;
+    height: 120px;
+    top: 8%;
+    right: 5%;
+  }
+  
+  .planet::before {
+    width: 140px;
+    height: 8px;
+    border-width: 2px;
+  }
+  
+  /* Sun adjustments */
+  .sun {
+    width: 50px;
+    height: 50px;
+    bottom: 20%;
+  }
+  
+  /* Tree adjustments */
+  .tree {
+    width: 30px;
+    height: 60px;
+    left: 3%;
+    bottom: 15%;
+  }
+  
+  .tree-trunk {
+    width: 6px;
+    height: 25px;
+  }
+  
+  .tree-crown {
+    width: 30px;
+    height: 40px;
+    bottom: 15px;
+  }
+  
+  /* Mountain adjustments */
+  .mountain-1 {
+    width: 35%;
+    height: 70%;
+  }
+  
+  .mountain-2 {
+    width: 45%;
+    height: 60%;
+  }
+  
+  /* Landscape adjustments */
+  .landscape {
+    height: 30%;
+  }
+
+  /* Reduce star density on mobile for better performance */
+  .star:nth-child(n+20) {
+    display: none;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 360px) {
+  /* Further optimize for very small screens */
+  .planet {
+    width: 100px;
+    height: 100px;
+    top: 5%;
+    right: 3%;
+  }
+  
+  .planet::before {
+    width: 120px;
+    height: 6px;
+    border-width: 1px;
+  }
+  
+  .sun {
+    width: 40px;
+    height: 40px;
+    bottom: 18%;
+  }
+  
+  .tree {
+    width: 25px;
+    height: 50px;
+    left: 2%;
+    bottom: 12%;
+  }
+  
+  .tree-trunk {
+    width: 4px;
+    height: 20px;
+  }
+  
+  .tree-crown {
+    width: 25px;
+    height: 35px;
+    bottom: 12px;
+  }
+  
+  .landscape {
+    height: 25%;
+  }
+
+  /* Hide some stars for performance */
+  .star:nth-child(n+15) {
+    display: none;
+  }
+}
+
+/* Landscape mobile orientation */
+@media screen and (max-width: 768px) and (orientation: landscape) {
+  .planet {
+    width: 100px;
+    height: 100px;
+    top: 5%;
+    right: 8%;
+  }
+  
+  .planet::before {
+    width: 120px;
+  }
+  
+  .sun {
+    width: 50px;
+    height: 50px;
+    bottom: 15%;
+  }
+  
+  .tree {
+    width: 35px;
+    height: 60px;
+    bottom: 10%;
+  }
+  
+  .landscape {
+    height: 40%;
+  }
+}
+
+/* Performance optimizations for mobile */
+@media (max-width: 768px) {
+  /* Reduce animation complexity on mobile */
+  .star {
+    animation-duration: 4s;
+  }
+  
+  .planet {
+    animation-duration: 8s;
+  }
+  
+  .tree {
+    animation-duration: 6s;
+  }
+  
+  .sun {
+    animation-duration: 4s;
+  }
+  
+  /* Simplify gradients for better mobile performance */
+  .background::before {
+    background: radial-gradient(circle at 80% 20%, rgba(0, 212, 255, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 20% 80%, rgba(255, 107, 53, 0.08) 0%, transparent 40%);
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  /* Disable hover-dependent animations on touch devices */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Ensure smooth scrolling on mobile */
+  html, body {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+}
+
+/* High DPI displays (retina) optimization */
+@media (max-width: 768px) and (-webkit-min-device-pixel-ratio: 2) {
+  /* Optimize background image for retina displays */
+  html, body {
+    background-size: cover;
+    background-repeat: no-repeat;
+  }
+}
+
+/* Very short screens (like some mobile browsers in landscape) */
+@media screen and (max-height: 500px) and (max-width: 768px) {
+  .planet {
+    width: 80px;
+    height: 80px;
+    top: 3%;
+    right: 5%;
+  }
+  
+  .planet::before {
+    width: 100px;
+    height: 5px;
+  }
+  
+  .sun {
+    width: 35px;
+    height: 35px;
+    bottom: 12%;
+  }
+  
+  .tree {
+    width: 20px;
+    height: 40px;
+    bottom: 8%;
+  }
+  
+  .landscape {
+    height: 35%;
+  }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  .star,
+  .planet,
+  .tree,
+  .sun,
+  .planet::before {
+    animation: none;
+  }
+  
+  .planet {
+    transform: translateY(0px);
+  }
+  
+  .tree {
+    transform: rotate(0deg);
+  }
+  
+  .sun {
+    transform: translateX(-50%) scale(1);
+  }
+}
+
+/* Dark mode considerations for mobile */
+@media (max-width: 768px) and (prefers-color-scheme: dark) {
+  html, body {
+    background-image: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 60%), url('../assets/mainbg.jpg');
+  }
+}
+
+/* Battery saving mode - reduce animations */
+@media (max-width: 768px) {
+  /* Simplified animations for better battery life */
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 0.4; }
+  }
+  
+  @keyframes planetFloat {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-5px); }
+  }
+  
+  @keyframes treeWave {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(0.5deg); }
+  }
+  
+  @keyframes sunGlow {
+    0%, 100% { 
+      box-shadow: 0 0 30px rgba(212, 9, 134, 0.4);
+      transform: translateX(-50%) scale(1);
+    }
+    50% { 
+      box-shadow: 0 0 40px rgba(205, 18, 115, 0.6);
+      transform: translateX(-50%) scale(1.02);
+    }
+  }
+}
