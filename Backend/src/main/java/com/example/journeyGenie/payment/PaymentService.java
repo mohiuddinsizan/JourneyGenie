@@ -1,6 +1,7 @@
 package com.example.journeyGenie.payment;
 
 import com.example.journeyGenie.util.AppEnv;
+import com.example.journeyGenie.util.Debug;
 import com.stripe.Stripe;
 import com.stripe.model.checkout.Session;
 import com.stripe.param.checkout.SessionCreateParams;
@@ -14,6 +15,9 @@ import java.util.Map;
 public class PaymentService {
 
     public Map<String, Object> createCheckoutSession(ProductRequest productRequest, HttpServletRequest request) throws Exception {
+        Debug.log("Creating Stripe Checkout Session");
+        Debug.log("Product Request - Quantity: " + productRequest.getQuantity() + ", Price: " + productRequest.getPrice());
+
         Stripe.apiKey = AppEnv.getStripeSecretKey(); // load from env/config
 
         SessionCreateParams params = SessionCreateParams.builder()
