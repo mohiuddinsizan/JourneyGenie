@@ -53,4 +53,7 @@ public class AppEnv {
     public static String getCloudinaryName(){return dotenv.get("CLOUD_NAME");}
 
     public static String getStripeSecretKey(){return dotenv.get("STRIPE_SECRET_KEY");}
+
+    public static String getHUGGINGFACE_API() {return dotenv.get("HUGGINGFACE_SECRET_KEY");}
+
 }

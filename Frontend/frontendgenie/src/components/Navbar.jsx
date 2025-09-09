@@ -296,7 +296,7 @@ const Navbar = () => {
           <NavLink to="/searchplace" className="nav-btn">Detect Places</NavLink>  
           <NavLink to="/tokenbuy" className="nav-btn">Buy Tokens</NavLink>
           <NavLink to="/howitworks" className="nav-btn">How It Works</NavLink>
-          {/* <NavLink to="/support" className="nav-btn">Support</NavLink> */}
+          <NavLink to="/support" className="nav-btn">Support</NavLink>
           <NavLink to="/about" className="nav-btn">About Us</NavLink>
           {isLoggedIn ? (
             <button className="nav-btn logout-btn" onClick={handleLogout}>
@@ -318,7 +318,7 @@ const Navbar = () => {
           <NavLink to="/searchplace" className="mobile-nav-btn" onClick={closeMobileMenu}>Detect Places</NavLink>  
           <NavLink to="/tokenbuy" className="mobile-nav-btn" onClick={closeMobileMenu}>Buy Tokens</NavLink>
           <NavLink to="/howitworks" className="mobile-nav-btn" onClick={closeMobileMenu}>How It Works</NavLink>
-          {/* <NavLink to="/support" className="mobile-nav-btn" onClick={closeMobileMenu}>Support</NavLink> */}
+          <NavLink to="/support" className="mobile-nav-btn" onClick={closeMobileMenu}>Support</NavLink>
           <NavLink to="/about" className="mobile-nav-btn" onClick={closeMobileMenu}>About Us</NavLink>
           {isLoggedIn ? (
             <button className="mobile-nav-btn logout-btn" onClick={() => {handleLogout(); closeMobileMenu();}}>
