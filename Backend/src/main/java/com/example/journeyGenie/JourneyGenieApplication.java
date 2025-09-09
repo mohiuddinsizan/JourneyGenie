@@ -29,6 +29,7 @@ public class JourneyGenieApplication {
 		System.out.println("FRONTEND_URL: " + AppEnv.getFrontendUrl());
 		System.out.println("BACKEND_URL: " + AppEnv.getBackendUrl());
 		System.out.println("GEMINI_API: "+ AppEnv.getGEMINI_API());
+        System.out.println("STRIPE_SECRET_KEY: "+ AppEnv.getStripeSecretKey());
 	}
 
 	// api for demonstration purpose (no usage)

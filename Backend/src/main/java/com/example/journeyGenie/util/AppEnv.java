@@ -51,4 +51,6 @@ public class AppEnv {
     public static String getCloudinary_API(){return dotenv.get("CLOUDINARY_URL");}
 
     public static String getCloudinaryName(){return dotenv.get("CLOUD_NAME");}
+
+    public static String getStripeSecretKey(){return dotenv.get("STRIPE_SECRET_KEY");}
 }
