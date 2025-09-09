@@ -156,7 +156,7 @@ const LandingPage = () => {
             Profile
           </button>
           <button className="fancy-btn" onClick={() => navigate("/searchplace")}>
-            Find a Place
+            Detect a Location
           </button>
           <button className="fancy-btn" onClick={() => navigate("/howitworks")}>
             How it Works

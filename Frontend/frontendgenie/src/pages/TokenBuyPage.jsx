@@ -236,7 +236,7 @@ const TokenBuyPage = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           quantity: amount, // number of tokens
-          price: amount, // amount in cents
+          price: 1, // amount in cents per token
         }),
         credentials: 'include',
       });
