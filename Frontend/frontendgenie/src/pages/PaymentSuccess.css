@@ -128,3 +128,29 @@
   background: #00c4ff;
   box-shadow: 0 0 12px #00c4ff;
 }
+
+/* Subtle checkmark for already verified state */
+.result.already-verified {
+  border: 2px solid #6c63ff;
+  background: #f4f3ff;
+  color: #333;
+  animation: fadeIn 0.6s ease-in-out;
+}
+
+.checkmark.subtle {
+  font-size: 48px;
+  color: #6c63ff;
+  animation: gentlePulse 2s infinite;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes gentlePulse {
+  0% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.8; }
+}
