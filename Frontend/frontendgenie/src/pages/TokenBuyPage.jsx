@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
+import { loadStripe } from "@stripe/stripe-js";
 
 const API_BASE = import.meta.env.REACT_APP_API_URL || 'http://localhost:8080';
+
+const stripePromise = loadStripe("pk_test_51S50jrEJfTfXV2h7e4NWEYOIRQsOGTJ4Jmh0lsz1z9c6ta8onZa1YcvW6mCDPcESzwX3UHAjEyegXvDD6lcgbpMV00Xuz0Vv63");
 
 const TokenBuyPage = () => {
   const [amount, setAmount] = useState(0);
@@ -44,7 +47,7 @@ const TokenBuyPage = () => {
         const data = await response.json();
         setIsAuthenticated(true);
         setTokens(data.tokens || userData.tokens || 0);
-        
+
         // Update localStorage with fresh token data
         const updatedUser = { ...userData, tokens: data.tokens };
         localStorage.setItem('user', JSON.stringify(updatedUser));
@@ -129,7 +132,7 @@ const TokenBuyPage = () => {
   };
 
   const calculateTotal = () => {
-    const subtotal = amount * 1; // 1 TK per token
+    const subtotal = amount * 1; // 1 cents per token
     const discountAmount = (subtotal * discount) / 100;
     return subtotal - discountAmount;
   };
@@ -159,7 +162,7 @@ const TokenBuyPage = () => {
       const data = await response.json();
       setMessage(data.message);
       setTokens(data.tokens);
-      
+
       // Update localStorage like in Plan.jsx
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
@@ -168,7 +171,7 @@ const TokenBuyPage = () => {
         localStorage.setItem('user', JSON.stringify(updatedUser));
         setUserInfo(updatedUser);
       }
-      
+
       showAlert(data.message);
     } catch (err) {
       setError(err.message);
@@ -203,7 +206,7 @@ const TokenBuyPage = () => {
       const data = await response.json();
       setTokens(data.tokens);
       setMessage(`Coupon applied! Now you have total ${data.tokens} tokens.`);
-      
+
       // Update localStorage like in Plan.jsx
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
@@ -220,16 +223,45 @@ const TokenBuyPage = () => {
     }
   };
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
     if (amount <= 0) {
       showAlert("Please enter a valid amount before proceeding to payment.");
       return;
     }
-    showAlert(`Redirecting to payment for ${calculateTotal().toFixed(2)} TK`);
+
+    try {
+      // 1. Send request to backend
+      const res = await fetch(API_BASE + "/payment/create-checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quantity: amount, // number of tokens
+          price: amount, // amount in cents
+        }),
+        credentials: 'include',
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to create checkout session");
+      }
+
+      const data = await res.json();
+
+      // 2. Redirect to Stripe Checkout
+      const stripe = await stripePromise;
+      const { error } = await stripe.redirectToCheckout({ sessionId: data.id });
+
+      if (error) {
+        showAlert(error.message);
+      }
+    } catch (err) {
+      console.error(err);
+      showAlert("Payment initialization failed. Please try again.");
+    }
   };
 
   const CouponCard = ({ code, info, onClick }) => (
-    <div 
+    <div
       className="coupon-card"
       onClick={() => onClick(code)}
       style={{
@@ -256,7 +288,7 @@ const TokenBuyPage = () => {
         transform: 'rotate(45deg)',
         pointerEvents: 'none'
       }} />
-      
+
       {/* Coupon Content */}
       <div style={{ position: 'relative', zIndex: 2 }}>
         <div style={{
@@ -283,7 +315,7 @@ const TokenBuyPage = () => {
             {info.discount}% OFF
           </div>
         </div>
-        
+
         <div style={{
           fontSize: '1rem',
           fontWeight: 'bold',
@@ -293,7 +325,7 @@ const TokenBuyPage = () => {
         }}>
           {code}
         </div>
-        
+
         <div style={{
           fontSize: '0.85rem',
           color: '#9aa5b1',
@@ -302,7 +334,7 @@ const TokenBuyPage = () => {
           {info.description}
         </div>
       </div>
-      
+
       {/* Hover Glow Effect */}
       <div className="coupon-glow" style={{
         position: 'absolute',
@@ -337,7 +369,7 @@ const TokenBuyPage = () => {
             Checking authentication status
           </p>
         </div>
-        
+
         <style jsx>{`
           @keyframes spin {
             from { transform: rotate(0deg); }
@@ -379,7 +411,7 @@ const TokenBuyPage = () => {
               }}>
                 🔐
               </div>
-              <h2 style={{ 
+              <h2 style={{
                 margin: 0,
                 fontSize: '2.2rem',
                 fontWeight: 'bold',
@@ -389,8 +421,8 @@ const TokenBuyPage = () => {
               }}>
                 Authentication Required
               </h2>
-              <p style={{ 
-                margin: 0, 
+              <p style={{
+                margin: 0,
                 fontSize: '1.1rem',
                 color: 'rgba(255,255,255,0.9)'
               }}>
@@ -400,7 +432,7 @@ const TokenBuyPage = () => {
           </div>
 
           {/* Main Content */}
-          <div style={{ 
+          <div style={{
             background: 'linear-gradient(135deg, rgba(15,18,24,0.8), rgba(26,31,39,0.6))',
             borderRadius: '16px',
             padding: '40px 30px',
@@ -414,7 +446,7 @@ const TokenBuyPage = () => {
             }}>
               💰✨🪙
             </div>
-            
+
             <h3 style={{
               color: '#e9edf1',
               fontSize: '1.5rem',
@@ -423,7 +455,7 @@ const TokenBuyPage = () => {
             }}>
               Ready to Buy Tokens?
             </h3>
-            
+
             <p style={{
               color: '#9aa5b1',
               fontSize: '1rem',
@@ -432,7 +464,7 @@ const TokenBuyPage = () => {
               maxWidth: '400px',
               margin: '0 auto 24px auto'
             }}>
-              Access our secure token purchase system with exclusive discounts, 
+              Access our secure token purchase system with exclusive discounts,
               special coupons, and instant delivery to your account.
             </p>
 
@@ -458,7 +490,7 @@ const TokenBuyPage = () => {
                   Tokens added immediately
                 </div>
               </div>
-              
+
               <div style={{
                 background: 'rgba(16,185,129,0.1)',
                 borderRadius: '12px',
@@ -544,7 +576,7 @@ const TokenBuyPage = () => {
             backdropFilter: 'blur(10px)'
           }}></div>
           <div style={{ position: 'relative', zIndex: 2 }}>
-            <h2 style={{ 
+            <h2 style={{
               margin: 0,
               fontSize: '2rem',
               fontWeight: 'bold',
@@ -553,30 +585,30 @@ const TokenBuyPage = () => {
             }}>
               💰 Buy Tokens
             </h2>
-            <p style={{ 
-              margin: '8px 0 0 0', 
+            <p style={{
+              margin: '8px 0 0 0',
               fontSize: '1rem',
               color: 'rgba(255,255,255,0.9)'
             }}>
-              🪙 1 Token = 1 TK | Secure & Instant Purchase
+              🪙 1 Token = 1 cents | Secure & Instant Purchase
             </p>
           </div>
         </div>
 
         {/* Main Content - Horizontal Layout */}
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: '1fr 1fr', 
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
           gap: '32px',
           marginBottom: '24px'
         }}>
-          
+
           {/* Left Column - Token Purchase & Price */}
           <div className="day-card">
             <div className="day-head">
               <h4>🪙 Purchase Tokens</h4>
             </div>
-            
+
             <div className="day-content">
               <div className="plan-form" style={{ marginBottom: '20px' }}>
                 <label style={{ color: '#9aa5b1', marginBottom: '8px', display: 'block', fontWeight: '600' }}>
@@ -605,9 +637,9 @@ const TokenBuyPage = () => {
                   border: '1px solid rgba(236,72,153,0.2)',
                   marginBottom: '20px'
                 }}>
-                  <h4 style={{ 
-                    margin: '0 0 12px 0', 
-                    color: '#ec4899', 
+                  <h4 style={{
+                    margin: '0 0 12px 0',
+                    color: '#ec4899',
                     fontSize: '1rem',
                     display: 'flex',
                     alignItems: 'center',
@@ -615,38 +647,38 @@ const TokenBuyPage = () => {
                   }}>
                     💳 Price Details
                   </h4>
-                  
+
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                     <span style={{ color: '#9aa5b1' }}>Tokens ({amount})</span>
-                    <span style={{ color: '#e9edf1', fontWeight: '600' }}>{amount} TK</span>
+                    <span style={{ color: '#e9edf1', fontWeight: '600' }}>{amount} cents</span>
                   </div>
-                  
+
                   {discountApplied && (
-                    <div style={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
                       marginBottom: '8px',
                       color: '#2ecc71'
                     }}>
                       <span>Discount ({discount}%)</span>
-                      <span>-{((amount * discount) / 100).toFixed(2)} TK</span>
+                      <span>-{((amount * discount) / 100).toFixed(2)} cents</span>
                     </div>
                   )}
-                  
+
                   <div style={{
                     borderTop: '1px solid rgba(236,72,153,0.3)',
                     paddingTop: '12px',
                     marginTop: '12px'
                   }}>
-                    <div style={{ 
-                      display: 'flex', 
+                    <div style={{
+                      display: 'flex',
                       justifyContent: 'space-between',
                       fontSize: '1.2rem',
                       fontWeight: 'bold',
                       color: '#ec4899'
                     }}>
                       <span>Total Amount:</span>
-                      <span>{calculateTotal().toFixed(2)} TK</span>
+                      <span>{calculateTotal().toFixed(2)} cents</span>
                     </div>
                   </div>
                 </div>
@@ -674,13 +706,13 @@ const TokenBuyPage = () => {
               </h4>
               <div className="chip">Save & Earn</div>
             </div>
-            
+
             <div className="day-content" style={{ padding: '16px' }}>
               {/* Discount Coupon Input */}
               <div style={{ marginBottom: '20px' }}>
-                <div style={{ 
-                  fontSize: '0.95rem', 
-                  color: '#ec4899', 
+                <div style={{
+                  fontSize: '0.95rem',
+                  color: '#ec4899',
                   fontWeight: '600',
                   marginBottom: '8px'
                 }}>
@@ -707,8 +739,8 @@ const TokenBuyPage = () => {
                   <button
                     className="btn primary"
                     onClick={handleDiscountCoupon}
-                    style={{ 
-                      padding: '10px 16px', 
+                    style={{
+                      padding: '10px 16px',
                       fontSize: '0.9rem',
                       borderRadius: '10px',
                       background: 'linear-gradient(135deg, #ec4899, #db2777)',
@@ -741,22 +773,22 @@ const TokenBuyPage = () => {
 
               {/* Available Coupons - Compact 4-in-a-row */}
               <div style={{ marginBottom: '20px' }}>
-                <div style={{ 
-                  fontSize: '0.85rem', 
-                  color: '#9aa5b1', 
+                <div style={{
+                  fontSize: '0.85rem',
+                  color: '#9aa5b1',
                   fontWeight: '600',
                   marginBottom: '10px',
                   textAlign: 'center'
                 }}>
                   ✨ Click to Apply ✨
                 </div>
-                <div style={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: 'repeat(2, 1fr)', 
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, 1fr)',
                   gap: '8px'
                 }}>
                   {Object.entries(discountCoupons).map(([code, info]) => (
-                    <div 
+                    <div
                       key={code}
                       className="coupon-card-compact"
                       onClick={() => setDiscountCoupon(code)}
@@ -802,13 +834,13 @@ const TokenBuyPage = () => {
               </div>
 
               {/* Special Coupon */}
-              <div style={{ 
+              <div style={{
                 borderTop: '1px solid rgba(236,72,153,0.2)',
                 paddingTop: '16px'
               }}>
-                <div style={{ 
-                  fontSize: '0.95rem', 
-                  color: '#f59e0b', 
+                <div style={{
+                  fontSize: '0.95rem',
+                  color: '#f59e0b',
                   fontWeight: '600',
                   marginBottom: '8px'
                 }}>
@@ -836,8 +868,8 @@ const TokenBuyPage = () => {
                     className="btn primary"
                     onClick={handleApplyCoupon}
                     disabled={loading}
-                    style={{ 
-                      padding: '10px 16px', 
+                    style={{
+                      padding: '10px 16px',
                       fontSize: '0.9rem',
                       borderRadius: '10px',
                       background: 'linear-gradient(135deg, #f59e0b, #d97706)',
@@ -847,10 +879,10 @@ const TokenBuyPage = () => {
                     {loading ? "..." : "Apply"}
                   </button>
                 </div>
-                
-                <div style={{ 
-                  fontSize: '0.8rem', 
-                  color: '#9aa5b1', 
+
+                <div style={{
+                  fontSize: '0.8rem',
+                  color: '#9aa5b1',
                   fontStyle: 'italic',
                   background: 'linear-gradient(135deg, rgba(26,31,39,0.4), rgba(15,18,24,0.6))',
                   padding: '8px',

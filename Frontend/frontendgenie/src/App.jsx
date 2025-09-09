@@ -13,6 +13,8 @@ import TokenBuyPage from './pages/TokenBuyPage';
 import SearchPlacePage from './pages/SearchPlacePage';
 import GalleryPage from './pages/GalleryPage';
 import SupportPage from './pages/Support';
+import PaymentSuccessPage from './pages/PaymentSuccess';
+import PaymentCancelPage from './pages/PaymentCancel';
 import './App.css';
 
 const App = () => {
@@ -41,6 +43,8 @@ const App = () => {
           <Route path="/searchplace" element={<SearchPlacePage />} />
           <Route path="/gallery" element={<GalleryPage />} />
           <Route path="/support" element={<SupportPage />} />
+          <Route path="/payment/success" element={<PaymentSuccessPage />} />
+          <Route path="/payment/cancel" element={<PaymentCancelPage />} />
         </Routes>
       </main>
     </>
