@@ -1,5 +1,6 @@
-package com.example.journeyGenie.payment;
+package com.example.journeyGenie.service;
 
+import com.example.journeyGenie.dto.ProductRequestDTO;
 import com.example.journeyGenie.util.AppEnv;
 import com.example.journeyGenie.util.Debug;
 import com.stripe.Stripe;
@@ -14,7 +15,7 @@ import java.util.Map;
 @Service
 public class PaymentService {
 
-    public Map<String, Object> createCheckoutSession(ProductRequest productRequest, HttpServletRequest request) throws Exception {
+    public Map<String, Object> createCheckoutSession(ProductRequestDTO productRequest, HttpServletRequest request) throws Exception {
         Debug.log("Creating Stripe Checkout Session");
         Debug.log("Product Request - Quantity: " + productRequest.getQuantity() + ", Price: " + productRequest.getPrice());
 

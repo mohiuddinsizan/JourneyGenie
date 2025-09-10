@@ -1,4 +1,4 @@
-package com.example.journeyGenie.ml;
+package com.example.journeyGenie.service;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;

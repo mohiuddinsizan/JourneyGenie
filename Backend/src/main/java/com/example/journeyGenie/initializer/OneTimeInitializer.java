@@ -18,8 +18,12 @@ public class OneTimeInitializer implements CommandLineRunner {
     public void run(String... args) throws Exception {
         // This method is called once when the application starts
 
-//         Set default token value for users with null token
+        // Set default token value for users with null token
 //         em.createQuery("UPDATE User u SET u.token = 0 WHERE u.token IS NULL")
+//                .executeUpdate();
+
+        // Alter blog column to TEXT if it's still varchar(255)
+//        em.createNativeQuery("ALTER TABLE tours ALTER COLUMN blog TYPE TEXT")
 //                .executeUpdate();
     }
 }
