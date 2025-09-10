@@ -1,5 +1,7 @@
-package com.example.journeyGenie.payment;
+package com.example.journeyGenie.controller;
 
+import com.example.journeyGenie.service.PaymentService;
+import com.example.journeyGenie.dto.ProductRequestDTO;
 import com.example.journeyGenie.service.TokenService;
 import com.example.journeyGenie.util.AppEnv;
 import com.stripe.Stripe;
@@ -22,7 +24,7 @@ public class PaymentController {
     private TokenService tokenService;
 
     @PostMapping("/create-checkout-session")
-    public Map<String, Object> createCheckoutSession(@RequestBody ProductRequest productRequest, HttpServletRequest request) throws Exception {
+    public Map<String, Object> createCheckoutSession(@RequestBody ProductRequestDTO productRequest, HttpServletRequest request) throws Exception {
         return paymentService.createCheckoutSession(productRequest, request);
     }
 

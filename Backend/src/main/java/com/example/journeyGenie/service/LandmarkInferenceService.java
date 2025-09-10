@@ -1,4 +1,4 @@
-package com.example.journeyGenie.ml;
+package com.example.journeyGenie.service;
 
 import ai.djl.modality.cv.Image;
 import ai.djl.modality.cv.ImageFactory;

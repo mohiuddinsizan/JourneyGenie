@@ -1,5 +1,7 @@
-package com.example.journeyGenie.ml;
+package com.example.journeyGenie.controller;
 
+import com.example.journeyGenie.service.LandmarkInferenceService;
+import com.example.journeyGenie.service.LandmarkMapping;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
