@@ -21,6 +21,15 @@ public class PaymentService {
 
         Stripe.apiKey = AppEnv.getStripeSecretKey(); // load from env/config
 
+        // Calculate final price after discount and round up
+        Long originalPrice = productRequest.getQuantity(); // 1 cent per token
+        Long finalPrice = originalPrice;
+
+        if (productRequest.getDiscountApplied() != null && productRequest.getDiscountApplied() && productRequest.getDiscount() != null) {
+            double discountAmount = (originalPrice * productRequest.getDiscount()) / 100.0;
+            finalPrice = (long) Math.ceil(originalPrice - discountAmount);
+        }
+
         SessionCreateParams params = SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.PAYMENT)
                 .setSuccessUrl(AppEnv.getFrontendUrl() + "/payment/success?session_id={CHECKOUT_SESSION_ID}")
@@ -32,7 +41,7 @@ public class PaymentService {
                                 .setPriceData(
                                         SessionCreateParams.LineItem.PriceData.builder()
                                                 .setCurrency("usd")
-                                                .setUnitAmount(productRequest.getPrice()) // amount in cents
+                                                .setUnitAmount(1L) // 1 cent per token (unit price)
                                                 .setProductData(
                                                         SessionCreateParams.LineItem.PriceData.ProductData.builder()
                                                                 .setName("Tokens")
@@ -43,6 +52,32 @@ public class PaymentService {
                                 .build()
                 )
                 .build();
+
+        // If discount is applied, we need to create a custom line item with the final price
+        if (productRequest.getDiscountApplied() != null && productRequest.getDiscountApplied()) {
+            params = SessionCreateParams.builder()
+                    .setMode(SessionCreateParams.Mode.PAYMENT)
+                    .setSuccessUrl(AppEnv.getFrontendUrl() + "/payment/success?session_id={CHECKOUT_SESSION_ID}")
+                    .setCancelUrl(AppEnv.getFrontendUrl() + "/payment/cancel")
+                    .putMetadata("quantity", productRequest.getQuantity().toString())
+                    .addLineItem(
+                            SessionCreateParams.LineItem.builder()
+                                    .setQuantity(1L)
+                                    .setPriceData(
+                                            SessionCreateParams.LineItem.PriceData.builder()
+                                                    .setCurrency("usd")
+                                                    .setUnitAmount(finalPrice) // final discounted price
+                                                    .setProductData(
+                                                            SessionCreateParams.LineItem.PriceData.ProductData.builder()
+                                                                    .setName("Tokens (" + productRequest.getDiscount() + "% off)")
+                                                                    .build()
+                                                    )
+                                                    .build()
+                                    )
+                                    .build()
+                    )
+                    .build();
+        }
 
         Session session = Session.create(params);
 
