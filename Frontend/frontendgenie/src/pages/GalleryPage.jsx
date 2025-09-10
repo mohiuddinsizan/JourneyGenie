@@ -63,71 +63,186 @@ const GalleryPage = () => {
     return photos;
   };
 
-  // Handle AI-powered search
-  const handleSearch = async () => {
-    if (!searchTerm.trim()) {
-      setFilteredPhotos(extractPhotos(user));
-      return;
-    }
+  // // Handle AI-powered search
+  // const handleSearch = async () => {
+  //   if (!searchTerm.trim()) {
+  //     setFilteredPhotos(extractPhotos(user));
+  //     return;
+  //   }
 
-    setIsSearching(true);
-    try {
-      const allPhotos = extractPhotos(user);
-      const analysisPromises = allPhotos.map(async (photo) => {
-        try {
-          const response = await fetch(`${API_BASE}/api/analyze-image-content`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({
-              imageUrl: photo.link,
-              prompt: searchTerm
-            })
-          });
+  //   setIsSearching(true);
+  //   try {
+  //     const allPhotos = extractPhotos(user);
+  //     const analysisPromises = allPhotos.map(async (photo) => {
+  //       try {
+  //         const response = await fetch(`${API_BASE}/api/analyze-image-content`, {
+  //           method: "POST",
+  //           headers: { "Content-Type": "application/json" },
+  //           credentials: "include",
+  //           body: JSON.stringify({
+  //             imageUrl: photo.link,
+  //             prompt: searchTerm
+  //           })
+  //         });
 
-          if (response.ok) {
-            const result = await response.json();
-            if (result && typeof result === 'object' && result.description) {
-              return {
-                ...photo,
-                relevance: result.description.toLowerCase().includes(searchTerm.toLowerCase()) ? 1 : 0,
-                description: result.description
-              };
-            }
-          }
-        } catch (error) {
-          console.error("Failed to analyze photo:", error);
-        }
+  //         if (response.ok) {
+  //           const result = await response.json();
+  //           if (result && typeof result === 'object' && result.description) {
+  //             return {
+  //               ...photo,
+  //               relevance: result.description.toLowerCase().includes(searchTerm.toLowerCase()) ? 1 : 0,
+  //               description: result.description
+  //             };
+  //           }
+  //         }
+  //       } catch (error) {
+  //         console.error("Failed to analyze photo:", error);
+  //       }
         
-        const photoText = `${photo.tourTitle} ${photo.startLocation} ${photo.destination}`.toLowerCase();
-        const matchScore = photoText.includes(searchTerm.toLowerCase()) ? 0.5 : 0;
+  //       const photoText = `${photo.tourTitle} ${photo.startLocation} ${photo.destination}`.toLowerCase();
+  //       const matchScore = photoText.includes(searchTerm.toLowerCase()) ? 0.5 : 0;
         
-        return { 
-          ...photo, 
-          relevance: matchScore, 
-          description: 'Basic search match' 
-        };
-      });
+  //       return { 
+  //         ...photo, 
+  //         relevance: matchScore, 
+  //         description: 'Basic search match' 
+  //       };
+  //     });
 
-      const analyzedPhotos = await Promise.all(analysisPromises);
-      const relevantPhotos = analyzedPhotos
-        .filter(photo => photo.relevance > 0)
-        .sort((a, b) => b.relevance - a.relevance);
+  //     const analyzedPhotos = await Promise.all(analysisPromises);
+  //     const relevantPhotos = analyzedPhotos
+  //       .filter(photo => photo.relevance > 0)
+  //       .sort((a, b) => b.relevance - a.relevance);
       
-      setFilteredPhotos(relevantPhotos);
-    } catch (error) {
-      console.error("Failed to perform AI search:", error);
-      const allPhotos = extractPhotos(user);
-      const basicResults = allPhotos.filter(photo => 
-        `${photo.tourTitle} ${photo.startLocation} ${photo.destination}`
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase())
-      );
-      setFilteredPhotos(basicResults);
-    } finally {
-      setIsSearching(false);
+  //     setFilteredPhotos(relevantPhotos);
+  //   } catch (error) {
+  //     console.error("Failed to perform AI search:", error);
+  //     const allPhotos = extractPhotos(user);
+  //     const basicResults = allPhotos.filter(photo => 
+  //       `${photo.tourTitle} ${photo.startLocation} ${photo.destination}`
+  //         .toLowerCase()
+  //         .includes(searchTerm.toLowerCase())
+  //     );
+  //     setFilteredPhotos(basicResults);
+  //   } finally {
+  //     setIsSearching(false);
+  //   }
+  // };
+
+
+
+  // Replace the handleSearch function in your GalleryPage.js with this:
+
+const handleSearch = async () => {
+  if (!searchTerm.trim()) {
+    setFilteredPhotos(extractPhotos(user));
+    return;
+  }
+
+  setIsSearching(true);
+  console.log('Starting smart search for:', searchTerm);
+
+  try {
+    const response = await fetch(`${API_BASE}/api/search-images`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        query: searchTerm
+      })
+    });
+
+    console.log('Search response status:', response.status);
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log('Search result:', result);
+
+      if (result.success && result.results) {
+        // Convert backend ImageAnalysisDTO results to frontend format
+        const searchResults = result.results.map(item => ({
+          id: item.photoId,
+          link: item.imageUrl,
+          description: item.description,
+          relevance: item.relevance,
+          tourTitle: item.tourTitle || 'Trip',
+          date: item.date,
+          startLocation: item.startLocation || 'Unknown',
+          destination: item.destination || 'Unknown',
+          dayId: item.dayId,
+          source: item.source // "cached" or "analyzed"
+        }));
+        
+        setFilteredPhotos(searchResults);
+        
+        console.log(`Smart search completed:`);
+        console.log(`- Found ${searchResults.length} matching photos`);
+        console.log(`- Total photos: ${result.totalPhotos}`);
+        console.log(`- Already analyzed: ${result.analyzedPhotos}`);
+        console.log(`- Newly analyzed: ${result.newlyAnalyzed}`);
+        
+        // Show user feedback about the search
+        if (result.newlyAnalyzed > 0) {
+          console.log(`Analyzed ${result.newlyAnalyzed} new photos with AI`);
+        }
+      } else {
+        console.error("Search failed:", result.message);
+        fallbackToBasicSearch();
+      }
+    } else {
+      console.error("Search request failed:", response.status);
+      const errorText = await response.text();
+      console.error("Error details:", errorText);
+      fallbackToBasicSearch();
     }
-  };
+  } catch (error) {
+    console.error("Search error:", error);
+    fallbackToBasicSearch();
+  } finally {
+    setIsSearching(false);
+  }
+};
+
+const fallbackToBasicSearch = () => {
+  console.log('Falling back to basic text search');
+  const allPhotos = extractPhotos(user);
+  const basicResults = allPhotos.filter(photo => {
+    const searchText = `${photo.tourTitle} ${photo.startLocation} ${photo.destination}`.toLowerCase();
+    return searchText.includes(searchTerm.toLowerCase());
+  });
+  setFilteredPhotos(basicResults);
+  console.log(`Basic search found ${basicResults.length} results`);
+};
+
+// Add this function to batch analyze photos (call when user wants to improve search)
+const handleBatchAnalyze = async () => {
+  console.log('Starting batch analysis of photos...');
+  
+  try {
+    const response = await fetch(`${API_BASE}/api/batch-analyze-photos`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include"
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log('Batch analysis completed:', result);
+      
+      alert(`Successfully analyzed ${result.successful} out of ${result.processed} photos! Your search results will be much better now.`);
+    } else {
+      console.error('Batch analysis failed:', response.status);
+      alert('Failed to analyze photos. Please try again later.');
+    }
+  } catch (error) {
+    console.error('Batch analysis error:', error);
+    alert('Error occurred during batch analysis.');
+  }
+};
+
+
+
+
 
   // Trigger search on Enter key
   const handleKeyPress = (e) => {
@@ -280,6 +395,26 @@ const GalleryPage = () => {
                   <Search size={16} />
                 )}
               </button>
+
+              {/* <button 
+                onClick={async () => {
+                  try {
+                    const response = await fetch(`${API_BASE}/api/force-reanalyze`, {
+                      method: "POST",
+                      credentials: "include",
+                    });
+                    const result = await response.json();
+                    console.log("Re-analysis result:", result);
+                    alert(`Re-analyzed ${result.successful}/${result.totalPhotos} photos successfully!`);
+                  } catch (error) {
+                    console.error("Re-analysis failed:", error);
+                  }
+                }}
+                style={{background: 'red', color: 'white', padding: '10px'}}
+              >
+                FORCE RE-ANALYZE ALL PHOTOS
+              </button> */}
+
             </div>
           </div>
         </div>
