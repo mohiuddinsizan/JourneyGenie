@@ -1,25 +1,136 @@
+/* TokenBuyPage.css */
+
 /* Custom alert style */
 .custom-alert {
-    background: red;
-    color: white;
-    padding: 16px;
-    border-radius: 12px;
-    margin-top: 20px;
-    font-size: 16px;
-    font-weight: bold;
-    text-align: center;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    animation: fadeInAlert 0.5s ease-out;
+  background: red;
+  color: white;
+  padding: 16px;
+  border-radius: 12px;
+  margin-top: 20px;
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  animation: fadeInAlert 0.5s ease-out;
+}
+
+.custom-alert span {
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+@keyframes fadeInAlert {
+  0% { 
+    opacity: 0; 
+    transform: translateY(20px); 
+  }
+  100% { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% { 
+    transform: translateY(0px) rotateX(0deg); 
+  }
+  50% { 
+    transform: translateY(-2px) rotateX(5deg); 
+  }
+}
+
+@keyframes spin {
+  from { 
+    transform: rotate(0deg); 
+  }
+  to { 
+    transform: rotate(360deg); 
+  }
+}
+
+.coupon-card-compact:hover {
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 4px 20px rgba(236,72,153,0.2) !important;
+  border-color: rgba(236,72,153,0.5) !important;
+}
+
+.coupon-card-compact:active {
+  transform: translateY(0px) scale(0.98) !important;
+}
+
+.plan-form input:focus {
+  border-color: #ec4899 !important;
+  box-shadow: 0 0 0 3px rgba(236,72,153,0.2) !important;
+  background: linear-gradient(135deg, #1a1f27, #2a2f38) !important;
+}
+
+.day-content input:focus {
+  border-color: #ec4899 !important;
+  box-shadow: 0 0 0 3px rgba(236,72,153,0.2) !important;
+  background: linear-gradient(135deg, #1a1f27, #2a2f38) !important;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(236,72,153,0.4);
+}
+
+.btn:active {
+  transform: translateY(0px);
+}
+
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+.alert-message {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(16,18,22,0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(236,72,153,0.3);
+  color: #e9edf1;
+  padding: 16px 20px;
+  border-radius: 12px;
+  z-index: 1000;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  animation: fadeInUp 0.3s ease-out;
+}
+
+@media (max-width: 1024px) {
+  .main-grid {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
   }
   
-  .custom-alert span {
-    display: inline-block;
-    max-width: 100%;
-    white-space: nowrap;
+  .coupon-card {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-grid {
+    grid-template-columns: 1fr !important;
   }
   
-  @keyframes fadeInAlert {
-    0% { opacity: 0; transform: translateY(20px); }
-    100% { opacity: 1; transform: translateY(0); }
+  .day-head h4 {
+    font-size: 1rem !important;
   }
   
+  .coupon-card {
+    grid-column: span 1;
+  }
+}

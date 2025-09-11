@@ -6,13 +6,10 @@ import java.util.List;
 public class ImageAnalysisDTO {
     private String imageUrl;
     private String prompt;
-
-    // Search-related fields
     private String query;
-    private List<String> tags;
     private String description;
     private Double relevance;
-    private String source; // "cached" or "analyzed"
+    private String source;
     private LocalDateTime analyzedAt;
 
     // Photo info for search results
@@ -24,34 +21,21 @@ public class ImageAnalysisDTO {
     private String startLocation;
     private String date;
 
-    public ImageAnalysisDTO() {
-    }
+    // Additional search fields
+    private List<String> tags;
+    private String category;
+    private String mood;
+    private String timeOfDay;
 
-    // Original constructor for backward compatibility
+    public ImageAnalysisDTO() {}
+
     public ImageAnalysisDTO(String imageUrl, String prompt) {
         this.imageUrl = imageUrl;
         this.prompt = prompt;
     }
 
-    // Search constructor
     public ImageAnalysisDTO(String query) {
         this.query = query;
-    }
-
-    // Full constructor for search results
-    public ImageAnalysisDTO(Long photoId, String imageUrl, String description, Double relevance,
-                            String source, Long tourId, String tourTitle, String destination,
-                            String startLocation, String date) {
-        this.photoId = photoId;
-        this.imageUrl = imageUrl;
-        this.description = description;
-        this.relevance = relevance;
-        this.source = source;
-        this.tourId = tourId;
-        this.tourTitle = tourTitle;
-        this.destination = destination;
-        this.startLocation = startLocation;
-        this.date = date;
     }
 
     // Getters and Setters
@@ -77,14 +61,6 @@ public class ImageAnalysisDTO {
 
     public void setQuery(String query) {
         this.query = query;
-    }
-
-    public List<String> getTags() {
-        return tags;
-    }
-
-    public void setTags(List<String> tags) {
-        this.tags = tags;
     }
 
     public String getDescription() {
@@ -175,11 +151,42 @@ public class ImageAnalysisDTO {
         this.date = date;
     }
 
+    public List<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(List<String> tags) {
+        this.tags = tags;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public String getMood() {
+        return mood;
+    }
+
+    public void setMood(String mood) {
+        this.mood = mood;
+    }
+
+    public String getTimeOfDay() {
+        return timeOfDay;
+    }
+
+    public void setTimeOfDay(String timeOfDay) {
+        this.timeOfDay = timeOfDay;
+    }
+
     @Override
     public String toString() {
         return "ImageAnalysisDTO{" +
                 "imageUrl='" + imageUrl + '\'' +
-                ", prompt='" + prompt + '\'' +
                 ", query='" + query + '\'' +
                 ", description='" + description + '\'' +
                 ", relevance=" + relevance +

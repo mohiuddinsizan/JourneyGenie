@@ -8,6 +8,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ProductRequestDTO {
-    private Long quantity;
-    private Long price; // in cents
+    private Long quantity; // number of tokens
+    private Long price; // final price in cents (after discount)
+    private Long originalPrice; // original price before discount
+    private Double discount; // discount percentage applied
+    private Boolean discountApplied; // whether discount was applied
 }

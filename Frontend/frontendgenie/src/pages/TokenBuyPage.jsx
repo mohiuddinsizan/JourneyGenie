@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
+import './TokenBuyPage.css';
 
 const API_BASE = import.meta.env.REACT_APP_API_URL || 'http://localhost:8080';
 
@@ -16,7 +17,7 @@ const TokenBuyPage = () => {
   const [alertMessage, setAlertMessage] = useState("");
   const [discount, setDiscount] = useState(0);
   const [discountApplied, setDiscountApplied] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(null); // null = checking, false = not authenticated, true = authenticated
+  const [isAuthenticated, setIsAuthenticated] = useState(null);
   const [userInfo, setUserInfo] = useState(null);
 
   // Check authentication status on component mount
@@ -37,7 +38,7 @@ const TokenBuyPage = () => {
       setUserInfo(userData);
       setTokens(userData.tokens || 0);
 
-      // Also verify with API (similar to your Plan.jsx pattern)
+      // Also verify with API
       const response = await fetch(`${API_BASE}/token/balance`, {
         method: 'GET',
         credentials: 'include',
@@ -72,7 +73,6 @@ const TokenBuyPage = () => {
   };
 
   const handleLogin = () => {
-    // Navigate to login page - using window.location like in Plan.jsx
     window.location.href = '/login';
   };
 
@@ -114,7 +114,16 @@ const TokenBuyPage = () => {
 
     const coupon = discountCoupons[discountCoupon.toUpperCase()];
     if (coupon) {
-      setDiscount(coupon.discount);
+      const newDiscount = coupon.discount;
+      const testTotal = calculateTotalWithDiscount(newDiscount);
+      
+      // Check if applying this discount would make the total less than 50 cents
+      if (amount >= 50 && testTotal < 50) {
+        showAlert(`Cannot apply this discount. The total would be ${testTotal} cents, which is below the 50 cent minimum. Please add more tokens or use a smaller discount.`);
+        return;
+      }
+      
+      setDiscount(newDiscount);
       setDiscountApplied(true);
       showAlert(`Discount coupon applied! You get ${coupon.discount}% off.`);
     } else {
@@ -132,53 +141,19 @@ const TokenBuyPage = () => {
   };
 
   const calculateTotal = () => {
-    const subtotal = amount * 1; // 1 cents per token
+    const subtotal = amount * 1; // 1 cent per token
     const discountAmount = (subtotal * discount) / 100;
-    return subtotal - discountAmount;
+    const finalAmount = subtotal - discountAmount;
+    // Round up to ensure integer cents for Stripe
+    return Math.ceil(finalAmount);
   };
 
-  const handleTokenPurchase = async () => {
-    if (amount <= 0) {
-      showAlert("Please enter a valid positive amount.");
-      return;
-    }
-
-    resetMessages();
-    setLoading(true);
-    try {
-      const response = await fetch(`${API_BASE}/token/add?tokens=${amount}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || "Failed to purchase tokens");
-      }
-
-      const data = await response.json();
-      setMessage(data.message);
-      setTokens(data.tokens);
-
-      // Update localStorage like in Plan.jsx
-      const storedUser = localStorage.getItem('user');
-      if (storedUser) {
-        const userData = JSON.parse(storedUser);
-        const updatedUser = { ...userData, tokens: data.tokens };
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-        setUserInfo(updatedUser);
-      }
-
-      showAlert(data.message);
-    } catch (err) {
-      setError(err.message);
-      showAlert(err.message);
-    } finally {
-      setLoading(false);
-    }
+  const calculateTotalWithDiscount = (testDiscount) => {
+    const subtotal = amount * 1; // 1 cent per token
+    const discountAmount = (subtotal * testDiscount) / 100;
+    const finalAmount = subtotal - discountAmount;
+    // Round up to ensure integer cents for Stripe
+    return Math.ceil(finalAmount);
   };
 
   const handleApplyCoupon = async () => {
@@ -207,7 +182,7 @@ const TokenBuyPage = () => {
       setTokens(data.tokens);
       setMessage(`Coupon applied! Now you have total ${data.tokens} tokens.`);
 
-      // Update localStorage like in Plan.jsx
+      // Update localStorage
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
         const userData = JSON.parse(storedUser);
@@ -224,19 +199,35 @@ const TokenBuyPage = () => {
   };
 
   const handlePayment = async () => {
+    // Check minimum token requirement
+    if (amount < 50) {
+      showAlert("Minimum purchase is 50 tokens. Please enter at least 50 tokens.");
+      return;
+    }
+
     if (amount <= 0) {
       showAlert("Please enter a valid amount before proceeding to payment.");
       return;
     }
 
+    // Check if final amount after discount is less than 50 cents
+    const finalAmount = calculateTotal();
+    if (finalAmount < 50) {
+      showAlert("After applying the discount, the total amount is below the 50 cent minimum. Please add more tokens or remove the discount to proceed.");
+      return;
+    }
+
     try {
-      // 1. Send request to backend
+      // Send request to backend with final calculated price
       const res = await fetch(API_BASE + "/payment/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           quantity: amount, // number of tokens
-          price: 1, // amount in cents per token
+          price: finalAmount, // final price in cents (integer)
+          originalPrice: amount * 1, // original price before discount
+          discount: discount, // discount percentage applied
+          discountApplied: discountApplied
         }),
         credentials: 'include',
       });
@@ -246,8 +237,9 @@ const TokenBuyPage = () => {
       }
 
       const data = await res.json();
+      console.log('Checkout session response:', data); // Debug log
 
-      // 2. Redirect to Stripe Checkout
+      // Redirect to Stripe Checkout
       const stripe = await stripePromise;
       const { error } = await stripe.redirectToCheckout({ sessionId: data.id });
 
@@ -260,105 +252,19 @@ const TokenBuyPage = () => {
     }
   };
 
-  const CouponCard = ({ code, info, onClick }) => (
-    <div
-      className="coupon-card"
-      onClick={() => onClick(code)}
-      style={{
-        background: `linear-gradient(135deg, ${info.color}15, ${info.color}08)`,
-        border: `1px solid ${info.color}40`,
-        borderRadius: '16px',
-        padding: '16px',
-        cursor: 'pointer',
-        position: 'relative',
-        overflow: 'hidden',
-        transform: 'translateZ(0)',
-        transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-        boxShadow: `0 4px 20px ${info.color}10, inset 0 1px 0 ${info.color}20`
-      }}
-    >
-      {/* 3D Background Pattern */}
-      <div style={{
-        position: 'absolute',
-        top: '-50%',
-        right: '-50%',
-        width: '100%',
-        height: '100%',
-        background: `radial-gradient(circle, ${info.color}10 0%, transparent 70%)`,
-        transform: 'rotate(45deg)',
-        pointerEvents: 'none'
-      }} />
-
-      {/* Coupon Content */}
-      <div style={{ position: 'relative', zIndex: 2 }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '12px'
-        }}>
-          <div style={{
-            fontSize: '1.5rem',
-            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
-          }}>
-            {info.emoji}
-          </div>
-          <div style={{
-            background: info.color,
-            color: 'white',
-            padding: '4px 12px',
-            borderRadius: '20px',
-            fontSize: '0.8rem',
-            fontWeight: 'bold',
-            boxShadow: `0 2px 8px ${info.color}40`
-          }}>
-            {info.discount}% OFF
-          </div>
-        </div>
-
-        <div style={{
-          fontSize: '1rem',
-          fontWeight: 'bold',
-          color: '#e9edf1',
-          marginBottom: '4px',
-          textShadow: '0 1px 2px rgba(0,0,0,0.5)'
-        }}>
-          {code}
-        </div>
-
-        <div style={{
-          fontSize: '0.85rem',
-          color: '#9aa5b1',
-          lineHeight: 1.3
-        }}>
-          {info.description}
-        </div>
-      </div>
-
-      {/* Hover Glow Effect */}
-      <div className="coupon-glow" style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: `linear-gradient(135deg, ${info.color}20, transparent)`,
-        opacity: 0,
-        transition: 'opacity 0.3s ease',
-        borderRadius: '16px'
-      }} />
-    </div>
-  );
+  // Check if payment should be disabled
+  const isPaymentDisabled = () => {
+    return amount < 50 || calculateTotal() < 50;
+  };
 
   // Show loading state while checking authentication
   if (isAuthenticated === null) {
     return (
       <div className="plan-page plan-scrollfix">
         <div className="plan-card" style={{ textAlign: 'center', padding: '60px 24px' }}>
-          <div style={{
+          <div className="loading-spinner" style={{
             fontSize: '3rem',
-            marginBottom: '20px',
-            animation: 'spin 1s linear infinite'
+            marginBottom: '20px'
           }}>
             ⚡
           </div>
@@ -369,13 +275,6 @@ const TokenBuyPage = () => {
             Checking authentication status
           </p>
         </div>
-
-        <style jsx>{`
-          @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-          }
-        `}</style>
       </div>
     );
   }
@@ -590,13 +489,13 @@ const TokenBuyPage = () => {
               fontSize: '1rem',
               color: 'rgba(255,255,255,0.9)'
             }}>
-              🪙 1 Token = 1 cents | Secure & Instant Purchase
+              🪙 Current Balance: {tokens} tokens | Minimum: 50 tokens / 50¢ | Secure & Instant Purchase
             </p>
           </div>
         </div>
 
         {/* Main Content - Horizontal Layout */}
-        <div style={{
+        <div className="main-grid" style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
           gap: '32px',
@@ -612,13 +511,14 @@ const TokenBuyPage = () => {
             <div className="day-content">
               <div className="plan-form" style={{ marginBottom: '20px' }}>
                 <label style={{ color: '#9aa5b1', marginBottom: '8px', display: 'block', fontWeight: '600' }}>
-                  Number of Tokens:
+                  Number of Tokens (Min: 50):
                 </label>
                 <input
                   type="number"
                   value={amount}
                   onChange={handleAmountChange}
-                  placeholder="Enter amount"
+                  placeholder="Enter amount (min 50)"
+                  min="50"
                   style={{
                     fontSize: '1.1rem',
                     padding: '12px',
@@ -626,6 +526,16 @@ const TokenBuyPage = () => {
                     fontWeight: '600'
                   }}
                 />
+                {amount > 0 && amount < 50 && (
+                  <div style={{
+                    color: '#dc3545',
+                    fontSize: '0.85rem',
+                    marginTop: '4px',
+                    fontWeight: '600'
+                  }}>
+                    ⚠️ Minimum 50 tokens required
+                  </div>
+                )}
               </div>
 
               {/* Price Breakdown */}
@@ -665,6 +575,23 @@ const TokenBuyPage = () => {
                     </div>
                   )}
 
+                  {/* Warning if total is less than 50 cents */}
+                  {calculateTotal() < 50 && (
+                    <div style={{
+                      background: 'rgba(220, 53, 69, 0.1)',
+                      border: '1px solid rgba(220, 53, 69, 0.3)',
+                      borderRadius: '8px',
+                      padding: '12px',
+                      marginBottom: '8px',
+                      color: '#dc3545',
+                      fontSize: '0.9rem',
+                      textAlign: 'center',
+                      fontWeight: '600'
+                    }}>
+                      ⚠️ Total is below 50¢ minimum. Please add more tokens or remove discount to proceed.
+                    </div>
+                  )}
+
                   <div style={{
                     borderTop: '1px solid rgba(236,72,153,0.3)',
                     paddingTop: '12px',
@@ -675,10 +602,10 @@ const TokenBuyPage = () => {
                       justifyContent: 'space-between',
                       fontSize: '1.2rem',
                       fontWeight: 'bold',
-                      color: '#ec4899'
+                      color: calculateTotal() < 50 ? '#dc3545' : '#ec4899'
                     }}>
                       <span>Total Amount:</span>
-                      <span>{calculateTotal().toFixed(2)} cents</span>
+                      <span>{calculateTotal()} cents</span>
                     </div>
                   </div>
                 </div>
@@ -689,7 +616,13 @@ const TokenBuyPage = () => {
                 <button
                   className="btn primary"
                   onClick={handlePayment}
-                  style={{ width: '100%', fontSize: '1rem' }}
+                  style={{ 
+                    width: '100%', 
+                    fontSize: '1rem',
+                    opacity: isPaymentDisabled() ? '0.6' : '1',
+                    cursor: isPaymentDisabled() ? 'not-allowed' : 'pointer'
+                  }}
+                  disabled={isPaymentDisabled()}
                 >
                   💳 Proceed to Payment
                 </button>
@@ -771,7 +704,7 @@ const TokenBuyPage = () => {
                 </div>
               </div>
 
-              {/* Available Coupons - Compact 4-in-a-row */}
+              {/* Available Coupons - Compact 2x2 grid */}
               <div style={{ marginBottom: '20px' }}>
                 <div style={{
                   fontSize: '0.85rem',
@@ -914,98 +847,11 @@ const TokenBuyPage = () => {
 
         {/* Custom Alert */}
         {alertMessage && (
-          <div style={{
-            position: 'fixed',
-            top: '20px',
-            right: '20px',
-            background: 'rgba(16,18,22,0.95)',
-            backdropFilter: 'blur(12px)',
-            border: '1px solid rgba(236,72,153,0.3)',
-            color: '#e9edf1',
-            padding: '16px 20px',
-            borderRadius: '12px',
-            zIndex: 1000,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-            animation: 'fadeInUp 0.3s ease-out'
-          }}>
+          <div className="alert-message">
             {alertMessage}
           </div>
         )}
       </div>
-
-      <style jsx>{`
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        @keyframes float {
-          0%, 100% { transform: translateY(0px) rotateX(0deg); }
-          50% { transform: translateY(-2px) rotateX(5deg); }
-        }
-        
-        .coupon-card-compact:hover {
-          transform: translateY(-2px) scale(1.02) !important;
-          box-shadow: 0 4px 20px rgba(236,72,153,0.2) !important;
-          border-color: rgba(236,72,153,0.5) !important;
-        }
-        
-        .coupon-card-compact:active {
-          transform: translateY(0px) scale(0.98) !important;
-        }
-        
-        .plan-form input:focus {
-          border-color: #ec4899 !important;
-          box-shadow: 0 0 0 3px rgba(236,72,153,0.2) !important;
-          background: linear-gradient(135deg, #1a1f27, #2a2f38) !important;
-        }
-        
-        .day-content input:focus {
-          border-color: #ec4899 !important;
-          box-shadow: 0 0 0 3px rgba(236,72,153,0.2) !important;
-          background: linear-gradient(135deg, #1a1f27, #2a2f38) !important;
-        }
-        
-        .btn:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 6px 20px rgba(236,72,153,0.4);
-        }
-        
-        .btn:active {
-          transform: translateY(0px);
-        }
-        
-        @media (max-width: 1024px) {
-          .plan-card > div:first-of-type {
-            grid-template-columns: 1fr !important;
-            gap: 20px !important;
-          }
-          
-          .coupon-card {
-            grid-column: span 2;
-          }
-        }
-        
-        @media (max-width: 768px) {
-          .plan-card > div:first-of-type {
-            grid-template-columns: 1fr !important;
-          }
-          
-          .day-head h4 {
-            font-size: 1rem !important;
-          }
-          
-          .coupon-card {
-            grid-column: span 1;
-          }
-        }
-      `}</style>
     </div>
   );
 };
