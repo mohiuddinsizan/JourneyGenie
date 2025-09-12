@@ -9,7 +9,9 @@ import image3 from "../assets/tour-thumbnail-7.jpg";
 import imagehero from "../assets/imagehero.jpg";
 import naturelover from "../assets/naturelover.jpg";
 
+
 const API_BASE = import.meta.env.REACT_APP_API_URL || 'http://localhost:8080';
+
 
 const loadUserFromLocalStorage = () => {
   try {
@@ -36,159 +38,69 @@ const saveUserToLocalStorage = (userLike) => {
   }
 };
 
-// Enhanced auth check that tries both sources
-const checkAuthStatus = async () => {
-  try {
-    // First check localStorage (faster)
-    const localUser = loadUserFromLocalStorage();
-    
-    // Then verify with backend
-    const res = await fetch(`${API_BASE}/user/me`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-    });
-
-    if (res.ok) {
-      const payload = await res.json();
-      const backendUser = payload?.user ?? payload;
-      
-      if (backendUser) {
-        // Update localStorage with fresh data
-        saveUserToLocalStorage(backendUser);
-        return { isAuthenticated: true, user: backendUser, source: 'backend' };
-      }
-    } else if (res.status === 401) {
-      // Backend says not authenticated, clear localStorage
-      localStorage.removeItem("user");
-      return { isAuthenticated: false, user: null, source: 'backend' };
-    }
-    
-    // Backend failed but we have local data, use it but mark as potentially stale
-    if (localUser) {
-      return { isAuthenticated: true, user: localUser, source: 'localStorage' };
-    }
-    
-    return { isAuthenticated: false, user: null, source: 'none' };
-  } catch (err) {
-    console.error("Auth check failed:", err);
-    
-    // Network error, fall back to localStorage
-    const localUser = loadUserFromLocalStorage();
-    return { 
-      isAuthenticated: !!localUser, 
-      user: localUser, 
-      source: localUser ? 'localStorage_fallback' : 'none' 
-    };
-  }
-};
-
 const LandingPage = () => {
   const navigate = useNavigate();
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
-  const [authLoading, setAuthLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState(null);
 
   // Prevent double-run in React Strict Mode (dev)
   const didBootstrapRef = useRef(false);
 
   // Keep isLoggedIn in sync with localStorage across tabs/refreshes
   useEffect(() => {
-    const sync = async () => {
-      const authResult = await checkAuthStatus();
-      setIsLoggedIn(authResult.isAuthenticated);
-      setCurrentUser(authResult.user);
-    };
-    
-    // Listen for storage changes (other tabs)
-    const handleStorageChange = () => {
-      sync();
-    };
-    
-    // Listen for visibility changes (tab focus)
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        sync();
-      }
-    };
-    
-    window.addEventListener("storage", handleStorageChange);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    
+    const sync = () => setIsLoggedIn(!!loadUserFromLocalStorage());
+    sync(); // initial
+    window.addEventListener("storage", sync);
+    document.addEventListener("visibilitychange", sync);
     return () => {
-      window.removeEventListener("storage", handleStorageChange);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("storage", sync);
+      document.removeEventListener("visibilitychange", sync);
     };
   }, []);
 
-  // 🔑 One-time bootstrap: comprehensive auth check
+  // 🔑 One-time bootstrap: try backend /user/me, else fall back to localStorage
   useEffect(() => {
     if (didBootstrapRef.current) return;
     didBootstrapRef.current = true;
 
     const bootstrap = async () => {
-      setAuthLoading(true);
-      
       try {
-        const authResult = await checkAuthStatus();
-        
-        setIsLoggedIn(authResult.isAuthenticated);
-        setCurrentUser(authResult.user);
-        
-        // Log the auth source for debugging
-        console.log(`Auth check complete: ${authResult.isAuthenticated ? 'authenticated' : 'not authenticated'} (source: ${authResult.source})`);
-        
+        const res = await fetch(`${API_BASE}/user/me`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        });
+
+        if (res.ok) {
+          const payload = await res.json();
+          // Accept { user: {...} } or {...}
+          const foundUser = payload?.user ?? payload;
+          if (foundUser) {
+            saveUserToLocalStorage(foundUser);
+            setIsLoggedIn(true);
+            return;
+          }
+        } else if (res.status === 401) {
+          // session expired: ensure we look logged out
+          localStorage.removeItem("user");
+        }
+        // Fall back to whatever is in localStorage
+        setIsLoggedIn(!!loadUserFromLocalStorage());
       } catch (err) {
-        console.error("Bootstrap auth check failed:", err);
-        setIsLoggedIn(false);
-        setCurrentUser(null);
-      } finally {
-        setAuthLoading(false);
+        console.error("Failed to fetch user:", err);
+        setIsLoggedIn(!!loadUserFromLocalStorage());
       }
     };
 
     bootstrap();
   }, []);
 
-  // Enhanced auth check that works on both mobile and desktop
-  const isAuthenticated = async () => {
-    if (authLoading) {
-      // Still loading, wait for it
-      return new Promise((resolve) => {
-        const checkLoading = () => {
-          if (!authLoading) {
-            resolve(isLoggedIn);
-          } else {
-            setTimeout(checkLoading, 100);
-          }
-        };
-        checkLoading();
-      });
-    }
-    
-    // Quick check first
-    if (isLoggedIn && currentUser) {
-      return true;
-    }
-    
-    // More thorough check
-    const authResult = await checkAuthStatus();
-    
-    // Update state if different
-    if (authResult.isAuthenticated !== isLoggedIn) {
-      setIsLoggedIn(authResult.isAuthenticated);
-      setCurrentUser(authResult.user);
-    }
-    
-    return authResult.isAuthenticated;
-  };
+  // Helper: robust auth check (uses state OR fresh localStorage)
+  const isAuthed = () => isLoggedIn || !!loadUserFromLocalStorage();
 
-  const requireLoginOr = async (go) => {
-    const authenticated = await isAuthenticated();
-    
-    if (!authenticated) {
+  const requireLoginOr = (go) => {
+    if (!isAuthed()) {
       setShowAlert(true);
       setTimeout(() => {
         setShowAlert(false);
@@ -202,23 +114,6 @@ const LandingPage = () => {
   const handlePlanTrip = () => requireLoginOr(() => navigate("/plan"));
   const handleProfile = () => requireLoginOr(() => navigate("/profile"));
   const handleFindPlaces = () => requireLoginOr(() => navigate("/searchplace"));
-
-  // Show loading state while checking auth
-  if (authLoading) {
-    return (
-      <div className="container" style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        minHeight: '100vh' 
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <img src={image} style={{ height: "80px", marginBottom: "20px" }} alt="icon" />
-          <p>Loading...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="container">
@@ -267,24 +162,6 @@ const LandingPage = () => {
             How it Works
           </button>
         </div>
-
-        {/* Debug info (remove in production) */}
-        {process.env.NODE_ENV === 'development' && (
-          <div style={{ 
-            position: 'fixed', 
-            top: '10px', 
-            right: '10px', 
-            background: 'rgba(0,0,0,0.8)', 
-            color: 'white', 
-            padding: '10px', 
-            borderRadius: '5px',
-            fontSize: '12px',
-            zIndex: 1000
-          }}>
-            <div>Auth Status: {isLoggedIn ? '✓ Logged In' : '✗ Not Logged In'}</div>
-            {currentUser && <div>User: {currentUser.name || currentUser.email}</div>}
-          </div>
-        )}
       </div>
 
       {/* Fancy custom alert modal */}
@@ -338,6 +215,10 @@ const LandingPage = () => {
           </button>
         </div>
       </div>
+
+
+
+
 
       <div className="box feature-box" style={{ marginTop: "100px" }}>
         <div className="feature-left">
