@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import ReactDOM from 'react-dom';
 import {
   MapPin, Calendar, DollarSign, Users, Star, Wallet, Clock, CheckCircle, Plus, Image,
-  RefreshCw, List, CheckSquare, Video, Share2,Copy, BookOpen
+  RefreshCw, List, CheckSquare, Video, Share2,Copy, BookOpen,Globe
 } from 'lucide-react';
 import { FacebookShareModal } from '../components/FacebookShareHandler';
 import './Profile.css';
@@ -664,12 +664,12 @@ async function generateVideo(tourId) {
 
             <div className="profile-stats">
               <div className="kv">
-                <div className="k"><Users size={16} /> Tours</div>
+                <div className="k"><Globe size={16} /> Tours</div>
                 <div className="v">{totalTours}</div>
               </div>
               <div className="kv">
-                <div className="k"><Star size={16} /> Rating</div>
-                <div className="v">{rating ? `${rating} ⭐` : '4.8'}</div>
+                <div className="k"><Users size={16} /> Friends</div>
+                <div className="v">{rating ? `${rating} ⭐` : '0'}</div>
               </div>
               <div className="kv">
                 <div className="k"><Wallet size={16} /> Balance</div>
