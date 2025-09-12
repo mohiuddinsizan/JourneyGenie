@@ -782,7 +782,7 @@ const TokenBuyPage = () => {
                 <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
                   <input
                     type="password"
-                    value={""}
+                    value={couponCode}
                     onChange={(e) => setCouponCode(e.target.value)}
                     placeholder="Enter special code"
                     style={{
