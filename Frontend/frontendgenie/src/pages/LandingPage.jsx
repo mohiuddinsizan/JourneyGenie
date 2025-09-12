@@ -114,6 +114,7 @@ const LandingPage = () => {
   const handlePlanTrip = () => requireLoginOr(() => navigate("/plan"));
   const handleProfile = () => requireLoginOr(() => navigate("/profile"));
   const handleFindPlaces = () => requireLoginOr(() => navigate("/searchplace"));
+  const handleHowItWorks = () => navigate("/howitworks");
 
   return (
     <div className="container">
@@ -241,7 +242,7 @@ const LandingPage = () => {
           <div className="feature-cta">
             <button
               className="cta-primary"
-              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              onClick={handleHowItWorks}
             >
               How it Works →
             </button>
