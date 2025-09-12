@@ -45,15 +45,15 @@ export default function AboutUs() {
           <div className="contact-grid">
             <div className="contact-card">
               📧 <strong>Email</strong><br />
-              <a href="mailto:support@journeygenie.com">support@journeygenie.com</a>
+              <a href="/support">support@journeygenie.com</a>
             </div>
             <div className="contact-card">
               📱 <strong>Phone</strong><br />
-              +1 (234) 567-890
+              +88 (017) 4192-9871
             </div>
             <div className="contact-card">
               🏢 <strong>Office</strong><br />
-              123 Explorer Lane, Adventure City, Wanderlust World
+              4th Floor, Dr. M A Rashid Hall, BUET
             </div>
           </div>
         </section>
