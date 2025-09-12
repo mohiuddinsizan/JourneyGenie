@@ -1,3 +1,460 @@
+// import React, { useState, useEffect } from "react";
+// import { loadStripe } from "@stripe/stripe-js";
+// import './TokenBuyPage.css';
+
+// const API_BASE = import.meta.env.REACT_APP_API_URL || 'http://localhost:8080';
+
+// const stripePromise = loadStripe("pk_test_51S50jrEJfTfXV2h7e4NWEYOIRQsOGTJ4Jmh0lsz1z9c6ta8onZa1YcvW6mCDPcESzwX3UHAjEyegXvDD6lcgbpMV00Xuz0Vv63");
+
+// const TokenBuyPage = () => {
+//   const [amount, setAmount] = useState(0);
+//   const [couponCode, setCouponCode] = useState("");
+//   const [discountCoupon, setDiscountCoupon] = useState("");
+//   const [loading, setLoading] = useState(false);
+//   const [error, setError] = useState(null);
+//   const [message, setMessage] = useState("");
+//   const [tokens, setTokens] = useState(0);
+//   const [alertMessage, setAlertMessage] = useState("");
+//   const [discount, setDiscount] = useState(0);
+//   const [discountApplied, setDiscountApplied] = useState(false);
+//   const [isAuthenticated, setIsAuthenticated] = useState(null);
+//   const [userInfo, setUserInfo] = useState(null);
+
+//   // Check authentication status on component mount
+//   useEffect(() => {
+//     checkAuthStatus();
+//   }, []);
+
+//   const checkAuthStatus = async () => {
+//     try {
+//       // First check localStorage for user data
+//       const storedUser = localStorage.getItem('user');
+//       if (!storedUser) {
+//         setIsAuthenticated(false);
+//         return;
+//       }
+
+//       const userData = JSON.parse(storedUser);
+//       setUserInfo(userData);
+//       setTokens(userData.tokens || 0);
+
+//       // Also verify with API
+//       const response = await fetch(`${API_BASE}/token/balance`, {
+//         method: 'GET',
+//         credentials: 'include',
+//       });
+
+//       if (response.ok) {
+//         const data = await response.json();
+//         setIsAuthenticated(true);
+//         setTokens(data.tokens || userData.tokens || 0);
+
+//         // Update localStorage with fresh token data
+//         const updatedUser = { ...userData, tokens: data.tokens };
+//         localStorage.setItem('user', JSON.stringify(updatedUser));
+//         setUserInfo(updatedUser);
+//       } else {
+//         // API call failed but we have localStorage data - might be network issue
+//         setIsAuthenticated(true); // Still authenticated based on localStorage
+//       }
+//     } catch (error) {
+//       console.error('Auth check failed:', error);
+//       // Check if we at least have localStorage data
+//       const storedUser = localStorage.getItem('user');
+//       if (storedUser) {
+//         const userData = JSON.parse(storedUser);
+//         setIsAuthenticated(true);
+//         setUserInfo(userData);
+//         setTokens(userData.tokens || 0);
+//       } else {
+//         setIsAuthenticated(false);
+//       }
+//     }
+//   };
+
+//   const handleLogin = () => {
+//     window.location.href = '/login';
+//   };
+
+//   // Predefined discount coupons (frontend validation)
+//   const discountCoupons = {
+//     "SAVE10": { discount: 10, description: "10% off on total amount", color: "#3b82f6", emoji: "💎" },
+//     "SAVE20": { discount: 20, description: "20% off on total amount", color: "#8b5cf6", emoji: "🎯" },
+//     "WELCOME": { discount: 15, description: "15% welcome discount", color: "#10b981", emoji: "🌟" },
+//     "STUDENT": { discount: 25, description: "25% student discount", color: "#f59e0b", emoji: "🎓" }
+//   };
+
+//   const resetMessages = () => {
+//     setMessage("");
+//     setError(null);
+//     setAlertMessage("");
+//   };
+
+//   const handleAmountChange = (e) => {
+//     const value = e.target.value;
+//     if (value < 0) {
+//       showAlert("Amount cannot be negative.");
+//       return;
+//     }
+//     setAmount(value);
+//   };
+
+//   const showAlert = (message) => {
+//     setAlertMessage(message);
+//     setTimeout(() => {
+//       setAlertMessage("");
+//     }, 5000);
+//   };
+
+//   const handleDiscountCoupon = () => {
+//     if (!discountCoupon.trim()) {
+//       showAlert("Please enter a discount coupon code.");
+//       return;
+//     }
+
+//     const coupon = discountCoupons[discountCoupon.toUpperCase()];
+//     if (coupon) {
+//       const newDiscount = coupon.discount;
+//       const testTotal = calculateTotalWithDiscount(newDiscount);
+      
+//       // Check if applying this discount would make the total less than 50 cents
+//       if (amount >= 50 && testTotal < 50) {
+//         showAlert(`Cannot apply this discount. The total would be ${testTotal} cents, which is below the 50 cent minimum. Please add more tokens or use a smaller discount.`);
+//         return;
+//       }
+      
+//       setDiscount(newDiscount);
+//       setDiscountApplied(true);
+//       showAlert(`Discount coupon applied! You get ${coupon.discount}% off.`);
+//     } else {
+//       setDiscount(0);
+//       setDiscountApplied(false);
+//       showAlert("Invalid discount coupon code.");
+//     }
+//   };
+
+//   const removeDiscount = () => {
+//     setDiscount(0);
+//     setDiscountApplied(false);
+//     setDiscountCoupon("");
+//     showAlert("Discount coupon removed.");
+//   };
+
+//   const calculateTotal = () => {
+//     const subtotal = amount * 1; // 1 cent per token
+//     const discountAmount = (subtotal * discount) / 100;
+//     const finalAmount = subtotal - discountAmount;
+//     // Round up to ensure integer cents for Stripe
+//     return Math.ceil(finalAmount);
+//   };
+
+//   const calculateTotalWithDiscount = (testDiscount) => {
+//     const subtotal = amount * 1; // 1 cent per token
+//     const discountAmount = (subtotal * testDiscount) / 100;
+//     const finalAmount = subtotal - discountAmount;
+//     // Round up to ensure integer cents for Stripe
+//     return Math.ceil(finalAmount);
+//   };
+
+//   const handleApplyCoupon = async () => {
+//     resetMessages();
+//     setLoading(true);
+//     try {
+//       const payload = {
+//         couponCode: couponCode
+//       };
+
+//       const response = await fetch(`${API_BASE}/token/apply-coupon`, {
+//         method: "POST",
+//         headers: {
+//           "Content-Type": "application/json",
+//         },
+//         body: JSON.stringify(payload),
+//         credentials: 'include',
+//       });
+
+//       if (!response.ok) {
+//         const errorText = await response.text();
+//         throw new Error(errorText || "Failed to apply coupon");
+//       }
+
+//       const data = await response.json();
+//       setTokens(data.tokens);
+//       setMessage(`Coupon applied! Now you have total ${data.tokens} tokens.`);
+
+//       // Update localStorage
+//       const storedUser = localStorage.getItem('user');
+//       if (storedUser) {
+//         const userData = JSON.parse(storedUser);
+//         const updatedUser = { ...userData, tokens: data.tokens };
+//         localStorage.setItem('user', JSON.stringify(updatedUser));
+//         setUserInfo(updatedUser);
+//       }
+//     } catch (err) {
+//       setError(err.message);
+//       showAlert(err.message);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const handlePayment = async () => {
+//     // Check minimum token requirement
+//     if (amount < 50) {
+//       showAlert("Minimum purchase is 50 tokens. Please enter at least 50 tokens.");
+//       return;
+//     }
+
+//     if (amount <= 0) {
+//       showAlert("Please enter a valid amount before proceeding to payment.");
+//       return;
+//     }
+
+//     // Check if final amount after discount is less than 50 cents
+//     const finalAmount = calculateTotal();
+//     if (finalAmount < 50) {
+//       showAlert("After applying the discount, the total amount is below the 50 cent minimum. Please add more tokens or remove the discount to proceed.");
+//       return;
+//     }
+
+//     try {
+//       // Send request to backend with final calculated price
+//       const res = await fetch(API_BASE + "/payment/create-checkout-session", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({
+//           quantity: amount, // number of tokens
+//           price: finalAmount, // final price in cents (integer)
+//           originalPrice: amount * 1, // original price before discount
+//           discount: discount, // discount percentage applied
+//           discountApplied: discountApplied
+//         }),
+//         credentials: 'include',
+//       });
+
+//       if (!res.ok) {
+//         throw new Error("Failed to create checkout session");
+//       }
+
+//       const data = await res.json();
+//       console.log('Checkout session response:', data); // Debug log
+
+//       // Redirect to Stripe Checkout
+//       const stripe = await stripePromise;
+//       const { error } = await stripe.redirectToCheckout({ sessionId: data.id });
+
+//       if (error) {
+//         showAlert(error.message);
+//       }
+//     } catch (err) {
+//       console.error(err);
+//       showAlert("Payment initialization failed. Please try again.");
+//     }
+//   };
+
+//   // Check if payment should be disabled
+//   const isPaymentDisabled = () => {
+//     return amount < 50 || calculateTotal() < 50;
+//   };
+
+//   // Show loading state while checking authentication
+//   if (isAuthenticated === null) {
+//     return (
+//       <div className="plan-page plan-scrollfix">
+//         <div className="plan-card" style={{ textAlign: 'center', padding: '60px 24px' }}>
+//           <div className="loading-spinner" style={{
+//             fontSize: '3rem',
+//             marginBottom: '20px'
+//           }}>
+//             ⚡
+//           </div>
+//           <h3 style={{ color: '#ec4899', marginBottom: '10px' }}>
+//             Loading...
+//           </h3>
+//           <p style={{ color: '#9aa5b1' }}>
+//             Checking authentication status
+//           </p>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   // Show login required screen if not authenticated
+//   if (isAuthenticated === false) {
+//     return (
+//       <div className="plan-page plan-scrollfix">
+//         <div className="plan-card" style={{ textAlign: 'center', padding: '60px 24px' }}>
+//           {/* Header */}
+//           <div style={{
+//             background: 'linear-gradient(135deg, #ec4899, #db2777)',
+//             margin: '-24px -24px 40px -24px',
+//             padding: '40px 24px',
+//             borderRadius: '14px 14px 0 0',
+//             position: 'relative',
+//             overflow: 'hidden'
+//           }}>
+//             <div style={{
+//               position: 'absolute',
+//               top: 0,
+//               left: 0,
+//               right: 0,
+//               bottom: 0,
+//               background: 'linear-gradient(135deg, rgba(236,72,153,0.9), rgba(219,39,119,0.9))',
+//               backdropFilter: 'blur(10px)'
+//             }}></div>
+//             <div style={{ position: 'relative', zIndex: 2 }}>
+//               <div style={{
+//                 fontSize: '4rem',
+//                 marginBottom: '20px',
+//                 filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))'
+//               }}>
+//                 🔐
+//               </div>
+//               <h2 style={{
+//                 margin: 0,
+//                 fontSize: '2.2rem',
+//                 fontWeight: 'bold',
+//                 color: '#ffffff',
+//                 textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+//                 marginBottom: '8px'
+//               }}>
+//                 Authentication Required
+//               </h2>
+//               <p style={{
+//                 margin: 0,
+//                 fontSize: '1.1rem',
+//                 color: 'rgba(255,255,255,0.9)'
+//               }}>
+//                 Please log in to purchase tokens
+//               </p>
+//             </div>
+//           </div>
+
+//           {/* Main Content */}
+//           <div style={{
+//             background: 'linear-gradient(135deg, rgba(15,18,24,0.8), rgba(26,31,39,0.6))',
+//             borderRadius: '16px',
+//             padding: '40px 30px',
+//             border: '1px solid rgba(236,72,153,0.2)',
+//             backdropFilter: 'blur(10px)',
+//             marginBottom: '30px'
+//           }}>
+//             <div style={{
+//               fontSize: '1.5rem',
+//               marginBottom: '16px'
+//             }}>
+//               💰✨🪙
+//             </div>
+
+//             <h3 style={{
+//               color: '#e9edf1',
+//               fontSize: '1.5rem',
+//               marginBottom: '16px',
+//               fontWeight: '600'
+//             }}>
+//               Ready to Buy Tokens?
+//             </h3>
+
+//             <p style={{
+//               color: '#9aa5b1',
+//               fontSize: '1rem',
+//               lineHeight: 1.6,
+//               marginBottom: '0',
+//               maxWidth: '400px',
+//               margin: '0 auto 24px auto'
+//             }}>
+//               Access our secure token purchase system with exclusive discounts,
+//               special coupons, and instant delivery to your account.
+//             </p>
+
+//             <div style={{
+//               display: 'grid',
+//               gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+//               gap: '16px',
+//               marginBottom: '30px',
+//               maxWidth: '500px',
+//               margin: '0 auto 30px auto'
+//             }}>
+//               <div style={{
+//                 background: 'rgba(236,72,153,0.1)',
+//                 borderRadius: '12px',
+//                 padding: '16px',
+//                 border: '1px solid rgba(236,72,153,0.2)'
+//               }}>
+//                 <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>🎯</div>
+//                 <div style={{ color: '#e9edf1', fontSize: '0.9rem', fontWeight: '600' }}>
+//                   Instant Delivery
+//                 </div>
+//                 <div style={{ color: '#9aa5b1', fontSize: '0.8rem' }}>
+//                   Tokens added immediately
+//                 </div>
+//               </div>
+
+//               <div style={{
+//                 background: 'rgba(16,185,129,0.1)',
+//                 borderRadius: '12px',
+//                 padding: '16px',
+//                 border: '1px solid rgba(16,185,129,0.2)'
+//               }}>
+//                 <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>🎫</div>
+//                 <div style={{ color: '#e9edf1', fontSize: '0.9rem', fontWeight: '600' }}>
+//                   Discount Coupons
+//                 </div>
+//                 <div style={{ color: '#9aa5b1', fontSize: '0.8rem' }}>
+//                   Save up to 25% off
+//                 </div>
+//               </div>
+//             </div>
+//           </div>
+
+//           {/* Login Button */}
+//           <button
+//             onClick={handleLogin}
+//             style={{
+//               background: 'linear-gradient(135deg, #ec4899, #db2777)',
+//               border: 'none',
+//               borderRadius: '16px',
+//               color: 'white',
+//               padding: '16px 40px',
+//               fontSize: '1.1rem',
+//               fontWeight: '700',
+//               cursor: 'pointer',
+//               boxShadow: '0 8px 25px rgba(236,72,153,0.4)',
+//               transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+//               position: 'relative',
+//               overflow: 'hidden',
+//               minWidth: '200px'
+//             }}
+//             onMouseEnter={(e) => {
+//               e.target.style.transform = 'translateY(-2px) scale(1.05)';
+//               e.target.style.boxShadow = '0 12px 35px rgba(236,72,153,0.5)';
+//             }}
+//             onMouseLeave={(e) => {
+//               e.target.style.transform = 'translateY(0px) scale(1)';
+//               e.target.style.boxShadow = '0 8px 25px rgba(236,72,153,0.4)';
+//             }}
+//           >
+//             <span style={{ position: 'relative', zIndex: 2 }}>
+//               🚀 Login to Continue
+//             </span>
+//           </button>
+
+//           <p style={{
+//             color: '#9aa5b1',
+//             fontSize: '0.9rem',
+//             marginTop: '20px',
+//             fontStyle: 'italic'
+//           }}>
+//             New user? Create an account during the login process
+//           </p>
+//         </div>
+//       </div>
+//     );
+//   }
+
+
+
+
 import React, { useState, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import './TokenBuyPage.css';
@@ -5,6 +462,201 @@ import './TokenBuyPage.css';
 const API_BASE = import.meta.env.REACT_APP_API_URL || 'http://localhost:8080';
 
 const stripePromise = loadStripe("pk_test_51S50jrEJfTfXV2h7e4NWEYOIRQsOGTJ4Jmh0lsz1z9c6ta8onZa1YcvW6mCDPcESzwX3UHAjEyegXvDD6lcgbpMV00Xuz0Vv63");
+
+// Unified auth utilities (consistent with LandingPage and Login)
+const loadUserFromLocalStorage = () => {
+  try {
+    // 1. Try window property first (fastest)
+    if (window.currentUser && window.currentUser.id) {
+      console.log('User found in window property');
+      return window.currentUser;
+    }
+    
+    // 2. Try localStorage
+    let userData = localStorage.getItem("user");
+    if (userData) {
+      const parsed = JSON.parse(userData);
+      if (parsed && parsed.id) {
+        console.log('User found in localStorage');
+        return parsed;
+      }
+    }
+    
+    // 3. Try sessionStorage
+    userData = sessionStorage.getItem("user");
+    if (userData) {
+      const parsed = JSON.parse(userData);
+      if (parsed && parsed.id) {
+        console.log('User found in sessionStorage');
+        return parsed;
+      }
+    }
+    
+    // 4. Try cookies as fallback
+    const cookies = document.cookie.split(';');
+    for (const cookieName of ['user', 'user_backup', 'auth_user']) {
+      const cookie = cookies.find(c => c.trim().startsWith(`${cookieName}=`));
+      if (cookie) {
+        try {
+          const cookieValue = cookie.split('=')[1];
+          const parsed = JSON.parse(decodeURIComponent(cookieValue));
+          if (parsed && parsed.id) {
+            console.log(`User found in ${cookieName} cookie`);
+            return parsed;
+          }
+        } catch (e) {
+          console.warn(`Failed to parse ${cookieName} cookie:`, e);
+        }
+      }
+    }
+    
+    console.log('No user data found in any storage method');
+    return null;
+  } catch (error) {
+    console.error('Failed to get user:', error);
+    return null;
+  }
+};
+
+const saveUserToLocalStorage = (userLike) => {
+  try {
+    if (!userLike) return false;
+    
+    const user = userLike.user ?? userLike;
+    if (!user || !user.id) {
+      console.error('Invalid user data:', user);
+      return false;
+    }
+    
+    const { password, ...safeUser } = user;
+    const userString = JSON.stringify(safeUser);
+    
+    // Save to multiple storage methods
+    localStorage.setItem("user", userString);
+    sessionStorage.setItem("user", userString);
+    
+    // Update window property
+    window.currentUser = safeUser;
+    
+    console.log('User data updated:', safeUser.email || safeUser.name);
+    return true;
+  } catch (error) {
+    console.error('Failed to save user:', error);
+    return false;
+  }
+};
+
+// Enhanced auth verification
+const verifyAuthWithBackend = async () => {
+  try {
+    const res = await fetch(`${API_BASE}/user/me`, {
+      method: "GET",
+      headers: { 
+        "Content-Type": "application/json",
+        "Cache-Control": "no-cache"
+      },
+      credentials: "include",
+    });
+
+    if (res.ok) {
+      const payload = await res.json();
+      const user = payload?.user ?? payload;
+      
+      if (user && user.id) {
+        saveUserToLocalStorage(user);
+        return { success: true, user, source: 'backend' };
+      }
+    } else if (res.status === 401) {
+      // Clear stale data
+      localStorage.removeItem("user");
+      sessionStorage.removeItem("user");
+      window.currentUser = null;
+      return { success: false, user: null, source: 'backend_rejected' };
+    }
+    
+    return { success: false, user: null, source: 'backend_error' };
+  } catch (err) {
+    console.error('Backend auth verification failed:', err);
+    return { success: false, user: null, source: 'network_error' };
+  }
+};
+
+// Comprehensive auth check
+const checkAuthStatus = async () => {
+  try {
+    // First check localStorage (fast)
+    const localUser = loadUserFromLocalStorage();
+    
+    // Then verify with backend
+    const backendResult = await verifyAuthWithBackend();
+    
+    if (backendResult.success) {
+      return { 
+        isAuthenticated: true, 
+        user: backendResult.user, 
+        source: 'backend_verified' 
+      };
+    }
+    
+    // Backend failed but we have local data
+    if (localUser && backendResult.source !== 'backend_rejected') {
+      return { 
+        isAuthenticated: true, 
+        user: localUser, 
+        source: 'localStorage_fallback' 
+      };
+    }
+    
+    return { 
+      isAuthenticated: false, 
+      user: null, 
+      source: backendResult.source 
+    };
+  } catch (err) {
+    console.error('Auth status check failed:', err);
+    const fallbackUser = loadUserFromLocalStorage();
+    return { 
+      isAuthenticated: !!fallbackUser, 
+      user: fallbackUser, 
+      source: 'error_fallback' 
+    };
+  }
+};
+
+// Enhanced token balance fetching
+const fetchTokenBalance = async (userData) => {
+  try {
+    const response = await fetch(`${API_BASE}/token/balance`, {
+      method: 'GET',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache'
+      },
+      credentials: 'include',
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const tokens = data.tokens || 0;
+      
+      // Update user data with fresh token count
+      if (userData) {
+        const updatedUser = { ...userData, tokens };
+        saveUserToLocalStorage(updatedUser);
+      }
+      
+      return { success: true, tokens, source: 'api' };
+    } else if (response.status === 401) {
+      // Token balance check failed due to auth
+      return { success: false, tokens: 0, source: 'auth_failed' };
+    }
+    
+    return { success: false, tokens: userData?.tokens || 0, source: 'api_error' };
+  } catch (error) {
+    console.error('Failed to fetch token balance:', error);
+    return { success: false, tokens: userData?.tokens || 0, source: 'network_error' };
+  }
+};
 
 const TokenBuyPage = () => {
   const [amount, setAmount] = useState(0);
@@ -19,58 +671,80 @@ const TokenBuyPage = () => {
   const [discountApplied, setDiscountApplied] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(null);
   const [userInfo, setUserInfo] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
-  // Check authentication status on component mount
+  // Enhanced authentication check on component mount
   useEffect(() => {
-    checkAuthStatus();
+    const initializeAuth = async () => {
+      setAuthLoading(true);
+      
+      try {
+        console.log('TokenBuyPage: Starting auth check...');
+        const authResult = await checkAuthStatus();
+        
+        console.log(`TokenBuyPage: Auth result - ${authResult.isAuthenticated ? 'authenticated' : 'not authenticated'} (source: ${authResult.source})`);
+        
+        setIsAuthenticated(authResult.isAuthenticated);
+        
+        if (authResult.isAuthenticated && authResult.user) {
+          setUserInfo(authResult.user);
+          
+          // Get fresh token balance
+          const tokenResult = await fetchTokenBalance(authResult.user);
+          console.log(`TokenBuyPage: Token balance - ${tokenResult.tokens} (source: ${tokenResult.source})`);
+          setTokens(tokenResult.tokens);
+          
+          // Update user info if we got fresh data
+          if (tokenResult.success && tokenResult.source === 'api') {
+            const updatedUser = { ...authResult.user, tokens: tokenResult.tokens };
+            setUserInfo(updatedUser);
+          }
+        }
+      } catch (error) {
+        console.error('TokenBuyPage: Auth initialization failed:', error);
+        setIsAuthenticated(false);
+        setUserInfo(null);
+        setTokens(0);
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+
+    initializeAuth();
   }, []);
 
-  const checkAuthStatus = async () => {
-    try {
-      // First check localStorage for user data
-      const storedUser = localStorage.getItem('user');
-      if (!storedUser) {
-        setIsAuthenticated(false);
-        return;
+  // Listen for auth changes from other components
+  useEffect(() => {
+    const handleAuthChange = async (event) => {
+      console.log('TokenBuyPage: Auth change event received', event.detail);
+      
+      if (event.detail && event.detail.user) {
+        setIsAuthenticated(true);
+        setUserInfo(event.detail.user);
+        
+        // Refresh token balance
+        const tokenResult = await fetchTokenBalance(event.detail.user);
+        setTokens(tokenResult.tokens);
+      } else {
+        // Re-check auth status
+        const authResult = await checkAuthStatus();
+        setIsAuthenticated(authResult.isAuthenticated);
+        setUserInfo(authResult.user);
+        setTokens(authResult.user?.tokens || 0);
       }
+    };
 
-      const userData = JSON.parse(storedUser);
-      setUserInfo(userData);
-      setTokens(userData.tokens || 0);
+    const events = ['user-authenticated', 'auth-changed', 'login-success'];
+    events.forEach(eventName => {
+      window.addEventListener(eventName, handleAuthChange);
+    });
 
-      // Also verify with API
-      const response = await fetch(`${API_BASE}/token/balance`, {
-        method: 'GET',
-        credentials: 'include',
+    return () => {
+      events.forEach(eventName => {
+        window.removeEventListener(eventName, handleAuthChange);
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        setIsAuthenticated(true);
-        setTokens(data.tokens || userData.tokens || 0);
-
-        // Update localStorage with fresh token data
-        const updatedUser = { ...userData, tokens: data.tokens };
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-        setUserInfo(updatedUser);
-      } else {
-        // API call failed but we have localStorage data - might be network issue
-        setIsAuthenticated(true); // Still authenticated based on localStorage
-      }
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      // Check if we at least have localStorage data
-      const storedUser = localStorage.getItem('user');
-      if (storedUser) {
-        const userData = JSON.parse(storedUser);
-        setIsAuthenticated(true);
-        setUserInfo(userData);
-        setTokens(userData.tokens || 0);
-      } else {
-        setIsAuthenticated(false);
-      }
-    }
-  };
+    };
+  }, []);
 
   const handleLogin = () => {
     window.location.href = '/login';
@@ -159,7 +833,16 @@ const TokenBuyPage = () => {
   const handleApplyCoupon = async () => {
     resetMessages();
     setLoading(true);
+    
     try {
+      // Verify auth before making the request
+      const authResult = await checkAuthStatus();
+      if (!authResult.isAuthenticated) {
+        setIsAuthenticated(false);
+        setUserInfo(null);
+        throw new Error('Please log in to apply coupons');
+      }
+
       const payload = {
         couponCode: couponCode
       };
@@ -168,12 +851,19 @@ const TokenBuyPage = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Cache-Control": "no-cache"
         },
         body: JSON.stringify(payload),
         credentials: 'include',
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          // Auth expired
+          setIsAuthenticated(false);
+          setUserInfo(null);
+          throw new Error('Session expired. Please log in again.');
+        }
         const errorText = await response.text();
         throw new Error(errorText || "Failed to apply coupon");
       }
@@ -182,15 +872,14 @@ const TokenBuyPage = () => {
       setTokens(data.tokens);
       setMessage(`Coupon applied! Now you have total ${data.tokens} tokens.`);
 
-      // Update localStorage
-      const storedUser = localStorage.getItem('user');
-      if (storedUser) {
-        const userData = JSON.parse(storedUser);
-        const updatedUser = { ...userData, tokens: data.tokens };
-        localStorage.setItem('user', JSON.stringify(updatedUser));
+      // Update user info with new token balance
+      if (userInfo) {
+        const updatedUser = { ...userInfo, tokens: data.tokens };
+        saveUserToLocalStorage(updatedUser);
         setUserInfo(updatedUser);
       }
     } catch (err) {
+      console.error('Apply coupon error:', err);
       setError(err.message);
       showAlert(err.message);
     } finally {
@@ -217,11 +906,23 @@ const TokenBuyPage = () => {
       return;
     }
 
+    // Verify auth before payment
+    const authResult = await checkAuthStatus();
+    if (!authResult.isAuthenticated) {
+      setIsAuthenticated(false);
+      setUserInfo(null);
+      showAlert("Please log in to proceed with payment.");
+      return;
+    }
+
     try {
       // Send request to backend with final calculated price
       const res = await fetch(API_BASE + "/payment/create-checkout-session", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Cache-Control": "no-cache"
+        },
         body: JSON.stringify({
           quantity: amount, // number of tokens
           price: finalAmount, // final price in cents (integer)
@@ -233,11 +934,16 @@ const TokenBuyPage = () => {
       });
 
       if (!res.ok) {
+        if (res.status === 401) {
+          setIsAuthenticated(false);
+          setUserInfo(null);
+          throw new Error("Session expired. Please log in again.");
+        }
         throw new Error("Failed to create checkout session");
       }
 
       const data = await res.json();
-      console.log('Checkout session response:', data); // Debug log
+      console.log('Checkout session response:', data);
 
       // Redirect to Stripe Checkout
       const stripe = await stripePromise;
@@ -247,8 +953,8 @@ const TokenBuyPage = () => {
         showAlert(error.message);
       }
     } catch (err) {
-      console.error(err);
-      showAlert("Payment initialization failed. Please try again.");
+      console.error('Payment error:', err);
+      showAlert(err.message || "Payment initialization failed. Please try again.");
     }
   };
 
@@ -258,7 +964,7 @@ const TokenBuyPage = () => {
   };
 
   // Show loading state while checking authentication
-  if (isAuthenticated === null) {
+  if (authLoading) {
     return (
       <div className="plan-page plan-scrollfix">
         <div className="plan-card" style={{ textAlign: 'center', padding: '60px 24px' }}>
@@ -272,7 +978,7 @@ const TokenBuyPage = () => {
             Loading...
           </h3>
           <p style={{ color: '#9aa5b1' }}>
-            Checking authentication status
+            Verifying authentication status
           </p>
         </div>
       </div>
