@@ -67,7 +67,7 @@ body {
 }
 
 .plan-button {
-  background-color: #2ecc71;
+  background-color: #e4529b;
   color: white;
   padding: 12px 28px;
   font-size: 1.1rem;
@@ -78,7 +78,7 @@ body {
 }
 
 .plan-button:hover {
-  background-color: #27ae60;
+  background-color: #e81e83;
 }
 
 /* GALLERY */
