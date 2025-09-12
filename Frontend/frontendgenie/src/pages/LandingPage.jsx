@@ -227,16 +227,16 @@ const LandingPage = () => {
             Why Our Tour Guide App <em>Works?</em>
           </h2>
           <ul className="feature-list">
-            <li>✔ Plan trips, hangouts, or date nights in one chat</li>
-            <li>✔ Get recommendations tailored to your mood and crew</li>
-            <li>✔ Find hidden gems — cafés, bars, and local spots</li>
-            <li>✔ Turn any idea into a real plan</li>
-            <li>✔ Explore curated itineraries from travel creators</li>
-            <li>✔ Discover stays, hotspots, and unique picks</li>
-            <li>✔ Ask anything — from weather to what to pack</li>
-            <li>✔ Get the full plan from A to Z</li>
-            <li>✔ See the routes of your journey</li>
-            <li>✔ Also checkout the weather there . All in one</li>
+            <li> Plan trips, hangouts, or date nights in one chat</li>
+            <li> Get recommendations tailored to your mood and crew</li>
+            <li> Find hidden gems — cafés, bars, and local spots</li>
+            <li> Turn any idea into a real plan</li>
+            <li> Explore curated itineraries from travel creators</li>
+            <li> Discover stays, hotspots, and unique picks</li>
+            <li> Ask anything — from weather to what to pack</li>
+            <li> Get the full plan from A to Z</li>
+            <li> See the routes of your journey</li>
+            <li> Also checkout the weather there . All in one</li>
           </ul>
 
           <div className="feature-cta">
