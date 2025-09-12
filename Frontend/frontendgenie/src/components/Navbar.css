@@ -102,12 +102,13 @@
   border: 2px solid;
   border-radius: 8px;
   padding: 6px 12px;  /* adjust padding since we now have border */
-  border-image: linear-gradient(135deg, #ec4899, #db2777, #be185d) 1;
-  
+  /* border-image: linear-gradient(135deg, #ec4899, #db2777, #be185d) 1; */
+  border-image: white 1;  /* solid white border for better visibility */
+
   /* Ensure text visibility for active state */
   background: linear-gradient(135deg, #ec4899, #db2777, #be185d);
   -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  -webkit-text-fill-color: white;
   background-clip: text;
 }
 
