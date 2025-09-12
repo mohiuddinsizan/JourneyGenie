@@ -272,9 +272,16 @@ const handleBatchAnalyze = async () => {
 
   if (!user) {
     return (
-      <div className="gallery-container">
-        <div className="no-user-message">
-          <p>Please log in to view your travel gallery.</p>
+      <div className="plan-page">
+        <div className="plan-card">
+          <h2>🔒 Login Required</h2>
+          <p className="muted">You need to log in to see your gallery !</p>
+          <button
+            className="btn success"
+            onClick={() => navigate('/login')}
+          >
+            Go to Login
+          </button>
         </div>
       </div>
     );
