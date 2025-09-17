@@ -14,12 +14,50 @@ const API_BASE = import.meta.env.REACT_APP_API_URL || 'http://localhost:8080';
 
 
 const loadUserFromLocalStorage = () => {
-  try {
-    const raw = localStorage.getItem("user");
-    if (!raw) return null;
-    return JSON.parse(raw);
+  // try {
+  //   const raw = localStorage.getItem("user");
+  //   if (!raw) return null;
+  //   return JSON.parse(raw);
+  // } catch (e) {
+  //   console.error("Failed to parse user from localStorage", e);
+  //   return null;
+  // }
+
+    try {
+    // 1. Window property
+    if (window.currentUser && window.currentUser.id) {
+      return window.currentUser;
+    }
+
+    // 2. LocalStorage
+    let raw = localStorage.getItem("user");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed?.id) return parsed;
+    }
+
+    // 3. SessionStorage
+    raw = sessionStorage.getItem("user");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed?.id) return parsed;
+    }
+
+    // 4. Cookies
+    const cookies = document.cookie.split(";");
+    for (const name of ["user", "user_backup", "auth_user"]) {
+      const cookie = cookies.find(c => c.trim().startsWith(`${name}=`));
+      if (cookie) {
+        try {
+          const parsed = JSON.parse(decodeURIComponent(cookie.split("=")[1]));
+          if (parsed?.id) return parsed;
+        } catch {}
+      }
+    }
+
+    return null;
   } catch (e) {
-    console.error("Failed to parse user from localStorage", e);
+    console.error("Failed to load user", e);
     return null;
   }
 };
